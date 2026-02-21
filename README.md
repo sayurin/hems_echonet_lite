@@ -108,7 +108,7 @@ Use the integration repair flow to restart the ECHONET Lite service.
 
 ## License
 
-Apache License 2.0 - See LICENSE file for details
+MIT - See LICENSE file for details
 
 ## Contributing
 
