@@ -6,8 +6,12 @@ from collections.abc import Callable
 import logging
 from typing import Any
 
-from pyhems import Property
-from pyhems.definitions import create_numeric_decoder
+from pyhems import (
+    CLASS_CODE_HOME_AIR_CONDITIONER,
+    NodeState,
+    Property,
+    create_numeric_decoder,
+)
 
 from homeassistant.components.climate import (
     ATTR_TEMPERATURE,
@@ -29,10 +33,9 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import CLASS_CODE_HOME_AIR_CONDITIONER
 from .coordinator import EchonetLiteCoordinator
 from .entity import EchonetLiteEntity
-from .types import EchonetLiteConfigEntry, EchonetLiteNodeState
+from .types import EchonetLiteConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,18 +51,6 @@ EPC_SWING_AIR_FLOW = 0xA3
 EPC_OPERATION_MODE = 0xB0
 EPC_TARGET_TEMPERATURE = 0xB3
 EPC_ROOM_TEMPERATURE = 0xBB
-
-# Minimal EPCs needed to construct the climate entity (gate).
-_CLIMATE_REQUIRED_EPCS: dict[int, frozenset[int]] = {
-    CLASS_CODE_HOME_AIR_CONDITIONER: frozenset(
-        {
-            EPC_OPERATION_STATUS,
-            EPC_OPERATION_MODE,
-            EPC_TARGET_TEMPERATURE,
-            EPC_ROOM_TEMPERATURE,
-        }
-    ),
-}
 
 _SUPPORTED_HVAC_MODES: list[HVACMode] = [
     HVACMode.OFF,
@@ -116,15 +107,6 @@ _CLIMATE_DESCRIPTION = ClimateEntityDescription(
 )
 
 
-def _should_create_climate(node: EchonetLiteNodeState) -> bool:
-    """Check if climate entity should be created for this node.
-
-    Climate requires a minimal set of EPCs at discovery.
-    """
-    required = _CLIMATE_REQUIRED_EPCS.get(node.eoj.class_code, frozenset())
-    return required.issubset(node.get_epcs)
-
-
 async def async_setup_entry(
     _hass: HomeAssistant,
     entry: EchonetLiteConfigEntry,
@@ -146,8 +128,7 @@ async def async_setup_entry(
             if node.eoj.class_code not in CLIMATE_CLASS_CODES:
                 continue
 
-            if _should_create_climate(node):
-                new_entities.append(EchonetLiteClimate(coordinator, node))
+            new_entities.append(EchonetLiteClimate(coordinator, node))
         if new_entities:
             async_add_entities(new_entities)
 
@@ -192,7 +173,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
     def __init__(
         self,
         coordinator: EchonetLiteCoordinator,
-        node: EchonetLiteNodeState,
+        node: NodeState,
     ) -> None:
         """Initialize an ECHONET Lite climate entity."""
         super().__init__(coordinator, node)

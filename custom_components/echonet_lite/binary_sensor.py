@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from pyhems.definitions import EntityDefinition, create_binary_decoder
+from pyhems import EntityDefinition, create_binary_decoder
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,

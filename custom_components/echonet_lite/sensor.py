@@ -5,11 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from pyhems.definitions import (
-    EntityDefinition,
-    create_enum_decoder,
-    create_numeric_decoder,
-)
+from pyhems import EntityDefinition, create_enum_decoder, create_numeric_decoder
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,

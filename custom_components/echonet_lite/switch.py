@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from pyhems.definitions import EntityDefinition, create_binary_decoder
+from pyhems import EntityDefinition, create_binary_decoder
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.core import HomeAssistant

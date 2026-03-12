@@ -4,9 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-import struct
 
-from pyhems.definitions import EntityDefinition, create_numeric_decoder
+from pyhems import (
+    EntityDefinition,
+    NodeState,
+    create_numeric_decoder,
+    create_numeric_encoder,
+)
 
 from homeassistant.components.number import (
     NumberDeviceClass,
@@ -30,7 +34,7 @@ from .entity import (
     EchonetLiteEntityDescription,
     setup_echonet_lite_platform,
 )
-from .types import EchonetLiteConfigEntry, EchonetLiteNodeState
+from .types import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 1  # Serialize writes to prevent overwhelming device
 
@@ -52,16 +56,6 @@ _MRA_UNIT_TO_HA: dict[str, tuple[NumberDeviceClass | None, str | None]] = {
 _PERCENTAGE_DEVICE_CLASS_KEYWORDS: dict[str, NumberDeviceClass] = {
     "humidity": NumberDeviceClass.HUMIDITY,
     "battery": NumberDeviceClass.BATTERY,
-}
-
-# MRA format string -> (signed, byte_count, struct_format)
-_FORMAT_INFO: dict[str, tuple[bool, int, str]] = {
-    "uint8": (False, 1, "B"),
-    "int8": (True, 1, "b"),
-    "uint16": (False, 2, "!H"),
-    "int16": (True, 2, "!h"),
-    "uint32": (False, 4, "!I"),
-    "int32": (True, 4, "!i"),
 }
 
 
@@ -101,42 +95,6 @@ def _infer_ha_unit(entity_def: EntityDefinition) -> str | None:
     return unit
 
 
-def _encode_value(
-    value: float, mra_format: str, scale: float, byte_offset: int
-) -> bytes:
-    """Encode a numeric value to EDT bytes.
-
-    Args:
-        value: The value to encode.
-        mra_format: MRA format string (e.g., "uint8", "int16").
-        scale: Scale factor (e.g., 0.1).
-        byte_offset: Byte offset within EDT data.
-
-    Returns:
-        Encoded bytes.
-    """
-    format_info = _FORMAT_INFO.get(mra_format)
-    if not format_info:
-        raise ValueError(f"Unknown MRA format: {mra_format}")
-
-    _signed, byte_count, fmt = format_info
-
-    # Reverse scale to get raw integer value
-    raw = round(value / scale) if scale != 1.0 else round(value)
-
-    # Encode the value
-    if byte_count == 1:
-        encoded = struct.pack(fmt, raw)
-    else:
-        encoded = struct.pack(fmt, raw)
-
-    # If there's a byte_offset, pad with zeros before the value
-    if byte_offset > 0:
-        encoded = b"\x00" * byte_offset + encoded
-
-    return encoded
-
-
 @dataclass(frozen=True, kw_only=True)
 class EchonetLiteNumberEntityDescription(
     NumberEntityDescription, EchonetLiteEntityDescription
@@ -144,9 +102,9 @@ class EchonetLiteNumberEntityDescription(
     """Entity description with EPC metadata for number entities."""
 
     decoder: Callable[[bytes], float | int | None]
+    encoder: Callable[[float | int], bytes]
     mra_format: str
     scale: float
-    byte_offset: int
 
 
 def _create_number_description(
@@ -180,9 +138,12 @@ def _create_number_description(
             scale=entity_def.multiple_of,
             byte_offset=entity_def.byte_offset,
         ),
+        encoder=create_numeric_encoder(
+            mra_format=entity_def.format,
+            scale=entity_def.multiple_of,
+        ),
         mra_format=entity_def.format,
         scale=entity_def.multiple_of,
-        byte_offset=entity_def.byte_offset,
         manufacturer_code=entity_def.manufacturer_code,
         fallback_name=entity_def.name_en or None,
     )
@@ -212,7 +173,7 @@ class EchonetLiteNumber(
     def __init__(
         self,
         coordinator: EchonetLiteCoordinator,
-        node: EchonetLiteNodeState,
+        node: NodeState,
         description: EchonetLiteNumberEntityDescription,
     ) -> None:
         """Initialize the ECHONET Lite number entity."""
@@ -226,12 +187,7 @@ class EchonetLiteNumber(
 
     async def async_set_native_value(self, value: float) -> None:
         """Set the value by sending an ECHONET Lite command."""
-        encoded = _encode_value(
-            value,
-            self.description.mra_format,
-            self.description.scale,
-            self.description.byte_offset,
-        )
+        encoded = self.description.encoder(value)
         await self._async_send_property(self._epc, encoded)
 
 

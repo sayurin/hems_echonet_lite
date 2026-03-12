@@ -31,8 +31,7 @@ from pathlib import Path
 import re
 from typing import Any
 
-from pyhems import load_definitions_registry
-from pyhems.definitions import DefinitionsRegistry, EntityDefinition
+from pyhems import DefinitionsRegistry, EntityDefinition, load_definitions_registry
 
 from ..const import camel_to_snake
 from ..entity import can_process_enum_values, infer_platform

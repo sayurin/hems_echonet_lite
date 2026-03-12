@@ -5,7 +5,13 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from pyhems import Property
+from pyhems import (
+    CLASS_CODE_AIR_CLEANER,
+    CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN,
+    CLASS_CODE_VENTILATION_FAN,
+    NodeState,
+    Property,
+)
 
 from homeassistant.components.fan import FanEntity, FanEntityFeature
 from homeassistant.core import HomeAssistant, callback
@@ -17,17 +23,22 @@ from homeassistant.util.percentage import (
 )
 from homeassistant.util.scaling import int_states_in_range
 
-from .const import CLASS_CODE_AIR_CLEANER
 from .coordinator import EchonetLiteCoordinator
 from .entity import EchonetLiteEntity
-from .types import EchonetLiteConfigEntry, EchonetLiteNodeState
+from .types import EchonetLiteConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
 PARALLEL_UPDATES = 0
 
 # Fan class codes (local to this platform)
-FAN_CLASS_CODES: frozenset[int] = frozenset({CLASS_CODE_AIR_CLEANER})
+FAN_CLASS_CODES: frozenset[int] = frozenset(
+    {
+        CLASS_CODE_VENTILATION_FAN,
+        CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN,
+        CLASS_CODE_AIR_CLEANER,
+    }
+)
 
 # Fan-specific EPCs (local to this platform)
 EPC_OPERATION_STATUS = 0x80
@@ -42,20 +53,6 @@ _EDT_AUTO = 0x41
 # Preset modes
 PRESET_MODE_AUTO = "auto"
 PRESET_MODE_MANUAL = "manual"
-
-# Minimal EPCs needed to construct the fan entity (gate).
-_FAN_REQUIRED_EPCS: dict[int, frozenset[int]] = {
-    CLASS_CODE_AIR_CLEANER: frozenset({EPC_OPERATION_STATUS}),
-}
-
-
-def _should_create_fan(node: EchonetLiteNodeState) -> bool:
-    """Check if fan entity should be created for this node.
-
-    Fan requires a minimal set of EPCs at discovery.
-    """
-    required = _FAN_REQUIRED_EPCS.get(node.eoj.class_code, frozenset())
-    return required.issubset(node.get_epcs)
 
 
 async def async_setup_entry(
@@ -79,8 +76,7 @@ async def async_setup_entry(
             if node.eoj.class_code not in FAN_CLASS_CODES:
                 continue
 
-            if _should_create_fan(node):
-                new_entities.append(EchonetLiteFan(coordinator, node))
+            new_entities.append(EchonetLiteFan(coordinator, node))
         if new_entities:
             async_add_entities(new_entities)
 
@@ -98,7 +94,11 @@ async def async_setup_entry(
 
 
 class EchonetLiteFan(EchonetLiteEntity, FanEntity):
-    """Representation of an ECHONET Lite air cleaner as a fan."""
+    """Representation of an ECHONET Lite fan device.
+
+    Supports air cleaners (0x0135), ventilation fans (0x0133),
+    and air conditioner ventilation fans (0x0134).
+    """
 
     _attr_has_entity_name = True
     _attr_translation_key = None
@@ -108,7 +108,7 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
     def __init__(
         self,
         coordinator: EchonetLiteCoordinator,
-        node: EchonetLiteNodeState,
+        node: NodeState,
     ) -> None:
         """Initialize an ECHONET Lite fan entity."""
         super().__init__(coordinator, node)

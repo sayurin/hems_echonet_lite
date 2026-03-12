@@ -7,8 +7,7 @@ from dataclasses import dataclass
 import logging
 from typing import Literal
 
-from pyhems import CONTROLLER_INSTANCE, ESV_SETC, Frame, Property
-from pyhems.definitions import EntityDefinition
+from pyhems import EntityDefinition, NodeState, Property
 
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
@@ -19,7 +18,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DEDICATED_PLATFORM_EPCS, DOMAIN
 from .coordinator import EchonetLiteCoordinator
-from .types import EchonetLiteConfigEntry, EchonetLiteNodeState
+from .types import EchonetLiteConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -99,7 +98,7 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
     def __init__(
         self,
         coordinator: EchonetLiteCoordinator,
-        node: EchonetLiteNodeState,
+        node: NodeState,
     ) -> None:
         """Initialize the base entity for the given device key."""
 
@@ -145,20 +144,13 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
         if not_writable:
             hex_list = ", ".join(f"0x{epc:02X}" for epc in not_writable)
             raise HomeAssistantError(f"EPC {hex_list} is not writable by the device")
-        frame = Frame(
-            seoj=CONTROLLER_INSTANCE,
+        sent = await self.coordinator.config_entry.runtime_data.client.set_properties(
+            node_id=node.node_id,
             deoj=node.eoj,
-            esv=ESV_SETC,
             properties=properties,
         )
-        try:
-            sent = await self.coordinator.client.async_send(node.node_id, frame)
-            if not sent:
-                raise HomeAssistantError("The target node address is unknown")
-        except OSError as err:
-            raise HomeAssistantError(
-                f"Failed to send ECHONET Lite command: {err!s}"
-            ) from err
+        if not sent:
+            raise HomeAssistantError("The target node address is unknown")
 
         # After a Set operation, schedule an earlier poll so the UI reflects the
         # updated device state sooner.
@@ -192,7 +184,7 @@ class EchonetLiteEntityDescription(EntityDescription):
     fallback_name: str | None = None
     """Fallback name for user-defined entities without translation."""
 
-    def should_create(self, node: EchonetLiteNodeState) -> bool:
+    def should_create(self, node: NodeState) -> bool:
         """Check if entity should be created for this node.
 
         Args:
@@ -234,7 +226,7 @@ class EchonetLiteDescribedEntity[DescriptionT: EchonetLiteEntityDescription](
     def __init__(
         self,
         coordinator: EchonetLiteCoordinator,
-        node: EchonetLiteNodeState,
+        node: NodeState,
         description: DescriptionT,
     ) -> None:
         """Initialize a described ECHONET Lite entity.
@@ -268,9 +260,7 @@ def setup_echonet_lite_platform[DescriptionT: EchonetLiteEntityDescription](
     async_add_entities: AddConfigEntryEntitiesCallback,
     platform_type: PlatformType,
     description_factory: Callable[[int, EntityDefinition], DescriptionT],
-    entity_factory: Callable[
-        [EchonetLiteCoordinator, EchonetLiteNodeState, DescriptionT], Entity
-    ],
+    entity_factory: Callable[[EchonetLiteCoordinator, NodeState, DescriptionT], Entity],
     platform_name: str,
 ) -> None:
     """Set up common entity platform setup pattern for ECHONET Lite.
@@ -308,6 +298,7 @@ def setup_echonet_lite_platform[DescriptionT: EchonetLiteEntityDescription](
             if infer_platform(entity_def) == platform_type
             and entity_def.epc not in excluded
             and can_process_enum_values(entity_def)
+            and not (entity_def.set != "notApplicable" and entity_def.byte_offset > 0)
         ]
 
     @callback

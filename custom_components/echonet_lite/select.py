@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from pyhems.definitions import EntityDefinition, create_enum_decoder
+from pyhems import EntityDefinition, NodeState, create_enum_decoder
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.core import HomeAssistant
@@ -18,7 +18,7 @@ from .entity import (
     EchonetLiteEntityDescription,
     setup_echonet_lite_platform,
 )
-from .types import EchonetLiteConfigEntry, EchonetLiteNodeState
+from .types import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 0
 
@@ -94,7 +94,7 @@ class EchonetLiteSelect(
     def __init__(
         self,
         coordinator: EchonetLiteCoordinator,
-        node: EchonetLiteNodeState,
+        node: NodeState,
         description: EchonetLiteSelectEntityDescription,
     ) -> None:
         """Initialize the ECHONET Lite select entity."""
