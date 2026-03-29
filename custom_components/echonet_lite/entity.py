@@ -45,10 +45,10 @@ def can_process_enum_values(entity: EntityDefinition) -> bool:
         return True  # Numeric entities are always processable
 
     keys = set()
-    for ev in entity.enum_values:
-        if ev.key in keys:
+    for enum_val in entity.enum_values:
+        if enum_val.key in keys:
             return False
-        keys.add(ev.key)
+        keys.add(enum_val.key)
 
     return True
 
@@ -140,7 +140,9 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
             HomeAssistantError: If any EPC is not writable by the device.
         """
         node = self._node
-        not_writable = [p.epc for p in properties if p.epc not in node.set_epcs]
+        not_writable = [
+            prop.epc for prop in properties if prop.epc not in node.set_epcs
+        ]
         if not_writable:
             hex_list = ", ".join(f"0x{epc:02X}" for epc in not_writable)
             raise HomeAssistantError(f"EPC {hex_list} is not writable by the device")

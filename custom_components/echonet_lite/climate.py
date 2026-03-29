@@ -327,8 +327,8 @@ _SIGNED_BYTE_TEMPERATURE_DECODER = create_numeric_decoder(
 
 
 def _encode_temperature(value: float) -> bytes:
-    bounded = max(0, min(50, int(round(value))))
-    return bytes([bounded])
+    clamped = max(0, min(50, int(round(value))))
+    return bytes([clamped])
 
 
 __all__ = ["EchonetLiteClimate"]

@@ -6,10 +6,10 @@ from datetime import timedelta
 import re
 
 from pyhems import (
-    CLASS_CODE_AIR_CLEANER as _CLASS_CODE_AIR_CLEANER,
-    CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN as _CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN,
-    CLASS_CODE_HOME_AIR_CONDITIONER as _CLASS_CODE_HOME_AIR_CONDITIONER,
-    CLASS_CODE_VENTILATION_FAN as _CLASS_CODE_VENTILATION_FAN,
+    CLASS_CODE_AIR_CLEANER,
+    CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN,
+    CLASS_CODE_HOME_AIR_CONDITIONER,
+    CLASS_CODE_VENTILATION_FAN,
 )
 
 DOMAIN = "echonet_lite"
@@ -44,7 +44,7 @@ STABLE_CLASS_CODES: frozenset[int] = frozenset(
 # - Excluded from other platforms (sensor/binary_sensor/select/switch) to avoid duplicates
 # - Used for polling/notification to keep entity state up-to-date
 DEDICATED_PLATFORM_EPCS: dict[int, frozenset[int]] = {
-    _CLASS_CODE_HOME_AIR_CONDITIONER: frozenset(
+    CLASS_CODE_HOME_AIR_CONDITIONER: frozenset(
         {
             0x80,  # Operation status (on/off)
             0xA0,  # Fan speed
@@ -53,19 +53,19 @@ DEDICATED_PLATFORM_EPCS: dict[int, frozenset[int]] = {
             0xB3,  # Target temperature
         }
     ),
-    _CLASS_CODE_VENTILATION_FAN: frozenset(
+    CLASS_CODE_VENTILATION_FAN: frozenset(
         {
             0x80,  # Operation status (on/off)
             0xA0,  # Air flow rate setting
         }
     ),
-    _CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN: frozenset(
+    CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN: frozenset(
         {
             0x80,  # Operation status (on/off)
             0xA0,  # Air flow rate setting
         }
     ),
-    _CLASS_CODE_AIR_CLEANER: frozenset(
+    CLASS_CODE_AIR_CLEANER: frozenset(
         {
             0x80,  # Operation status (on/off)
             0xA0,  # Air flow rate setting
@@ -80,8 +80,7 @@ def camel_to_snake(name: str) -> str:
     MRA enum names use camelCase (e.g., 'automaticAirFlowDirection').
     HA uses snake_case for state keys (e.g., 'automatic_air_flow_direction').
     """
-    s1 = re.sub(r"(?<!^)(?=[A-Z])", "_", name)
-    return s1.lower()
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
 
 
 __all__ = [

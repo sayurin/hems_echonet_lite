@@ -42,6 +42,7 @@ from ..entity import can_process_enum_values, infer_platform
 
 ECHONET_LITE_DIR = Path(__file__).parent.parent
 GENERATOR_DIR = Path(__file__).parent
+REPO_ROOT = ECHONET_LITE_DIR.parent.parent.parent
 STRINGS_STATIC_FILE = GENERATOR_DIR / "strings_static.json"
 HA_STRINGS_FILE = ECHONET_LITE_DIR.parent.parent / "strings.json"
 
@@ -526,7 +527,8 @@ def main() -> None:
     # Write strings.json
     strings_path = ECHONET_LITE_DIR / "strings.json"
     with strings_path.open("w", encoding="utf-8") as f:
-        json.dump(strings_data, f, indent=2, ensure_ascii=False)
+        json.dump(strings_data, f, indent=2, ensure_ascii=False, sort_keys=True)
+        f.write("\n")
     print(f"Generated: {strings_path}")
 
     # Print summary
@@ -536,7 +538,6 @@ def main() -> None:
     print(f"  Device classes: {len(all_class_codes)}")
     print(f"  Entities (total across platforms): {entity_count}")
     print(f"  Common strings: {common_count}")
-    print("\nRun 'pre-commit run --files <files>' to format generated files.")
 
 
 if __name__ == "__main__":

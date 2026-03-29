@@ -54,7 +54,6 @@
     "fluorescent_light": "Fluorescent light",
     "fully_closed": "Fully closed",
     "fully_open": "Fully open",
-    "heat_exchanger_on": "Heat exchanger ON",
     "heating": "Heating",
     "hot_water_supply_status": "Hot water supply status",
     "incandescent_lamp_color": "Incandescent lamp color",
@@ -123,8 +122,8 @@
     "re_interconnection_permission_setting": "Re-interconnection permission setting",
     "relative_time_based_reservation_function_is_on": "Relative time-based reservation function is ON.",
     "remaining_chargeable_capacity_of_vehicle_mounted_battery": "Remaining chargeable capacity of vehicle mounted battery",
-    "remaining_stored_electricity_of_vehicle_mounted_battery1": "Remaining stored electricity of vehicle mounted battery1",
-    "remaining_stored_electricity_of_vehicle_mounted_battery3": "Remaining stored electricity of vehicle mounted battery3",
+    "remaining_stored_electricity_of_vehicle_mounted_battery_1": "Remaining stored electricity of vehicle mounted battery 1",
+    "remaining_stored_electricity_of_vehicle_mounted_battery_3": "Remaining stored electricity of vehicle mounted battery 3",
     "remote_operation_setting_status": "Remote operation setting status",
     "removed": "Removed",
     "reservation_off": "Reservation OFF",
@@ -152,6 +151,8 @@
     "tank_capacity": "Tank capacity",
     "test": "Test",
     "time_based_reservation_function_is_on": "Time-based reservation function is ON.",
+    "timer_1": "Timer 1",
+    "timer_2": "Timer 2",
     "timer_operation_setting": "Timer operation setting",
     "undefined": "Undefined",
     "unknown": "Unknown",
@@ -1567,8 +1568,8 @@
       "class_027a_epc_e6": {
         "name": "[%key:component::echonet_lite::common::daily_timer_setting%]",
         "state": {
-          "timer1": "Timer 1",
-          "timer2": "Timer 2",
+          "timer1": "[%key:component::echonet_lite::common::timer_1%]",
+          "timer2": "[%key:component::echonet_lite::common::timer_2%]",
           "timer_off": "Timer OFF"
         }
       },
@@ -1605,8 +1606,8 @@
         "name": "[%key:component::echonet_lite::common::daily_timer_setting%]",
         "state": {
           "off": "[%key:common::state::off%]",
-          "timer1": "Timer1",
-          "timer2": "Timer2"
+          "timer1": "[%key:component::echonet_lite::common::timer_1%]",
+          "timer2": "[%key:component::echonet_lite::common::timer_2%]"
         }
       },
       "class_027d_epc_c1": {
@@ -2150,6 +2151,42 @@
       "class_0273_epc_bb": {
         "name": "Measured value of bathroom temperature"
       },
+      "class_0279_custom_000005_epc_f2_1": {
+        "name": "Input Voltage 1"
+      },
+      "class_0279_custom_000005_epc_f2_2": {
+        "name": "Input Voltage 2"
+      },
+      "class_0279_custom_000005_epc_f2_3": {
+        "name": "Input Voltage 3"
+      },
+      "class_0279_custom_000005_epc_f2_4": {
+        "name": "Input Voltage 4"
+      },
+      "class_0279_custom_000005_epc_f3_1": {
+        "name": "Input Current 1"
+      },
+      "class_0279_custom_000005_epc_f3_2": {
+        "name": "Input Current 2"
+      },
+      "class_0279_custom_000005_epc_f3_3": {
+        "name": "Input Current 3"
+      },
+      "class_0279_custom_000005_epc_f3_4": {
+        "name": "Input Current 4"
+      },
+      "class_0279_custom_000005_epc_f4_1": {
+        "name": "Input Power 1"
+      },
+      "class_0279_custom_000005_epc_f4_2": {
+        "name": "Input Power 2"
+      },
+      "class_0279_custom_000005_epc_f4_3": {
+        "name": "Input Power 3"
+      },
+      "class_0279_custom_000005_epc_f4_4": {
+        "name": "Input Power 4"
+      },
       "class_0279_epc_b3": {
         "name": "Output power change time setting value"
       },
@@ -2486,13 +2523,13 @@
         }
       },
       "class_027e_epc_e2": {
-        "name": "[%key:component::echonet_lite::common::remaining_stored_electricity_of_vehicle_mounted_battery1%]"
+        "name": "[%key:component::echonet_lite::common::remaining_stored_electricity_of_vehicle_mounted_battery_1%]"
       },
       "class_027e_epc_e3": {
-        "name": "Remaining stored electricity of vehicle mounted battery2"
+        "name": "Remaining stored electricity of vehicle mounted battery 2"
       },
       "class_027e_epc_e4": {
-        "name": "[%key:component::echonet_lite::common::remaining_stored_electricity_of_vehicle_mounted_battery3%]"
+        "name": "[%key:component::echonet_lite::common::remaining_stored_electricity_of_vehicle_mounted_battery_3%]"
       },
       "class_027e_epc_ef": {
         "name": "[%key:component::echonet_lite::common::rated_voltage_independent%]"
@@ -2659,10 +2696,10 @@
         "name": "[%key:component::echonet_lite::common::measured_cumulative_amount_of_charging_electric_energy%]"
       },
       "class_02a1_epc_e2": {
-        "name": "[%key:component::echonet_lite::common::remaining_stored_electricity_of_vehicle_mounted_battery1%]"
+        "name": "[%key:component::echonet_lite::common::remaining_stored_electricity_of_vehicle_mounted_battery_1%]"
       },
       "class_02a1_epc_e4": {
-        "name": "[%key:component::echonet_lite::common::remaining_stored_electricity_of_vehicle_mounted_battery3%]"
+        "name": "[%key:component::echonet_lite::common::remaining_stored_electricity_of_vehicle_mounted_battery_3%]"
       },
       "class_02a4_epc_c3": {
         "name": "Power consumption when fully lighted"
@@ -2899,8 +2936,8 @@
       "class_0134_epc_e0": {
         "name": "Heat exchanger operation setting",
         "state": {
-          "off": "[%key:component::echonet_lite::common::heat_exchanger_on%]",
-          "on": "[%key:component::echonet_lite::common::heat_exchanger_on%]"
+          "off": "Heat exchanger OFF",
+          "on": "Heat exchanger ON"
         }
       },
       "class_0135_epc_c2": {
@@ -3009,7 +3046,7 @@
         }
       },
       "class_026f_epc_e0": {
-        "name": "Lock setting1",
+        "name": "Lock setting 1",
         "state": {
           "off": "[%key:component::echonet_lite::common::unlock%]",
           "on": "[%key:component::echonet_lite::common::lock%]"

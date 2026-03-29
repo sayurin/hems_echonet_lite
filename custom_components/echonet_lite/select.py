@@ -47,10 +47,10 @@ def _create_select_description(
     option_to_value: dict[str, int] = {}
 
     # enum_values is tuple[EnumValue, ...] with edt, key, name_en, name_ja
-    for ev in entity_def.enum_values:
-        option_key = camel_to_snake(ev.key)
-        value_to_option[ev.edt] = option_key
-        option_to_value[option_key] = ev.edt
+    for enum_val in entity_def.enum_values:
+        option_key = camel_to_snake(enum_val.key)
+        value_to_option[enum_val.edt] = option_key
+        option_to_value[option_key] = enum_val.edt
 
     assert option_to_value, (
         f"Select entity EPC 0x{entity_def.epc:02X} for class 0x{class_code:04X} "

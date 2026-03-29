@@ -87,9 +87,9 @@ def _infer_device_class(
     # Context-specific inference for % unit
     if unit == "%" and device_class is None:
         name_lower = entity_def.name_en.lower()
-        for keyword, dc in _PERCENTAGE_DEVICE_CLASS_KEYWORDS.items():
+        for keyword, device_class in _PERCENTAGE_DEVICE_CLASS_KEYWORDS.items():
             if keyword in name_lower:
-                return dc
+                return device_class
 
     return device_class
 
@@ -146,19 +146,22 @@ def _create_sensor_description(
     """Create a sensor entity description from an EntityDefinition."""
     # Read-only multi-value enum → ENUM sensor
     if entity_def.enum_values:
-        value_map = {ev.edt: camel_to_snake(ev.key) for ev in entity_def.enum_values}
+        value_map = {
+            enum_val.edt: camel_to_snake(enum_val.key)
+            for enum_val in entity_def.enum_values
+        }
         options = list(value_map.values())
         raw_decoder = create_enum_decoder()
 
         def _enum_sensor_decoder(
             state: bytes,
             *,
-            _raw: Callable[[bytes], int | None] = raw_decoder,
-            _map: dict[int, str] = value_map,
+            _raw_decoder: Callable[[bytes], int | None] = raw_decoder,
+            _value_map: dict[int, str] = value_map,
         ) -> str | None:
-            if (val := _raw(state)) is None:
+            if (raw_value := _raw_decoder(state)) is None:
                 return None
-            return _map.get(val)
+            return _value_map.get(raw_value)
 
         return EchonetLiteSensorEntityDescription(
             key=f"{entity_def.epc:02x}",

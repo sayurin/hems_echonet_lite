@@ -75,9 +75,9 @@ def _infer_device_class(
 
     if unit == "%" and device_class is None:
         name_lower = entity_def.name_en.lower()
-        for keyword, dc in _PERCENTAGE_DEVICE_CLASS_KEYWORDS.items():
+        for keyword, device_class in _PERCENTAGE_DEVICE_CLASS_KEYWORDS.items():
             if keyword in name_lower:
-                return dc
+                return device_class
 
     return device_class
 

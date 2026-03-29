@@ -89,8 +89,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     # Build device-specific EPC sets for polling/notification
     # Start with definitions-based EPCs (MRA + vendor)
     monitored_epcs: dict[int, frozenset[int]] = {
-        class_code: frozenset(e.epc for e in entities)
-        for class_code, entities in definitions.entities.items()
+        class_code: frozenset(entity_def.epc for entity_def in entity_defs)
+        for class_code, entity_defs in definitions.entities.items()
     }
 
     # Add dedicated platform EPCs (used for both exclusion and polling)
@@ -99,7 +99,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
 
     _LOGGER.debug(
         "Monitored EPCs (polling/notification) per device class: %s",
-        {hex(k): " ".join(f"{e:02x}" for e in v) for k, v in monitored_epcs.items()},
+        {
+            hex(class_code): " ".join(f"{epc:02x}" for epc in epcs)
+            for class_code, epcs in monitored_epcs.items()
+        },
     )
 
     # EPCs to request during node discovery (in addition to identification and instance list)
@@ -341,10 +344,10 @@ class _RuntimeIssueMonitor:
 
     @callback
     def _async_check_runtime(self, _now: datetime) -> None:
-        last = self._coordinator.last_runtime_activity_at
-        if last is None:
+        last_activity_at = self._coordinator.last_runtime_activity_at
+        if last_activity_at is None:
             return
-        if self._monotonic() - last < self._threshold:
+        if self._monotonic() - last_activity_at < self._threshold:
             self._clear_inactivity_issue_if_needed()
             return
         if self._inactivity_issue_active:
