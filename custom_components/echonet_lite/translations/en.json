@@ -647,6 +647,37 @@
                 "name": "All stop setting"
             }
         },
+        "climate": {
+            "climate": {
+                "state_attributes": {
+                    "fan_mode": {
+                        "state": {
+                            "auto": "Auto",
+                            "high": "High",
+                            "level_2": "Level 2",
+                            "level_3": "Level 3",
+                            "level_4": "Level 4",
+                            "level_5": "Level 5",
+                            "level_6": "Level 6",
+                            "level_7": "Level 7",
+                            "low": "Low"
+                        }
+                    }
+                }
+            }
+        },
+        "fan": {
+            "fan": {
+                "state_attributes": {
+                    "preset_mode": {
+                        "state": {
+                            "auto": "Auto",
+                            "manual": "Manual"
+                        }
+                    }
+                }
+            }
+        },
         "number": {
             "class_0000_epc_87": {
                 "name": "Current limit setting"

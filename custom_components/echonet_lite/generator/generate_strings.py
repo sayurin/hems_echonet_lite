@@ -103,13 +103,20 @@ def _is_key_reference(value: str) -> bool:
     return value.startswith("[%key:")
 
 
+def _count_state_values(state: dict[str, str], counts: Counter[str]) -> None:
+    """Count non-reference string values in a state dict."""
+    for state_value in state.values():
+        if state_value and not _is_key_reference(state_value):
+            counts[state_value] += 1
+
+
 def _collect_value_counts(
     entity_strings: dict[str, dict[str, dict[str, Any]]],
 ) -> Counter[str]:
     """Count occurrences of each non-reference string value across all entities.
 
-    Counts both entity names and state values. Values that are already
-    key references ([%key:...%]) are excluded.
+    Counts entity names, state values, and state_attributes state values.
+    Values that are already key references ([%key:...%]) are excluded.
 
     Args:
         entity_strings: Generated entity strings dict.
@@ -126,9 +133,12 @@ def _collect_value_counts(
                 counts[name] += 1
             # Count state values
             if state := entity_entry.get("state"):
-                for state_value in state.values():
-                    if state_value and not _is_key_reference(state_value):
-                        counts[state_value] += 1
+                _count_state_values(state, counts)
+            # Count state_attributes state values
+            if state_attrs := entity_entry.get("state_attributes"):
+                for attr_entry in state_attrs.values():
+                    if attr_state := attr_entry.get("state"):
+                        _count_state_values(attr_state, counts)
     return counts
 
 
@@ -186,6 +196,20 @@ def _build_text_to_ref(common_section: dict[str, str]) -> dict[str, str]:
     }
 
 
+def _replace_state_values(state: dict[str, str], text_to_ref: dict[str, str]) -> int:
+    """Replace non-reference values with common references in a state dict."""
+    replacements = 0
+    for state_key, state_value in state.items():
+        if (
+            state_value
+            and not _is_key_reference(state_value)
+            and state_value in text_to_ref
+        ):
+            state[state_key] = text_to_ref[state_value]
+            replacements += 1
+    return replacements
+
+
 def _replace_with_references(
     entity_strings: dict[str, dict[str, dict[str, Any]]],
     text_to_ref: dict[str, str],
@@ -193,6 +217,7 @@ def _replace_with_references(
     """Replace duplicated values with common section references in-place.
 
     Only replaces values that are not already key references.
+    Handles both top-level state and nested state_attributes state.
 
     Args:
         entity_strings: Generated entity strings dict (mutated in-place).
@@ -211,14 +236,12 @@ def _replace_with_references(
                 replacements += 1
             # Replace state values
             if state := entity_entry.get("state"):
-                for state_key, state_value in state.items():
-                    if (
-                        state_value
-                        and not _is_key_reference(state_value)
-                        and state_value in text_to_ref
-                    ):
-                        state[state_key] = text_to_ref[state_value]
-                        replacements += 1
+                replacements += _replace_state_values(state, text_to_ref)
+            # Replace state_attributes state values
+            if state_attrs := entity_entry.get("state_attributes"):
+                for attr_entry in state_attrs.values():
+                    if attr_state := attr_entry.get("state"):
+                        replacements += _replace_state_values(attr_state, text_to_ref)
     return replacements
 
 
@@ -442,8 +465,10 @@ def generate_strings(registry: DefinitionsRegistry) -> dict[str, Any]:
     3. Build a common section with snake_case keys for duplicated values
     4. Replace duplicated values with [%key:component::echonet_lite::common::KEY%]
 
-    Static entries from strings_static.json take priority over generated ones.
-    This allows manual overrides of auto-generated translations.
+    Static entity entries from strings_static.json are merged into the
+    generated set before deduplication, so static plain-text values also
+    participate in common section extraction. Static entries take priority
+    over generated ones for the same entity key.
 
     Args:
         registry: DefinitionsRegistry loaded from pyhems.
@@ -470,6 +495,17 @@ def generate_strings(registry: DefinitionsRegistry) -> dict[str, Any]:
                 reporting_reverse_lookup,
             )
 
+    # Load static file early to merge entity section before deduplication
+    with STRINGS_STATIC_FILE.open(encoding="utf-8") as f:
+        static_data = json.load(f)
+
+    # Merge static entity entries into entity_strings (static takes priority)
+    # This ensures static plain-text values participate in deduplication
+    for platform, platform_entities in static_data.get("entity", {}).items():
+        gen_platform = entity_strings.setdefault(platform, {})
+        for entity_key, entity_value in platform_entities.items():
+            gen_platform[entity_key] = entity_value
+
     # Pass 2: Detect duplicates and build common section
     value_counts = _collect_value_counts(entity_strings)
     common_section = _build_common_section(value_counts)
@@ -478,23 +514,19 @@ def generate_strings(registry: DefinitionsRegistry) -> dict[str, Any]:
     text_to_ref = _build_text_to_ref(common_section)
     _replace_with_references(entity_strings, text_to_ref)
 
-    # Load static sections and merge generated entity strings
-    with STRINGS_STATIC_FILE.open(encoding="utf-8") as f:
-        result = json.load(f)
+    # Build result from static non-entity sections
+    result: dict[str, Any] = {k: v for k, v in static_data.items() if k != "entity"}
 
     # Merge common section (static common entries take priority)
     if common_section:
-        static_common = result.setdefault("common", {})
+        result_common = result.setdefault("common", {})
         for key, value in common_section.items():
-            static_common.setdefault(key, value)
+            result_common.setdefault(key, value)
 
-    # Merge generated entity strings into static entity section
-    # Static entries take priority over generated ones (setdefault skips
-    # entities already defined in strings_static.json)
+    # Set entity section from fully processed entity_strings
+    result["entity"] = {}
     for platform, platform_entities in sorted(entity_strings.items()):
-        static_platform = result["entity"].setdefault(platform, {})
-        for entity_key, entity_value in sorted(platform_entities.items()):
-            static_platform.setdefault(entity_key, entity_value)
+        result["entity"][platform] = dict(sorted(platform_entities.items()))
 
     # Ensure "common" is the first key in the output for readability
     # (json.dump preserves dict insertion order)

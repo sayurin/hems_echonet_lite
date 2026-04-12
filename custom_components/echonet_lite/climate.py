@@ -81,12 +81,12 @@ _ECHONET_TO_HA_ACTION: dict[int, HVACAction] = {
 _HA_TO_ECHONET_FAN: dict[str, int] = {
     FAN_AUTO: 0x41,
     FAN_LOW: 0x31,  # Level 1
-    "Level 2": 0x32,  # Level 2
-    "Level 3": 0x33,  # Level 3
-    "Level 4": 0x34,  # Level 4
-    "Level 5": 0x35,  # Level 5
-    "Level 6": 0x36,  # Level 6
-    "Level 7": 0x37,  # Level 7
+    "level_2": 0x32,  # Level 2
+    "level_3": 0x33,  # Level 3
+    "level_4": 0x34,  # Level 4
+    "level_5": 0x35,  # Level 5
+    "level_6": 0x36,  # Level 6
+    "level_7": 0x37,  # Level 7
     FAN_HIGH: 0x38,  # Level 8
 }
 _ECHONET_TO_HA_FAN = {v: k for k, v in _HA_TO_ECHONET_FAN.items()}
@@ -163,7 +163,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
     entity_description: ClimateEntityDescription
     _attr_has_entity_name = True
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
-    _attr_translation_key = None
+    _attr_translation_key = "climate"
     _attr_precision = PRECISION_WHOLE
     _attr_hvac_modes = _SUPPORTED_HVAC_MODES
     _attr_fan_modes = list(_HA_TO_ECHONET_FAN.keys())

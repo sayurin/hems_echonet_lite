@@ -101,7 +101,7 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
     """
 
     _attr_has_entity_name = True
-    _attr_translation_key = None
+    _attr_translation_key = "fan"
     _attr_preset_modes = [PRESET_MODE_AUTO, PRESET_MODE_MANUAL]
     _attr_speed_count = int_states_in_range(_SPEED_RANGE)
 
