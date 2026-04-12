@@ -1,0 +1,108 @@
+{
+  "config": {
+    "abort": {
+      "cannot_connect": "マルチキャストリスナーを開始できませんでした。ホストネットワークでUDPマルチキャスト通信（224.0.23.0:3610）が許可されていることを確認してください。",
+      "reconfigure_successful": "ネットワークインターフェースが正常に更新されました",
+      "single_instance_allowed": "すでに設定されています。設定できるのは1つだけです。",
+      "unknown": "設定の検証中に予期しないエラーが発生しました"
+    },
+    "error": {
+      "cannot_connect": "[%key:component::echonet_lite::config::abort::cannot_connect%]",
+      "invalid_interface": "有効なIPv4アドレスを入力してください（例: 192.168.1.10 または 0.0.0.0）。",
+      "unknown": "[%key:component::echonet_lite::config::abort::unknown%]"
+    },
+    "step": {
+      "reconfigure": {
+        "data": {
+          "interface": "ネットワークインターフェース"
+        },
+        "data_description": {
+          "interface": "ECHONET Lite通信に使用するネットワークインターフェースを選択してください。自動を選択すると、Home Assistantが自動的に適切なインターフェースを検出します。"
+        },
+        "description": "ECHONET Lite通信のネットワークインターフェースを変更します。",
+        "title": "ECHONET Liteの再設定"
+      },
+      "user": {
+        "data": {
+          "interface": "[%key:component::echonet_lite::config::step::reconfigure::data::interface%]"
+        },
+        "data_description": {
+          "interface": "[%key:component::echonet_lite::config::step::reconfigure::data_description::interface%]"
+        },
+        "description": "Home Assistantは自動的にECHONET Liteマルチキャストチャネル（224.0.23.0:3610）にバインドし、デバイスの検出を開始します。",
+        "title": "ECHONET Liteのセットアップ"
+      }
+    }
+  },
+  "entity": {
+    "climate": {
+      "climate": {
+        "state_attributes": {
+          "fan_mode": {
+            "state": {
+              "auto": "自動",
+              "high": "強",
+              "level_2": "レベル2",
+              "level_3": "レベル3",
+              "level_4": "レベル4",
+              "level_5": "レベル5",
+              "level_6": "レベル6",
+              "level_7": "レベル7",
+              "low": "弱"
+            }
+          }
+        }
+      }
+    },
+    "fan": {
+      "fan": {
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "auto": "自動",
+              "manual": "手動"
+            }
+          }
+        }
+      }
+    }
+  },
+  "issues": {
+    "runtime_client_error": {
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "description": "ECHONET Liteインテグレーションでエラーが発生しました: {error}。ネットワークの問題やデバイスの切断が原因の可能性があります。\n\n送信を押すとECHONET Liteインテグレーションを再起動し、復旧を試みます。問題が解決しない場合は、ネットワーク設定を確認してください。",
+            "title": "ECHONET Liteインテグレーションを再起動"
+          }
+        }
+      },
+      "title": "ECHONET Liteランタイムエラー"
+    },
+    "runtime_inactive": {
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "description": "ECHONET Liteデバイスから{minutes}分以上フレームを受信していません。デバイスがオフラインであるか、ネットワークに問題がある可能性があります。\n\n送信を押すとECHONET Liteインテグレーションを再起動します。ECHONET Liteデバイスの電源が入っており、ネットワークに接続されていることを確認してください。",
+            "title": "[%key:component::echonet_lite::issues::runtime_client_error::fix_flow::step::confirm::title%]"
+          }
+        }
+      },
+      "title": "ECHONET Liteデバイスが応答していません"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "enable_experimental": "実験的なデバイスクラスを有効にする",
+          "poll_interval": "ポーリング間隔"
+        },
+        "data_description": {
+          "enable_experimental": "有効にすると、実機での検証が行われていないデバイスクラスも登録されます。正しく動作しない場合があります。",
+          "poll_interval": "デバイスプロパティのポーリング間隔（秒）。値を小さくすると更新が速くなりますが、ネットワークトラフィックが増加します。"
+        }
+      }
+    }
+  }
+}
