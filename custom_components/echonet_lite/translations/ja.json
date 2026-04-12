@@ -1,0 +1,3301 @@
+{
+  "config": {
+    "abort": {
+      "cannot_connect": "マルチキャストリスナーを開始できませんでした。ホストネットワークでUDPマルチキャスト通信（224.0.23.0:3610）が許可されていることを確認してください。",
+      "reconfigure_successful": "ネットワークインターフェースが正常に更新されました",
+      "single_instance_allowed": "すでに設定されています。設定できるのは1つだけです。",
+      "unknown": "設定の検証中に予期しないエラーが発生しました"
+    },
+    "error": {
+      "cannot_connect": "マルチキャストリスナーを開始できませんでした。ホストネットワークでUDPマルチキャスト通信（224.0.23.0:3610）が許可されていることを確認してください。",
+      "invalid_interface": "有効なIPv4アドレスを入力してください（例: 192.168.1.10 または 0.0.0.0）。",
+      "unknown": "設定の検証中に予期しないエラーが発生しました"
+    },
+    "step": {
+      "reconfigure": {
+        "data": {
+          "interface": "ネットワークインターフェース"
+        },
+        "data_description": {
+          "interface": "ECHONET Lite通信に使用するネットワークインターフェースを選択してください。自動を選択すると、Home Assistantが自動的に適切なインターフェースを検出します。"
+        },
+        "description": "ECHONET Lite通信のネットワークインターフェースを変更します。",
+        "title": "ECHONET Liteの再設定"
+      },
+      "user": {
+        "data": {
+          "interface": "ネットワークインターフェース"
+        },
+        "data_description": {
+          "interface": "ECHONET Lite通信に使用するネットワークインターフェースを選択してください。自動を選択すると、Home Assistantが自動的に適切なインターフェースを検出します。"
+        },
+        "description": "Home Assistantは自動的にECHONET Liteマルチキャストチャネル（224.0.23.0:3610）にバインドし、デバイスの検出を開始します。",
+        "title": "ECHONET Liteのセットアップ"
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "class_0000_epc_88": {
+        "name": "異常発生状態",
+        "state": {
+          "off": "異常なし",
+          "on": "異常あり"
+        }
+      },
+      "class_0002_epc_b1": {
+        "name": "侵入発生状態",
+        "state": {
+          "off": "検知無",
+          "on": "検知有"
+        }
+      },
+      "class_0003_epc_b1": {
+        "name": "非常発生状態",
+        "state": {
+          "off": "無",
+          "on": "有"
+        }
+      },
+      "class_0007_epc_b1": {
+        "name": "人体検知状態",
+        "state": {
+          "off": "検知無",
+          "on": "検知有"
+        }
+      },
+      "class_0016_epc_b1": {
+        "name": "風呂沸き上がり検知状態",
+        "state": {
+          "off": "検知無",
+          "on": "検知有"
+        }
+      },
+      "class_001d_epc_b1": {
+        "name": "VOC 検知状態",
+        "state": {
+          "off": "検知無",
+          "on": "検知有"
+        }
+      },
+      "class_0130_epc_ab": {
+        "name": "非優先状態",
+        "state": {
+          "off": "非優先状態",
+          "on": "通常状態"
+        }
+      },
+      "class_0134_epc_c1": {
+        "name": "煙 (タバコ) 検知状態",
+        "state": {
+          "off": "煙 (タバコ) 検知無",
+          "on": "煙 (タバコ) 検知有"
+        }
+      },
+      "class_0134_epc_c2": {
+        "name": "汚れ検知状態",
+        "state": {
+          "off": "汚れ検知無",
+          "on": "汚れ検知有"
+        }
+      },
+      "class_0135_epc_c0": {
+        "name": "空気汚れ検知状態",
+        "state": {
+          "off": "空気汚れ検知無",
+          "on": "空気汚れ検知有"
+        }
+      },
+      "class_0135_epc_c1": {
+        "name": "煙 (タバコ) 検知状態",
+        "state": {
+          "off": "煙 (タバコ) 検知無",
+          "on": "煙 (タバコ) 検知有"
+        }
+      },
+      "class_0135_epc_e1": {
+        "name": "フィルタ交換通知状態",
+        "state": {
+          "off": "フィルタ交換時期通知無",
+          "on": "フィルタ交換時期通知有"
+        }
+      },
+      "class_0156_epc_ac": {
+        "name": "サーモ状態",
+        "state": {
+          "off": "サーモOFF",
+          "on": "サーモON"
+        }
+      },
+      "class_0157_epc_ab": {
+        "name": "特殊状態",
+        "state": {
+          "off": "特殊状態",
+          "on": "通常状態"
+        }
+      },
+      "class_0260_epc_c2": {
+        "name": "風検知状態",
+        "state": {
+          "off": "検知無",
+          "on": "検知有"
+        }
+      },
+      "class_0260_epc_c3": {
+        "name": "日差し検知状態",
+        "state": {
+          "off": "検知無",
+          "on": "検知有"
+        }
+      },
+      "class_0260_epc_e8": {
+        "name": "遠隔操作設定状態",
+        "state": {
+          "off": "OFF (禁止)",
+          "on": "ON (許可)"
+        }
+      },
+      "class_0263_epc_e8": {
+        "name": "遠隔操作設定状態",
+        "state": {
+          "off": "OFF (禁止)",
+          "on": "ON (許可)"
+        }
+      },
+      "class_026b_epc_b2": {
+        "name": "沸き上げ中状態",
+        "state": {
+          "off": "非沸き上げ中",
+          "on": "沸き上げ中"
+        }
+      },
+      "class_026b_epc_c3": {
+        "name": "給湯中状態",
+        "state": {
+          "off": "非給湯中",
+          "on": "給湯中"
+        }
+      },
+      "class_026b_epc_e9": {
+        "name": "浴室優先設定",
+        "state": {
+          "off": "浴室優先切",
+          "on": "浴室優先入"
+        }
+      },
+      "class_026f_epc_e2": {
+        "name": "ドアガード施錠状態",
+        "state": {
+          "off": "解錠",
+          "on": "施錠"
+        }
+      },
+      "class_026f_epc_e3": {
+        "name": "扉開閉状態",
+        "state": {
+          "off": "閉",
+          "on": "開"
+        }
+      },
+      "class_026f_epc_e4": {
+        "name": "在室・不在状態",
+        "state": {
+          "off": "不在",
+          "on": "在室"
+        }
+      },
+      "class_0272_epc_d0": {
+        "name": "給湯器燃焼状態",
+        "state": {
+          "off": "無",
+          "on": "給湯燃焼状態有"
+        }
+      },
+      "class_0272_epc_e2": {
+        "name": "風呂給湯器燃焼状態",
+        "state": {
+          "off": "燃焼状態無",
+          "on": "燃焼状態有"
+        }
+      },
+      "class_0272_epc_e9": {
+        "name": "浴室優先設定",
+        "state": {
+          "off": "入浴優先切",
+          "on": "浴室優先入"
+        }
+      },
+      "class_0272_epc_ea": {
+        "name": "シャワー給湯状態",
+        "state": {
+          "off": "シャワー給湯状態無",
+          "on": "シャワー給湯状態有"
+        }
+      },
+      "class_0272_epc_eb": {
+        "name": "台所給湯状態",
+        "state": {
+          "off": "台所湯量状態無",
+          "on": "台所湯量状態有"
+        }
+      },
+      "class_0273_epc_e0": {
+        "name": "人体検知状態",
+        "state": {
+          "off": "人体検知なし",
+          "on": "人体検知あり"
+        }
+      },
+      "class_0279_epc_b2": {
+        "name": "余剰買取制御機能タイプ",
+        "state": {
+          "off": "無効",
+          "on": "有効"
+        }
+      },
+      "class_027e_epc_e5": {
+        "name": "メンテナンス状態",
+        "state": {
+          "off": "発生無",
+          "on": "発生有"
+        }
+      },
+      "class_0281_epc_e3": {
+        "name": "検針データ異常検知状態",
+        "state": {
+          "off": "検知無",
+          "on": "検知有"
+        }
+      },
+      "class_02a6_epc_b2": {
+        "name": "給湯沸き上げ中状態",
+        "state": {
+          "off": "非沸き上げ中",
+          "on": "沸き上げ中"
+        }
+      },
+      "class_02a6_epc_b3": {
+        "name": "暖房沸き上げ中状態",
+        "state": {
+          "off": "非沸き上げ中",
+          "on": "沸き上げ中"
+        }
+      },
+      "class_02a6_epc_c3": {
+        "name": "給湯中状態",
+        "state": {
+          "off": "非給湯中",
+          "on": "給湯中"
+        }
+      },
+      "class_03b7_epc_a5": {
+        "name": "製氷動作状態",
+        "state": {
+          "off": "停止中",
+          "on": "運転中"
+        }
+      },
+      "class_03b7_epc_a6": {
+        "name": "製氷用給水タンク状態",
+        "state": {
+          "off": "タンクなし or 水なし",
+          "on": "タンク水あり"
+        }
+      },
+      "class_03b7_epc_b0": {
+        "name": "ドア開閉状態",
+        "state": {
+          "off": "ドア閉",
+          "on": "ドア開"
+        }
+      },
+      "class_03b7_epc_b1": {
+        "name": "ドア開放警告状態",
+        "state": {
+          "off": "ドア開放警告無",
+          "on": "ドア開放警告有"
+        }
+      },
+      "class_03b7_epc_b2": {
+        "name": "冷蔵室ドア開閉状態",
+        "state": {
+          "off": "ドア閉",
+          "on": "ドア開"
+        }
+      },
+      "class_03b7_epc_b3": {
+        "name": "冷凍室ドア開閉状態",
+        "state": {
+          "off": "ドア閉",
+          "on": "ドア開"
+        }
+      },
+      "class_03b7_epc_b4": {
+        "name": "氷温室ドア開閉状態",
+        "state": {
+          "off": "ドア閉",
+          "on": "ドア開"
+        }
+      },
+      "class_03b7_epc_b5": {
+        "name": "野菜室ドア開閉状態",
+        "state": {
+          "off": "ドア閉",
+          "on": "ドア開"
+        }
+      },
+      "class_03b7_epc_b6": {
+        "name": "切換室ドア開閉状態",
+        "state": {
+          "off": "ドア閉",
+          "on": "ドア開"
+        }
+      },
+      "class_03bb_epc_b0": {
+        "name": "蓋開閉状態",
+        "state": {
+          "off": "蓋閉",
+          "on": "蓋開"
+        }
+      },
+      "class_03bb_epc_e5": {
+        "name": "内なべ取り外し状態",
+        "state": {
+          "off": "取り外し無",
+          "on": "取り外し有"
+        }
+      },
+      "class_03bb_epc_e6": {
+        "name": "蓋取り外し状態",
+        "state": {
+          "off": "取り外し無",
+          "on": "取り外し有"
+        }
+      },
+      "class_03ce_epc_d1": {
+        "name": "ドアタイプ情報",
+        "state": {
+          "off": "クローズ",
+          "on": "オープン"
+        }
+      },
+      "class_03ce_epc_d2": {
+        "name": "冷凍機内蔵型か冷凍機別置型かを示すショーケース構成情報",
+        "state": {
+          "off": "内蔵型",
+          "on": "別置型"
+        }
+      },
+      "class_03ce_epc_d4": {
+        "name": "冷蔵用途か冷凍用途かを示す庫内温度帯情報",
+        "state": {
+          "off": "冷凍",
+          "on": "冷蔵"
+        }
+      },
+      "class_03ce_epc_e7": {
+        "name": "ホット用ヒーター動作状態 (ヒーターモード)",
+        "state": {
+          "off": "OFF",
+          "on": "ON"
+        }
+      },
+      "class_03d3_epc_b0": {
+        "name": "扉・蓋開閉状態",
+        "state": {
+          "off": "扉・蓋閉",
+          "on": "扉・蓋開"
+        }
+      },
+      "class_03d4_epc_aa": {
+        "name": "特殊状態",
+        "state": {
+          "off": "通常状態",
+          "on": "除霜状態"
+        }
+      },
+      "class_05ff_epc_cd": {
+        "name": "管理対象機器異常発生状態",
+        "state": {
+          "off": "無",
+          "on": "有"
+        }
+      },
+      "class_0602_epc_b1": {
+        "name": "文字列設定受付可能状態",
+        "state": {
+          "off": "Busy",
+          "on": "Ready"
+        }
+      }
+    },
+    "button": {
+      "class_0002_epc_bf": {
+        "name": "侵入発生状態リセット設定"
+      },
+      "class_0003_epc_bf": {
+        "name": "非常発生状態リセット設定"
+      },
+      "class_0130_epc_d0": {
+        "name": "ブザー"
+      },
+      "class_0279_epc_e2": {
+        "name": "積算発電電力量リセット設定"
+      },
+      "class_0279_epc_e4": {
+        "name": "積算売電電力量リセット設定"
+      },
+      "class_027c_epc_c6": {
+        "name": "積算発電電力量リセット設定"
+      },
+      "class_027c_epc_c9": {
+        "name": "積算ガス消費量リセット設定"
+      },
+      "class_027c_epc_ce": {
+        "name": "宅内積算消費電力量リセット設定"
+      },
+      "class_027d_epc_d7": {
+        "name": "積算放電電力量リセット設定"
+      },
+      "class_027d_epc_d9": {
+        "name": "積算充電電力量リセット設定"
+      },
+      "class_027e_epc_cd": {
+        "name": "車両接続確認"
+      },
+      "class_027e_epc_d7": {
+        "name": "積算放電電力量リセット設定"
+      },
+      "class_027e_epc_d9": {
+        "name": "積算充電電力量リセット設定"
+      },
+      "class_02a1_epc_cd": {
+        "name": "車両接続確認"
+      },
+      "class_02a1_epc_d9": {
+        "name": "積算充電電力量リセット設定"
+      },
+      "class_03b9_epc_b3": {
+        "name": "一括停止設定"
+      }
+    },
+    "climate": {
+      "climate": {
+        "state_attributes": {
+          "fan_mode": {
+            "state": {
+              "auto": "自動",
+              "high": "強",
+              "level_2": "レベル2",
+              "level_3": "レベル3",
+              "level_4": "レベル4",
+              "level_5": "レベル5",
+              "level_6": "レベル6",
+              "level_7": "レベル7",
+              "low": "弱"
+            }
+          }
+        }
+      }
+    },
+    "fan": {
+      "fan": {
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "auto": "自動",
+              "manual": "手動"
+            }
+          }
+        }
+      }
+    },
+    "number": {
+      "class_0000_epc_87": {
+        "name": "電流制限設定"
+      },
+      "class_0000_epc_99": {
+        "name": "電力制限設定"
+      },
+      "class_0130_epc_b3": {
+        "name": "温度設定値"
+      },
+      "class_0130_epc_b4": {
+        "name": "除湿モード時相対湿度設定値"
+      },
+      "class_0130_epc_b5": {
+        "name": "冷房モード時温度設定値"
+      },
+      "class_0130_epc_b6": {
+        "name": "暖房モード時温度設定値"
+      },
+      "class_0130_epc_b7": {
+        "name": "除湿モード時温度設定値"
+      },
+      "class_0130_epc_bf": {
+        "name": "相対温度設定値"
+      },
+      "class_0134_epc_b4": {
+        "name": "室内相対湿度設定値"
+      },
+      "class_0156_epc_b3": {
+        "name": "温度設定値"
+      },
+      "class_0157_epc_de": {
+        "name": "室外機消費電力制限設定"
+      },
+      "class_0260_epc_d2": {
+        "name": "動作時間設定値"
+      },
+      "class_0260_epc_e1": {
+        "name": "開度レベル設定"
+      },
+      "class_0260_epc_e2": {
+        "name": "ブラインド角度設定値"
+      },
+      "class_0263_epc_d2": {
+        "name": "動作時間設定値"
+      },
+      "class_0263_epc_e1": {
+        "name": "開度レベル設定"
+      },
+      "class_0263_epc_e2": {
+        "name": "ブラインド角度設定値"
+      },
+      "class_026b_epc_b3": {
+        "name": "沸き上げ湯温設定値"
+      },
+      "class_026b_epc_b4": {
+        "name": "手動沸き上げ停止日数設定値"
+      },
+      "class_026b_epc_d1": {
+        "name": "給湯温度設定値"
+      },
+      "class_026b_epc_d3": {
+        "name": "風呂温度設定値"
+      },
+      "class_026b_epc_d6": {
+        "name": "音量設定値"
+      },
+      "class_026b_epc_e0": {
+        "name": "沸き上げ湯量設定値"
+      },
+      "class_026b_epc_e7": {
+        "name": "風呂湯量設定1"
+      },
+      "class_026b_epc_ee": {
+        "name": "風呂湯量設定3"
+      },
+      "class_0272_epc_d1": {
+        "name": "給湯温度設定値"
+      },
+      "class_0272_epc_d6": {
+        "name": "音量設定値"
+      },
+      "class_0272_epc_e1": {
+        "name": "風呂温度設定値"
+      },
+      "class_0272_epc_e7": {
+        "name": "風呂湯量設定1"
+      },
+      "class_0272_epc_ee": {
+        "name": "風呂湯量設定3"
+      },
+      "class_0279_epc_a0": {
+        "name": "出力制御設定1"
+      },
+      "class_0279_epc_a1": {
+        "name": "出力制御設定2"
+      },
+      "class_0279_epc_e5": {
+        "name": "発電電力制限設定1"
+      },
+      "class_0279_epc_e6": {
+        "name": "発電電力制限設定2"
+      },
+      "class_0279_epc_e7": {
+        "name": "売電電力制限設定"
+      },
+      "class_0279_epc_e8": {
+        "name": "定格発電電力値(系統連系時)"
+      },
+      "class_0279_epc_e9": {
+        "name": "定格発電電力値(独立時)"
+      },
+      "class_027a_epc_e1": {
+        "name": "水温設定1"
+      },
+      "class_027b_epc_e0": {
+        "name": "温度設定1"
+      },
+      "class_027d_epc_a6": {
+        "name": "AC充電上限設定"
+      },
+      "class_027d_epc_a7": {
+        "name": "AC放電下限設定"
+      },
+      "class_027d_epc_aa": {
+        "name": "AC充電量設定値"
+      },
+      "class_027d_epc_ab": {
+        "name": "AC放電量設定値"
+      },
+      "class_027d_epc_e0": {
+        "name": "充放電量設定値1"
+      },
+      "class_027d_epc_e1": {
+        "name": "充放電量設定値2"
+      },
+      "class_027d_epc_e7": {
+        "name": "充電量設定値1"
+      },
+      "class_027d_epc_e8": {
+        "name": "放電量設定値1"
+      },
+      "class_027d_epc_e9": {
+        "name": "充電量設定値2"
+      },
+      "class_027d_epc_ea": {
+        "name": "放電量設定値2"
+      },
+      "class_027d_epc_eb": {
+        "name": "充電電力設定値"
+      },
+      "class_027d_epc_ec": {
+        "name": "放電電力設定値"
+      },
+      "class_027d_epc_ed": {
+        "name": "充電電流設定値"
+      },
+      "class_027d_epc_ee": {
+        "name": "放電電流設定値"
+      },
+      "class_027e_epc_de": {
+        "name": "買電電力設定値"
+      },
+      "class_027e_epc_e0": {
+        "name": "充放電電力設定値"
+      },
+      "class_027e_epc_e7": {
+        "name": "充電量設定値1"
+      },
+      "class_027e_epc_e9": {
+        "name": "充電量設定値2"
+      },
+      "class_027e_epc_ea": {
+        "name": "放電量設定値"
+      },
+      "class_027e_epc_eb": {
+        "name": "充電電力設定値"
+      },
+      "class_027e_epc_ec": {
+        "name": "放電電力設定値"
+      },
+      "class_027e_epc_ed": {
+        "name": "充電電流設定値"
+      },
+      "class_027e_epc_ee": {
+        "name": "放電電流設定値"
+      },
+      "class_0290_epc_b0": {
+        "name": "照明の明るさ設定"
+      },
+      "class_0290_epc_b7": {
+        "name": "通常灯モード時照明の明るさ設定"
+      },
+      "class_0290_epc_b9": {
+        "name": "常夜灯モード時照明の明るさ設定"
+      },
+      "class_0291_epc_b0": {
+        "name": "照明の明るさ設定"
+      },
+      "class_02a1_epc_e7": {
+        "name": "充電量設定値"
+      },
+      "class_02a1_epc_eb": {
+        "name": "充電電力設定値"
+      },
+      "class_02a1_epc_ed": {
+        "name": "充電電流設定値"
+      },
+      "class_02a3_epc_b0": {
+        "name": "照明の明るさ設定"
+      },
+      "class_02a4_epc_b0": {
+        "name": "照明の明るさ設定"
+      },
+      "class_02a4_epc_c7": {
+        "name": "フェード制御変化時間設定"
+      },
+      "class_02a7_epc_c2": {
+        "name": "EM電力目標値"
+      },
+      "class_02a7_epc_c7": {
+        "name": "基準周波数補正値"
+      },
+      "class_03b7_epc_e2": {
+        "name": "冷蔵室温度設定値"
+      },
+      "class_03b7_epc_e3": {
+        "name": "冷凍室温度設定値"
+      },
+      "class_03b7_epc_e4": {
+        "name": "氷温室温度設定値"
+      },
+      "class_03b7_epc_e5": {
+        "name": "野菜室温度設定値"
+      },
+      "class_03b7_epc_e6": {
+        "name": "切換室温度設定値"
+      },
+      "class_03ce_epc_ed": {
+        "name": "庫内照明照度レベル設定"
+      },
+      "class_03ce_epc_ee": {
+        "name": "庫外照明照度レベル設定"
+      },
+      "class_03ce_epc_ef": {
+        "name": "庫内温度設定値"
+      },
+      "class_03d3_epc_d7": {
+        "name": "脱水回転数設定値"
+      },
+      "class_03d3_epc_ea": {
+        "name": "洗い温水設定値"
+      }
+    },
+    "select": {
+      "class_0002_epc_b0": {
+        "name": "検知閾値レベル設定",
+        "state": {
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8"
+        }
+      },
+      "class_0007_epc_b0": {
+        "name": "検知閾値レベル設定",
+        "state": {
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8"
+        }
+      },
+      "class_0016_epc_b0": {
+        "name": "検知閾値レベル設定",
+        "state": {
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8"
+        }
+      },
+      "class_001d_epc_b0": {
+        "name": "検知閾値レベル設定",
+        "state": {
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8"
+        }
+      },
+      "class_0130_epc_90": {
+        "name": "ONタイマ予約設定",
+        "state": {
+          "time_off_relative_time_off": "予約切",
+          "time_off_relative_time_on": "相対時間予約のみ入",
+          "time_on_relative_time_off": "時刻予約のみ入",
+          "time_on_relative_time_on": "時刻予約、相対時間予約共に入"
+        }
+      },
+      "class_0130_epc_94": {
+        "name": "OFFタイマ予約設定",
+        "state": {
+          "both_off": "予約切",
+          "relative_time_based_on": "相対時間予約のみ入",
+          "time_based_and_relative_time_based_on": "時刻予約、相対時間予約共に入",
+          "time_based_on": "時刻予約のみ入"
+        }
+      },
+      "class_0130_epc_a0": {
+        "name": "風量設定",
+        "state": {
+          "auto": "風量自動設定",
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8"
+        }
+      },
+      "class_0130_epc_a1": {
+        "name": "風向自動設定",
+        "state": {
+          "auto": "AUTO",
+          "auto_horizontal": "左右AUTO",
+          "auto_vertical": "上下AUTO",
+          "non_auto": "非AUTO"
+        }
+      },
+      "class_0130_epc_a3": {
+        "name": "風向スイング設定",
+        "state": {
+          "horizontal": "左右",
+          "off": "OFF",
+          "vertical": "上下",
+          "vertical_and_horizontal": "上下左右"
+        }
+      },
+      "class_0130_epc_a4": {
+        "name": "風向上下設定",
+        "state": {
+          "central": "中央",
+          "lower_center": "下中",
+          "lowermost": "下",
+          "upper_center": "上中",
+          "uppermost": "上"
+        }
+      },
+      "class_0130_epc_a5": {
+        "name": "風向左右設定",
+        "state": {
+          "c": "中",
+          "c_r": "中・右",
+          "c_rc": "中・右中",
+          "c_rc_r": "中・右中・右",
+          "l": "左",
+          "l_c": "左・中",
+          "l_c_r": "左・中・右",
+          "l_c_rc": "左・中・右中",
+          "l_c_rc_r": "左・中・右中・右",
+          "l_lc": "左・左中",
+          "l_lc_c": "左・左中・中",
+          "l_lc_c_r": "左・左中・中・右",
+          "l_lc_c_rc": "左・左中・中・右中",
+          "l_lc_c_rc_r": "左・左中・中・右中・右",
+          "l_lc_r": "左・左中・右",
+          "l_lc_rc": "左・左中・右中",
+          "l_lc_rc_r": "左・左中・右中・右",
+          "l_r": "左・右",
+          "l_rc": "左・右中",
+          "l_rc_r": "左・右中・右",
+          "lc": "左中",
+          "lc_c": "左中・中",
+          "lc_c_r": "左中・中・右",
+          "lc_c_rc": "左中・中・右中",
+          "lc_c_rc_r": "左中・中・右中・右",
+          "lc_r": "左中・右",
+          "lc_rc": "左中・右中",
+          "lc_rc_r": "左中・右中・右",
+          "r": "右",
+          "rc": "右中",
+          "rc_r": "右中・右"
+        }
+      },
+      "class_0130_epc_b0": {
+        "name": "運転モード設定",
+        "state": {
+          "auto": "自動",
+          "circulation": "送風",
+          "cooling": "冷房",
+          "dehumidification": "除湿",
+          "heating": "暖房",
+          "other": "その他"
+        }
+      },
+      "class_0130_epc_b2": {
+        "name": "急速動作モード設定",
+        "state": {
+          "highspeed": "急速",
+          "normal": "通常運転",
+          "silent": "静音"
+        }
+      },
+      "class_0130_epc_c0": {
+        "name": "換気モード設定",
+        "state": {
+          "off": "換気OFF",
+          "on_intake": "換気ON (吸気方向)",
+          "on_outlet": "換気ON (排気方向)",
+          "on_outlet_and_intake": "換気ON (吸排気方向)"
+        }
+      },
+      "class_0130_epc_c2": {
+        "name": "換気風量設定",
+        "state": {
+          "auto": "換気風量自動",
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8"
+        }
+      },
+      "class_0130_epc_c4": {
+        "name": "加湿量設定",
+        "state": {
+          "auto": "加湿量自動",
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8"
+        }
+      },
+      "class_0130_epc_cc": {
+        "name": "特別運転モード設定",
+        "state": {
+          "active_defrosting": "強制除霜",
+          "clothes_dryer": "衣類乾燥",
+          "condensation_suppressor": "結露抑制",
+          "mite_and_mold_control": "ダニカビ抑制",
+          "no_setting": "設定なし"
+        }
+      },
+      "class_0130_epc_ce": {
+        "name": "強制サーモモード設定",
+        "state": {
+          "normal": "通常設定",
+          "off": "強制サーモOFF",
+          "on": "強制サーモON"
+        }
+      },
+      "class_0133_epc_a0": {
+        "name": "換気風量設定",
+        "state": {
+          "auto": "換気風量自動状態",
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8"
+        }
+      },
+      "class_0134_epc_a0": {
+        "name": "換気風量設定",
+        "state": {
+          "auto": "換気風量自動状態",
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8"
+        }
+      },
+      "class_0134_epc_b2": {
+        "name": "換気モード設定",
+        "state": {
+          "cooling": "冷房換気",
+          "dehumidifying": "除湿換気",
+          "heat_exchange": "熱交換換気",
+          "heating": "暖房換気",
+          "humidifying": "加湿換気",
+          "normal": "普通換気",
+          "other": "その他換気"
+        }
+      },
+      "class_0134_epc_b3": {
+        "name": "冷暖強弱設定",
+        "state": {
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8"
+        }
+      },
+      "class_0135_epc_a0": {
+        "name": "風量設定",
+        "state": {
+          "auto": "換気風量自動状態",
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8"
+        }
+      },
+      "class_0156_epc_b0": {
+        "name": "運転モード設定",
+        "state": {
+          "auto": "自動",
+          "circulation": "送風",
+          "cooling": "冷房",
+          "dehumidification": "除湿",
+          "heating": "暖房"
+        }
+      },
+      "class_0260_epc_d0": {
+        "name": "開(張出し)速度設定",
+        "state": {
+          "high": "高",
+          "low": "低",
+          "medium": "中"
+        }
+      },
+      "class_0260_epc_d1": {
+        "name": "閉(収納)速度設定",
+        "state": {
+          "high": "高",
+          "low": "低",
+          "medium": "中"
+        }
+      },
+      "class_0260_epc_e0": {
+        "name": "開閉(張出し/収納)動作設定",
+        "state": {
+          "close": "閉",
+          "open": "開",
+          "stop": "停止"
+        }
+      },
+      "class_0260_epc_e3": {
+        "name": "開閉(張出し/収納)速度設定",
+        "state": {
+          "high": "高",
+          "low": "低",
+          "medium": "中"
+        }
+      },
+      "class_0260_epc_e9": {
+        "name": "選択開(張出し)度動作設定",
+        "state": {
+          "degree_of_opening": "開度レベル設定位置開",
+          "local_setting": "ローカル設定位置",
+          "operation_time_of_closing": "動作時間設定値閉",
+          "operation_time_of_opening": "動作時間設定値開"
+        }
+      },
+      "class_0260_epc_ee": {
+        "name": "ワンタイム開(張出し)速度設定",
+        "state": {
+          "high": "高",
+          "low": "低",
+          "medium": "中",
+          "none": "無し"
+        }
+      },
+      "class_0260_epc_ef": {
+        "name": "ワンタイム閉(収納)速度設定",
+        "state": {
+          "high": "高",
+          "low": "低",
+          "medium": "中",
+          "none": "無し"
+        }
+      },
+      "class_0263_epc_d0": {
+        "name": "開速度設定",
+        "state": {
+          "high": "高",
+          "low": "低",
+          "medium": "中"
+        }
+      },
+      "class_0263_epc_d1": {
+        "name": "閉速度設定",
+        "state": {
+          "high": "高",
+          "low": "低",
+          "medium": "中"
+        }
+      },
+      "class_0263_epc_e0": {
+        "name": "開閉動作設定",
+        "state": {
+          "close": "閉",
+          "open": "開",
+          "stop": "停止"
+        }
+      },
+      "class_0263_epc_e3": {
+        "name": "開閉速度設定",
+        "state": {
+          "high": "高",
+          "low": "低",
+          "medium": "中"
+        }
+      },
+      "class_0263_epc_e9": {
+        "name": "選択開度動作設定",
+        "state": {
+          "degree_of_opening": "開度レベル設定位置開",
+          "local_setting": "ローカル設定位置",
+          "operation_time_of_closing": "動作時間設定値閉",
+          "operation_time_of_opening": "動作時間設定値開",
+          "slit_degree_of_opening": "スリット開度設定"
+        }
+      },
+      "class_0263_epc_ed": {
+        "name": "スリット開度設定",
+        "state": {
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8"
+        }
+      },
+      "class_0263_epc_ee": {
+        "name": "ワンタイム開速度設定",
+        "state": {
+          "high": "高",
+          "low": "低",
+          "medium": "中",
+          "none": "無し"
+        }
+      },
+      "class_0263_epc_ef": {
+        "name": "ワンタイム閉速度設定",
+        "state": {
+          "high": "高",
+          "low": "低",
+          "medium": "中",
+          "none": "無し"
+        }
+      },
+      "class_026b_epc_b0": {
+        "name": "沸き上げ自動設定",
+        "state": {
+          "auto": "自動沸き上げ",
+          "manual_heating": "手動沸き上げ",
+          "manual_no_heating": "手動沸き上げ停止"
+        }
+      },
+      "class_026b_epc_b6": {
+        "name": "タンク運転モード設定",
+        "state": {
+          "extra": "多め",
+          "saving": "節約",
+          "standard": "標準"
+        }
+      },
+      "class_026b_epc_ca": {
+        "name": "昼間沸き上げシフト時刻1",
+        "state": {
+          "at0900": "9時",
+          "at1000": "10時",
+          "at1100": "11時",
+          "at1200": "12時",
+          "at1300": "13時",
+          "at1400": "14時",
+          "at1500": "15時",
+          "at1600": "16時",
+          "at1700": "17時(エネルギーシフト回数が2回の場合はこの値無効になる)",
+          "cleared": "クリア状態"
+        }
+      },
+      "class_026b_epc_cd": {
+        "name": "昼間沸き上げシフト時刻2",
+        "state": {
+          "at1000": "10時",
+          "at1100": "11時",
+          "at1200": "12時",
+          "at1300": "13時",
+          "at1400": "14時",
+          "at1500": "15時",
+          "at1600": "16時",
+          "at1700": "17時",
+          "cleared": "クリア状態"
+        }
+      },
+      "class_026b_epc_e8": {
+        "name": "風呂湯量設定2",
+        "state": {
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8"
+        }
+      },
+      "class_0272_epc_e8": {
+        "name": "風呂湯量設定2",
+        "state": {
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8"
+        }
+      },
+      "class_0273_epc_b0": {
+        "name": "運転設定",
+        "state": {
+          "circulation": "涼風運転",
+          "drying": "乾燥運転",
+          "heating": "入浴中暖房運転",
+          "mist_sauna": "ミストサウナ運転",
+          "prewarming": "入浴前予備暖房運転",
+          "stop": "停止",
+          "ventilation": "換気運転",
+          "water_mist": "水ミスト運転"
+        }
+      },
+      "class_0273_epc_b1": {
+        "name": "換気運転設定",
+        "state": {
+          "auto": "自動",
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8",
+          "standard": "標準"
+        }
+      },
+      "class_0273_epc_b2": {
+        "name": "入浴前予備暖房運転設定",
+        "state": {
+          "auto": "自動",
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8",
+          "standard": "標準"
+        }
+      },
+      "class_0273_epc_b3": {
+        "name": "入浴中暖房運転設定",
+        "state": {
+          "auto": "自動",
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8",
+          "standard": "標準"
+        }
+      },
+      "class_0273_epc_b4": {
+        "name": "乾燥運転設定",
+        "state": {
+          "auto": "自動",
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8",
+          "standard": "標準"
+        }
+      },
+      "class_0273_epc_b5": {
+        "name": "涼風運転設定",
+        "state": {
+          "auto": "自動",
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8",
+          "standard": "標準"
+        }
+      },
+      "class_0273_epc_b6": {
+        "name": "ミストサウナ運転設定",
+        "state": {
+          "auto": "自動",
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8",
+          "standard": "標準"
+        }
+      },
+      "class_0273_epc_b7": {
+        "name": "水ミスト運転設定",
+        "state": {
+          "auto": "自動",
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8",
+          "standard": "標準"
+        }
+      },
+      "class_0273_epc_c2": {
+        "name": "換気風量設定",
+        "state": {
+          "auto": "自動",
+          "level_1": "レベル1",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8"
+        }
+      },
+      "class_0273_epc_e1": {
+        "name": "ONタイマ予約設定2",
+        "state": {
+          "circulation_reservation": "涼風運転予約",
+          "drying_reservation": "乾燥運転予約",
+          "heating_reservation": "入浴中暖房運転予約",
+          "mist_sauna_reservation": "ミストサウナ運転予約",
+          "no_reservation": "予約切",
+          "prewarming_reservation": "入浴前予備暖房運転予約",
+          "ventilation_reservation": "換気運転予約",
+          "water_mist_reservation": "水ミスト運転予約"
+        }
+      },
+      "class_0279_epc_c1": {
+        "name": "FIT契約タイプ",
+        "state": {
+          "fit": "FIT",
+          "non_fit": "非FIT",
+          "undefined": "未設定"
+        }
+      },
+      "class_027a_epc_e5": {
+        "name": "特殊運転設定",
+        "state": {
+          "high_power": "ハイパワー運転",
+          "modest": "ひかえめ運転",
+          "normal": "通常運転"
+        }
+      },
+      "class_027a_epc_e6": {
+        "name": "デイリータイマー設定",
+        "state": {
+          "timer1": "タイマー1",
+          "timer2": "タイマー2",
+          "timer_off": "タイマー切"
+        }
+      },
+      "class_027b_epc_e1": {
+        "name": "温度設定2",
+        "state": {
+          "auto": "自動",
+          "level_1": "レベル1",
+          "level_10": "レベル10",
+          "level_11": "レベル11",
+          "level_12": "レベル12",
+          "level_13": "レベル13",
+          "level_14": "レベル14",
+          "level_15": "レベル15",
+          "level_2": "レベル2",
+          "level_3": "レベル3",
+          "level_4": "レベル4",
+          "level_5": "レベル5",
+          "level_6": "レベル6",
+          "level_7": "レベル7",
+          "level_8": "レベル8",
+          "level_9": "レベル9"
+        }
+      },
+      "class_027b_epc_e5": {
+        "name": "特殊運転設定",
+        "state": {
+          "high_power": "ハイパワー運転",
+          "modest": "ひかえめ運転",
+          "normal": "通常運転"
+        }
+      },
+      "class_027b_epc_e6": {
+        "name": "デイリータイマー設定",
+        "state": {
+          "off": "タイマー切",
+          "timer1": "タイマー1",
+          "timer2": "タイマー2"
+        }
+      },
+      "class_027d_epc_c1": {
+        "name": "充電方式",
+        "state": {
+          "designated_current": "指定電流充電",
+          "designated_power": "指定電力充電",
+          "maximum": "最大充電電力充電",
+          "other": "その他",
+          "surplus": "余剰電力充電"
+        }
+      },
+      "class_027d_epc_c2": {
+        "name": "放電方式",
+        "state": {
+          "designated_current": "指定電流放電",
+          "designated_power": "指定電力放電",
+          "load_following": "負荷追従放電",
+          "maximum": "最大放電電力放電",
+          "other": "その他"
+        }
+      },
+      "class_027d_epc_da": {
+        "name": "運転モード設定",
+        "state": {
+          "auto": "自動",
+          "capacity_recalculation": "実効容量再計算処理",
+          "charging": "充電",
+          "discharging": "放電",
+          "other": "その他",
+          "rapid_charging": "急速充電",
+          "restart": "再起動",
+          "standby": "待機",
+          "test": "テスト"
+        }
+      },
+      "class_027e_epc_da": {
+        "name": "運転モード設定",
+        "state": {
+          "automatic": "自動",
+          "charge": "充電",
+          "charging_discharging": "充放電",
+          "discharge": "放電",
+          "idle": "停止",
+          "other": "その他",
+          "preparation": "準備",
+          "standby": "待機"
+        }
+      },
+      "class_027e_epc_dc": {
+        "name": "充電方式",
+        "state": {
+          "designated_electric_current": "指定電流充電",
+          "designated_electric_power": "指定電力充電",
+          "designated_purchasing_electric_power": "買電電力指定充電",
+          "maximum_charging_electric_power": "最大充電電力充電",
+          "others": "その他",
+          "surplus_electric_power": "余剰電力充電",
+          "v2_g": "V2G"
+        }
+      },
+      "class_027e_epc_dd": {
+        "name": "放電方式",
+        "state": {
+          "designated_electric_current": "指定電流放電",
+          "designated_electric_power": "指定電力放電",
+          "designated_purchasing_electric_power": "買電電力指定放電",
+          "load_following": "負荷追従放電",
+          "maximum_discharging_electric_power": "最大放電電力充電",
+          "others": "その他",
+          "v2_g": "V2G"
+        }
+      },
+      "class_0281_epc_d0": {
+        "name": "水流量メータ区分",
+        "state": {
+          "other_water": "その他",
+          "recycled_water": "中水",
+          "running_water": "上水",
+          "sewage_water": "下水"
+        }
+      },
+      "class_0281_epc_d1": {
+        "name": "所有者区分",
+        "state": {
+          "individual": "個人",
+          "not_specified": "指定なし",
+          "private_sector_company": "民間会社",
+          "public_waterworks_company": "事業体"
+        }
+      },
+      "class_0290_epc_b1": {
+        "name": "光色設定",
+        "state": {
+          "daylight_color": "昼光色",
+          "daylight_white": "昼白色",
+          "incandescent": "電球色",
+          "other": "その他",
+          "undefined": "不明",
+          "white": "白色"
+        }
+      },
+      "class_0290_epc_b6": {
+        "name": "点灯モード設定",
+        "state": {
+          "auto": "自動",
+          "color": "カラー灯",
+          "night": "常夜灯",
+          "normal": "通常灯"
+        }
+      },
+      "class_0290_epc_bb": {
+        "name": "通常灯モード時光色設定",
+        "state": {
+          "daylight_color": "昼光色",
+          "daylight_white": "昼白色",
+          "incandescent": "電球色",
+          "other": "その他",
+          "white": "白色"
+        }
+      },
+      "class_0290_epc_bd": {
+        "name": "常夜灯モード時光色設定",
+        "state": {
+          "daylight_color": "昼光色",
+          "daylight_white": "昼白色",
+          "incandescent": "電球色",
+          "other": "その他",
+          "white": "白色"
+        }
+      },
+      "class_02a1_epc_da": {
+        "name": "運転モード設定",
+        "state": {
+          "charge": "充電",
+          "idle": "停止",
+          "other": "その他",
+          "standby": "待機"
+        }
+      },
+      "class_02a6_epc_b0": {
+        "name": "沸き上げ自動設定",
+        "state": {
+          "auto": "自動沸き上げ",
+          "manual_heating": "手動沸き上げ",
+          "manual_not_heating": "手動沸き上げ停止"
+        }
+      },
+      "class_02a6_epc_b8": {
+        "name": "太陽光発電連携モード設定",
+        "state": {
+          "economic_efficiency": "経済",
+          "household_consumption": "自家消費",
+          "mode_off": "モード切",
+          "prioritizing_electricity_sales": "売電優先"
+        }
+      },
+      "class_03b7_epc_a0": {
+        "name": "急速冷凍動作設定",
+        "state": {
+          "normal": "通常冷凍",
+          "quick": "急速冷凍",
+          "standby": "急速冷凍待機"
+        }
+      },
+      "class_03b7_epc_a1": {
+        "name": "急速冷蔵動作設定",
+        "state": {
+          "normal": "通常冷蔵",
+          "quick": "急速冷蔵",
+          "standby": "急速冷蔵待機"
+        }
+      },
+      "class_03b7_epc_a4": {
+        "name": "製氷許可設定",
+        "state": {
+          "disable": "製氷禁止",
+          "enable": "製氷許可",
+          "standby": "製氷一定時間禁止"
+        }
+      },
+      "class_03ce_epc_b0": {
+        "name": "運転モード設定",
+        "state": {
+          "cooling": "冷却",
+          "defrosting": "霜取り",
+          "non_cooling": "非冷",
+          "other": "その他"
+        }
+      },
+      "class_03d3_epc_b2": {
+        "name": "洗濯・乾燥設定",
+        "state": {
+          "pause": "洗濯乾燥一時停止",
+          "run": "洗濯乾燥開始・再開／洗濯乾燥運転中",
+          "stop": "洗濯乾燥停止"
+        }
+      },
+      "class_03d3_epc_d0": {
+        "name": "洗濯乾燥コース設定1",
+        "state": {
+          "dry_blankets": "＜乾燥コース＞毛布",
+          "dry_disinfection": "＜乾燥コース＞除菌",
+          "dry_drymark": "＜乾燥コース＞ドライ",
+          "dry_finishing": "＜乾燥コース＞仕上げ",
+          "dry_hang_drying": "＜乾燥コース＞吊り干し",
+          "dry_ironing": "＜乾燥コース＞アイロン／Yシャツ",
+          "dry_shrinkage_minimization": "＜乾燥コース＞縮み低減",
+          "dry_soft": "＜乾燥コース＞ソフト",
+          "dry_standard": "＜乾燥コース＞標準",
+          "dry_stationary_drying": "＜乾燥コース＞静止乾燥",
+          "dry_tank_drying": "＜乾燥コース＞槽洗浄",
+          "dry_thick": "＜乾燥コース＞厚物",
+          "dry_user_defined_time": "＜乾燥コース＞時間指定",
+          "dry_warming": "＜乾燥コース＞衣類あたため",
+          "wash_blankets": "＜洗濯コース＞毛布",
+          "wash_clean_rinsing": "＜洗濯コース＞清潔すすぎ",
+          "wash_detergent_saving": "＜洗濯コース＞省洗剤",
+          "wash_disinfection": "＜洗濯コース＞除菌",
+          "wash_dry_blankets": "＜洗濯乾燥コース＞毛布",
+          "wash_dry_clean_rinsing": "＜洗濯乾燥コース＞清潔すすぎ",
+          "wash_dry_detergent_saving": "＜洗濯乾燥コース＞省洗剤",
+          "wash_dry_disinfection": "＜洗濯乾燥コース＞除菌",
+          "wash_dry_drymark": "＜洗濯乾燥コース＞ドライ",
+          "wash_dry_hang_drying": "＜洗濯乾燥コース＞吊り干し",
+          "wash_dry_hard_to_remove": "＜洗濯乾燥コース＞しつこい汚れ",
+          "wash_dry_heavily_soiled": "＜洗濯乾燥コース＞汚れ大",
+          "wash_dry_ironing": "＜洗濯乾燥コース＞アイロン／Yシャツ",
+          "wash_dry_lightly_soiled": "＜洗濯乾燥コース＞汚れ小",
+          "wash_dry_memory": "＜洗濯乾燥コース＞メモリー",
+          "wash_dry_oil_strains": "＜洗濯乾燥コース＞油汚れ",
+          "wash_dry_presoaking": "＜洗濯乾燥コース＞つけおき",
+          "wash_dry_silent": "＜洗濯乾燥コース＞静音",
+          "wash_dry_small_amount_quick": "＜洗濯乾燥コース＞少量短時間",
+          "wash_dry_soft": "＜洗濯乾燥コース＞ソフト",
+          "wash_dry_standard": "＜洗濯乾燥コース＞標準",
+          "wash_dry_thick": "＜洗濯乾燥コース＞厚物",
+          "wash_drymark": "＜洗濯コース＞ドライ",
+          "wash_hard_to_remove": "＜洗濯コース＞しつこい汚れ",
+          "wash_heavily_soiled": "＜洗濯コース＞汚れ大",
+          "wash_lightly_soiled": "＜洗濯コース＞汚れ小",
+          "wash_memory": "＜洗濯コース＞メモリー",
+          "wash_oil_strains": "＜洗濯コース＞油汚れ",
+          "wash_presoaking": "＜洗濯コース＞つけおき",
+          "wash_silent": "＜洗濯コース＞静音",
+          "wash_small_amount_quick": "＜洗濯コース＞少量短時間",
+          "wash_soft": "＜洗濯コース＞ソフト",
+          "wash_standard": "＜洗濯コース＞標準",
+          "wash_tank_cleaning": "＜洗濯コース＞槽洗浄"
+        }
+      },
+      "class_03d3_epc_d1": {
+        "name": "洗濯乾燥コース設定2",
+        "state": {
+          "wash_dry_blankets": "毛布",
+          "wash_dry_clean_rinsing": "清潔すすぎ",
+          "wash_dry_detergent_saving": "省洗剤",
+          "wash_dry_disinfection": "除菌",
+          "wash_dry_drymark": "ドライ",
+          "wash_dry_hard_to_remove": "しつこい汚れ",
+          "wash_dry_heavily_soiled": "汚れ大",
+          "wash_dry_lightly_soiled": "汚れ小",
+          "wash_dry_memory": "メモリー",
+          "wash_dry_no_wash": "洗濯なし",
+          "wash_dry_oil_strains": "油汚れ",
+          "wash_dry_presoaking": "つけおき",
+          "wash_dry_silent": "静音",
+          "wash_dry_small_amount_quick": "少量短時間",
+          "wash_dry_soft": "ソフト",
+          "wash_dry_standard": "標準",
+          "wash_dry_tank_cleaning": "槽洗浄"
+        }
+      },
+      "class_03d3_epc_d2": {
+        "name": "乾燥方法設定",
+        "state": {
+          "dry_blankets": "毛布",
+          "dry_disinfection": "除菌",
+          "dry_drymark": "ドライ",
+          "dry_finishing": "仕上げ",
+          "dry_hang_drying": "吊り干し",
+          "dry_heater_current_limit": "ヒータ入力制限",
+          "dry_ironing": "アイロン／Yシャツ",
+          "dry_no_drying": "乾燥なし",
+          "dry_shrinkage_minimization": "縮み低減",
+          "dry_soft": "ソフト",
+          "dry_standard": "標準",
+          "dry_stationary_drying": "静止乾燥",
+          "dry_tank_drying": "槽洗浄",
+          "dry_thick": "厚物",
+          "dry_user_defined_time": "時間指定",
+          "dry_warming": "衣類あたため"
+        }
+      },
+      "class_03d3_epc_eb": {
+        "name": "風呂水設定",
+        "state": {
+          "none": "風呂水給水なし",
+          "rinsing": "全すすぎ",
+          "rinsing_without_final": "すすぎのみ (除く最終すすぎ)",
+          "washing": "洗いのみ",
+          "washing_rinsing": "洗い＋全すすぎ",
+          "washing_rinsing_without_final": "洗い+すすぎ (除く最終すすぎ)"
+        }
+      }
+    },
+    "sensor": {
+      "class_0000_epc_84": {
+        "name": "瞬時消費電力計測値"
+      },
+      "class_0000_epc_85": {
+        "name": "積算消費電力量計測値"
+      },
+      "class_0000_epc_89": {
+        "name": "異常内容",
+        "state": {
+          "changing_battery": "電池交換",
+          "cleaning": "掃除（フィルタ等）",
+          "fault": "異常あり",
+          "no_fault": "異常なし",
+          "recover_operation_no_reuired": "復帰操作不要",
+          "repair_location_unkown": "修理箇所不明",
+          "reset_button": "リセットボタンを押し再操作",
+          "set_incorrectly": "セット不良",
+          "supply": "補給",
+          "trun_off_or_unplug": "スイッチを切る/コンセントを抜き再操作",
+          "user_definable": "ユーザ定義領域"
+        }
+      },
+      "class_0011_epc_e0": {
+        "name": "温度計測値"
+      },
+      "class_0012_epc_e0": {
+        "name": "相対湿度計測値"
+      },
+      "class_001b_epc_e0": {
+        "name": "CO2濃度計測値"
+      },
+      "class_001d_epc_e0": {
+        "name": "VOC 濃度計測値"
+      },
+      "class_0022_epc_e0": {
+        "name": "積算電力量計測値"
+      },
+      "class_0022_epc_e1": {
+        "name": "中容量センサ瞬時電力値計測値"
+      },
+      "class_0022_epc_e2": {
+        "name": "小容量センサ瞬時電力値計測値"
+      },
+      "class_0022_epc_e3": {
+        "name": "大容量センサ瞬時電力値計測値"
+      },
+      "class_0022_epc_e5": {
+        "name": "実効電圧値計測値"
+      },
+      "class_0023_epc_e0": {
+        "name": "電流値計測値1"
+      },
+      "class_0023_epc_e1": {
+        "name": "計測対象定格電圧値"
+      },
+      "class_0023_epc_e2": {
+        "name": "電流値計測値2"
+      },
+      "class_00d0_epc_e0": {
+        "name": "照度計測値1"
+      },
+      "class_00d0_epc_e1": {
+        "name": "照度計測値2"
+      },
+      "class_0130_epc_aa": {
+        "name": "特殊状態",
+        "state": {
+          "defrosting": "除霜状態",
+          "heat_removal": "排熱状態",
+          "normal": "通常状態",
+          "preheating": "予熱状態"
+        }
+      },
+      "class_0130_epc_b9": {
+        "name": "消費電流計測値"
+      },
+      "class_0130_epc_ba": {
+        "name": "室内相対湿度計測値"
+      },
+      "class_0130_epc_bb": {
+        "name": "室内温度計測値"
+      },
+      "class_0130_epc_bc": {
+        "name": "ユーザリモコン温度設定値"
+      },
+      "class_0130_epc_bd": {
+        "name": "吹き出し温度計測値"
+      },
+      "class_0130_epc_be": {
+        "name": "外気温度計測値"
+      },
+      "class_0134_epc_b9": {
+        "name": "消費電流計測値"
+      },
+      "class_0134_epc_ba": {
+        "name": "室内相対湿度計測値"
+      },
+      "class_0134_epc_be": {
+        "name": "外気温度計測値"
+      },
+      "class_0134_epc_c0": {
+        "name": "CO2濃度計測値"
+      },
+      "class_0134_epc_ca": {
+        "name": "外気相対湿度計測値"
+      },
+      "class_0134_epc_d2": {
+        "name": "給気温度計測値"
+      },
+      "class_0134_epc_d3": {
+        "name": "給気相対湿度計測値"
+      },
+      "class_0134_epc_d4": {
+        "name": "排気温度計測値"
+      },
+      "class_0134_epc_d5": {
+        "name": "排気相対湿度計測値"
+      },
+      "class_0135_custom_000005_epc_f1_1": {
+        "name": "温度"
+      },
+      "class_0135_custom_000005_epc_f1_2": {
+        "name": "湿度"
+      },
+      "class_0135_custom_000005_epc_f1_3": {
+        "name": "PM2.5"
+      },
+      "class_0156_epc_ae": {
+        "name": "自動運転時運転モード状態",
+        "state": {
+          "circulation": "送風",
+          "cooling": "冷房",
+          "dehumidification": "除湿",
+          "heating": "暖房",
+          "other": "その他"
+        }
+      },
+      "class_0156_epc_bb": {
+        "name": "室内機温度計測値"
+      },
+      "class_0156_epc_db": {
+        "name": "室内機消費電力範囲",
+        "state": {
+          "200_w_or_more": "200W以上",
+          "less100_w": "50W以上～100W未満",
+          "less150_w": "100W以上～150W未満",
+          "less200_w": "150W以上～200W未満",
+          "less50_w": "50W未満",
+          "undefined": "未定"
+        }
+      },
+      "class_0157_epc_be": {
+        "name": "室外機温度計測値"
+      },
+      "class_0157_epc_db": {
+        "name": "室外機消費電力計測値"
+      },
+      "class_0157_epc_dd": {
+        "name": "室外機節電可能消費電力"
+      },
+      "class_0157_epc_df": {
+        "name": "室外機抑制最低消費電力"
+      },
+      "class_0260_epc_ea": {
+        "name": "開閉(張出し/収納)状態",
+        "state": {
+          "closing": "閉動作中",
+          "fully_closed": "全閉",
+          "fully_open": "全開",
+          "opening": "開動作中",
+          "stopped_halfway": "途中停止"
+        }
+      },
+      "class_0263_epc_ea": {
+        "name": "開閉状態",
+        "state": {
+          "closing": "閉動作中",
+          "fully_closed": "全閉",
+          "fully_open": "全開",
+          "opening": "開動作中",
+          "stopped_halfway": "途中停止"
+        }
+      },
+      "class_026b_epc_c1": {
+        "name": "温水器湯温計測値"
+      },
+      "class_026b_epc_d8": {
+        "name": "給湯可能湯量値"
+      },
+      "class_026b_epc_db": {
+        "name": "冬季H/Pユニット定格消費電力"
+      },
+      "class_026b_epc_dc": {
+        "name": "中間期H/Pユニット定格消費電力"
+      },
+      "class_026b_epc_dd": {
+        "name": "夏季H/Pユニット定格消費電力"
+      },
+      "class_026b_epc_e1": {
+        "name": "残湯量計測値"
+      },
+      "class_026b_epc_e2": {
+        "name": "タンク容量値"
+      },
+      "class_026b_epc_ea": {
+        "name": "風呂動作状態監視",
+        "state": {
+          "keeping_temperature": "保温中",
+          "no_operation": "停止中",
+          "running_hot_water": "湯張り中"
+        }
+      },
+      "class_026f_epc_e5": {
+        "name": "警報状態",
+        "state": {
+          "break_open": "こじ開け",
+          "door_open": "扉開放",
+          "manual_unlocked": "手動解錠",
+          "normal": "通常状態(警報なし)",
+          "tampered": "タンパ"
+        }
+      },
+      "class_0272_epc_ef": {
+        "name": "風呂動作状態監視",
+        "state": {
+          "keeping_temperature": "保温中",
+          "no_operation": "停止中",
+          "running_hot_water": "湯張り中"
+        }
+      },
+      "class_0273_epc_ba": {
+        "name": "浴室内相対湿度計測値"
+      },
+      "class_0273_epc_bb": {
+        "name": "浴室内温度計測値"
+      },
+      "class_0279_custom_000005_epc_f2_1": {
+        "name": "入力電圧1"
+      },
+      "class_0279_custom_000005_epc_f2_2": {
+        "name": "入力電圧2"
+      },
+      "class_0279_custom_000005_epc_f2_3": {
+        "name": "入力電圧3"
+      },
+      "class_0279_custom_000005_epc_f2_4": {
+        "name": "入力電圧4"
+      },
+      "class_0279_custom_000005_epc_f3_1": {
+        "name": "入力電流1"
+      },
+      "class_0279_custom_000005_epc_f3_2": {
+        "name": "入力電流2"
+      },
+      "class_0279_custom_000005_epc_f3_3": {
+        "name": "入力電流3"
+      },
+      "class_0279_custom_000005_epc_f3_4": {
+        "name": "入力電流4"
+      },
+      "class_0279_custom_000005_epc_f4_1": {
+        "name": "入力電力1"
+      },
+      "class_0279_custom_000005_epc_f4_2": {
+        "name": "入力電力2"
+      },
+      "class_0279_custom_000005_epc_f4_3": {
+        "name": "入力電力3"
+      },
+      "class_0279_custom_000005_epc_f4_4": {
+        "name": "入力電力4"
+      },
+      "class_0279_epc_b3": {
+        "name": "出力変化時間設定値"
+      },
+      "class_0279_epc_b4": {
+        "name": "上限クリップ設定値"
+      },
+      "class_0279_epc_c0": {
+        "name": "運転力率設定値"
+      },
+      "class_0279_epc_c2": {
+        "name": "自家消費タイプ",
+        "state": {
+          "unknown": "不明",
+          "with_self_consumption": "自家消費有",
+          "without_self_consumption": "自家消費無"
+        }
+      },
+      "class_0279_epc_c3": {
+        "name": "設備認定容量"
+      },
+      "class_0279_epc_c4": {
+        "name": "換算係数"
+      },
+      "class_0279_epc_d0": {
+        "name": "系統連系状態",
+        "state": {
+          "independent": "独立",
+          "reverse_power_flow_acceptable": "系統連系(逆潮流可)",
+          "reverse_power_flow_not_acceptable": "系統連系(逆潮流不可)",
+          "unknown": "不明"
+        }
+      },
+      "class_0279_epc_d1": {
+        "name": "出力抑制状態",
+        "state": {
+          "except_control": "抑制中(出力制御以外)",
+          "not_power_restraint": "抑制未実施",
+          "output_control": "抑制中(出力制御)",
+          "reason_unknown": "抑制中(抑制要因不明)",
+          "unknown": "不明"
+        }
+      },
+      "class_0279_epc_e0": {
+        "name": "瞬時発電電力計測値"
+      },
+      "class_0279_epc_e1": {
+        "name": "積算発電電力量計測値"
+      },
+      "class_0279_epc_e3": {
+        "name": "積算売電電力量計測値"
+      },
+      "class_027a_epc_e3": {
+        "name": "往き水温計測値(出口水温)"
+      },
+      "class_027a_epc_e4": {
+        "name": "戻り水温計測値(入口水温)"
+      },
+      "class_027a_epc_ea": {
+        "name": "消費電力計測方法",
+        "state": {
+          "class_unit": "クラス単位",
+          "instance_unit": "インスタンス単位",
+          "node_unit": "ノード単位"
+        }
+      },
+      "class_027b_epc_e2": {
+        "name": "室内温度計測値"
+      },
+      "class_027b_epc_e3": {
+        "name": "床温度計測値"
+      },
+      "class_027b_epc_e9": {
+        "name": "定格消費電力値"
+      },
+      "class_027b_epc_ea": {
+        "name": "消費電力計測方法",
+        "state": {
+          "class": "クラス単位",
+          "instance": "インスタンス単位",
+          "node": "ノード単位"
+        }
+      },
+      "class_027c_epc_c1": {
+        "name": "温水器湯温計測値"
+      },
+      "class_027c_epc_c2": {
+        "name": "定格発電出力"
+      },
+      "class_027c_epc_c3": {
+        "name": "貯湯槽熱量"
+      },
+      "class_027c_epc_c4": {
+        "name": "瞬時発電電力計測値"
+      },
+      "class_027c_epc_c5": {
+        "name": "積算発電電力量計測値"
+      },
+      "class_027c_epc_c7": {
+        "name": "瞬時ガス消費量計測値"
+      },
+      "class_027c_epc_c8": {
+        "name": "積算ガス消費量計測値"
+      },
+      "class_027c_epc_cb": {
+        "name": "発電動作状態",
+        "state": {
+          "generating": "発電中",
+          "idling": "アイドル中",
+          "starting": "起動中",
+          "stopped": "停止中",
+          "stopping": "停止動作中"
+        }
+      },
+      "class_027c_epc_cc": {
+        "name": "宅内瞬時消費電力計測値"
+      },
+      "class_027c_epc_cd": {
+        "name": "宅内積算消費電力量計測値"
+      },
+      "class_027c_epc_d0": {
+        "name": "系統連系状態",
+        "state": {
+          "independent": "独立",
+          "reverse_power_flow_acceptable": "系統連系 (逆潮流可)",
+          "reverse_power_flow_not_acceptable": "系統連系 (逆潮流不可)"
+        }
+      },
+      "class_027c_epc_e1": {
+        "name": "残湯量計測値"
+      },
+      "class_027c_epc_e2": {
+        "name": "タンク容量値"
+      },
+      "class_027d_epc_a0": {
+        "name": "AC実効容量 (充電)"
+      },
+      "class_027d_epc_a1": {
+        "name": "AC実効容量 (放電)"
+      },
+      "class_027d_epc_a2": {
+        "name": "AC充電可能容量"
+      },
+      "class_027d_epc_a3": {
+        "name": "AC放電可能容量"
+      },
+      "class_027d_epc_a4": {
+        "name": "AC充電可能量"
+      },
+      "class_027d_epc_a5": {
+        "name": "AC放電可能量"
+      },
+      "class_027d_epc_a8": {
+        "name": "AC積算充電電力量計測値"
+      },
+      "class_027d_epc_a9": {
+        "name": "AC積算放電電力量計測値"
+      },
+      "class_027d_epc_c7": {
+        "name": "AC定格電力量"
+      },
+      "class_027d_epc_cf": {
+        "name": "運転動作状態",
+        "state": {
+          "auto": "自動",
+          "capacity_recalculation": "実効容量再計算処理",
+          "charging": "充電",
+          "discharging": "放電",
+          "other": "その他",
+          "rapid_charging": "急速充電",
+          "restart": "再起動",
+          "standby": "待機",
+          "test": "テスト"
+        }
+      },
+      "class_027d_epc_d0": {
+        "name": "定格電力量"
+      },
+      "class_027d_epc_d1": {
+        "name": "定格容量"
+      },
+      "class_027d_epc_d2": {
+        "name": "定格電圧"
+      },
+      "class_027d_epc_d3": {
+        "name": "瞬時充放電電力計測値"
+      },
+      "class_027d_epc_d4": {
+        "name": "瞬時充放電電流計測値"
+      },
+      "class_027d_epc_d5": {
+        "name": "瞬時充放電電圧計測値"
+      },
+      "class_027d_epc_d6": {
+        "name": "積算放電電力量計測値"
+      },
+      "class_027d_epc_d8": {
+        "name": "積算充電電力量計測値"
+      },
+      "class_027d_epc_db": {
+        "name": "系統連系状態",
+        "state": {
+          "independent": "独立",
+          "reverse_power_flow_acceptable": "系統連系 (逆潮流可)",
+          "reverse_power_flow_not_acceptable": "系統連系 (逆潮流不可)"
+        }
+      },
+      "class_027d_epc_e2": {
+        "name": "蓄電残量1"
+      },
+      "class_027d_epc_e3": {
+        "name": "蓄電残量2"
+      },
+      "class_027d_epc_e4": {
+        "name": "蓄電残量3"
+      },
+      "class_027d_epc_e5": {
+        "name": "劣化状態"
+      },
+      "class_027d_epc_e6": {
+        "name": "蓄電池タイプ",
+        "state": {
+          "alkaline": "充電式アルカリ",
+          "lead": "鉛",
+          "lib": "リチウムイオン",
+          "ni_cd": "ニッケルカドミウム",
+          "ni_mh": "ニッケル水素",
+          "unknown": "不明",
+          "zinc": "亜鉛"
+        }
+      },
+      "class_027d_epc_ef": {
+        "name": "定格電圧 (独立時)"
+      },
+      "class_027e_epc_c0": {
+        "name": "車載電池の放電可能容量値1"
+      },
+      "class_027e_epc_c1": {
+        "name": "車載電池の放電可能容量値2"
+      },
+      "class_027e_epc_c2": {
+        "name": "車載電池の放電可能残容量1"
+      },
+      "class_027e_epc_c3": {
+        "name": "車載電池の放電可能残容量2"
+      },
+      "class_027e_epc_c4": {
+        "name": "車載電池の放電可能残容量3"
+      },
+      "class_027e_epc_c5": {
+        "name": "定格充電能力"
+      },
+      "class_027e_epc_c6": {
+        "name": "定格放電能力"
+      },
+      "class_027e_epc_c7": {
+        "name": "車両接続・充放電可否状態",
+        "state": {
+          "chargeable": "車両接続・充電可・放電不可",
+          "chargeable_dischargeable": "車両接続・充電可・放電可",
+          "connected": "車両接続・充電不可・放電不可",
+          "dischargeable": "車両接続・充電不可・放電可",
+          "not_connected": "車両未接続",
+          "undefined": "不定",
+          "unknown": "車両接続・充電可否不明"
+        }
+      },
+      "class_027e_epc_cc": {
+        "name": "充放電器タイプ",
+        "state": {
+          "ac_cplt": "AC_CPLT",
+          "ac_hlc_charge": "AC_HLC (充電のみ)",
+          "ac_hlc_chargedischarge": "AC_HLC (充放電可)",
+          "dc_aa_charge": "DCタイプ_AA (充電のみ)",
+          "dc_aa_chargedischarge": "DCタイプ_AA (充放電可)",
+          "dc_aa_discharge": "DCタイプ_AA (放電のみ)",
+          "dc_bb_charge": "DCタイプ_BB (充電のみ)",
+          "dc_bb_chargedischarge": "DCタイプ_BB (充放電可)",
+          "dc_bb_discharge": "DCタイプ_BB (放電のみ)",
+          "dc_ee_charge": "DCタイプ_EE (充電のみ)",
+          "dc_ee_chargedischarge": "DCタイプ_EE (充放電可)",
+          "dc_ee_discharge": "DCタイプ_EE (放電のみ)",
+          "dc_ff_charge": "DCタイプ_FF (充電のみ)",
+          "dc_ff_chargedischarge": "DCタイプ_FF (充放電可)",
+          "dc_ff_discharge": "DCタイプ_FF (放電のみ)"
+        }
+      },
+      "class_027e_epc_ce": {
+        "name": "車載電池の充電可能容量値"
+      },
+      "class_027e_epc_cf": {
+        "name": "車載電池の充電可能残容量値"
+      },
+      "class_027e_epc_d0": {
+        "name": "車載電池の使用容量値1"
+      },
+      "class_027e_epc_d1": {
+        "name": "車載電池の使用容量値2"
+      },
+      "class_027e_epc_d2": {
+        "name": "定格電圧"
+      },
+      "class_027e_epc_d3": {
+        "name": "瞬時充放電電力計測値"
+      },
+      "class_027e_epc_d4": {
+        "name": "瞬時充放電電流計測値"
+      },
+      "class_027e_epc_d5": {
+        "name": "瞬時充放電電圧計測値"
+      },
+      "class_027e_epc_d6": {
+        "name": "積算放電電力量計測値"
+      },
+      "class_027e_epc_d8": {
+        "name": "積算充電電力量計測値"
+      },
+      "class_027e_epc_db": {
+        "name": "系統連系状態",
+        "state": {
+          "independent": "独立",
+          "reverse_power_flow_acceptable": "系統連系 (逆潮流可)",
+          "reverse_power_flow_not_acceptable": "系統連系 (逆潮流不可)"
+        }
+      },
+      "class_027e_epc_e1": {
+        "name": "運転動作状態",
+        "state": {
+          "charge": "充電",
+          "discharge": "放電",
+          "idle": "停止",
+          "other": "その他",
+          "preparation": "準備",
+          "standby": "待機"
+        }
+      },
+      "class_027e_epc_e2": {
+        "name": "車載電池の電池残容量1"
+      },
+      "class_027e_epc_e3": {
+        "name": "車載電池の電池残容量2"
+      },
+      "class_027e_epc_e4": {
+        "name": "車載電池の電池残容量3"
+      },
+      "class_027e_epc_ef": {
+        "name": "定格電圧 (独立時)"
+      },
+      "class_0280_epc_e0": {
+        "name": "積算電力量計測値"
+      },
+      "class_0281_epc_e0": {
+        "name": "積算水流量計測値"
+      },
+      "class_0282_epc_e0": {
+        "name": "積算ガス消費量計測値"
+      },
+      "class_0287_epc_b0": {
+        "name": "主幹定格容量"
+      },
+      "class_0287_epc_c0": {
+        "name": "積算電力量計測値 (正方向)"
+      },
+      "class_0287_epc_c1": {
+        "name": "積算電力量計測値 (逆方向)"
+      },
+      "class_0287_epc_c6": {
+        "name": "瞬時電力計測値"
+      },
+      "class_0288_epc_d7": {
+        "name": "積算電力量有効桁数"
+      },
+      "class_0288_epc_e0": {
+        "name": "積算電力量計測値 (正方向計測値)"
+      },
+      "class_0288_epc_e3": {
+        "name": "積算電力量計測値 (逆方向計測値)"
+      },
+      "class_0288_epc_e7": {
+        "name": "瞬時電力計測値"
+      },
+      "class_028a_epc_c1": {
+        "name": "月間最大需要電力"
+      },
+      "class_028a_epc_c2": {
+        "name": "累積最大需要電力"
+      },
+      "class_028a_epc_c4": {
+        "name": "需要電力有効桁数"
+      },
+      "class_028a_epc_cc": {
+        "name": "力測積算無効電力量 (遅れ)有効桁数"
+      },
+      "class_028a_epc_e5": {
+        "name": "積算有効電力量有効桁数"
+      },
+      "class_028d_epc_d7": {
+        "name": "積算電力量有効桁数"
+      },
+      "class_028d_epc_e1": {
+        "name": "積算電力量計測値（正方向計測値）"
+      },
+      "class_028d_epc_e3": {
+        "name": "積算電力量計測値（逆方向計測値）"
+      },
+      "class_028d_epc_e7": {
+        "name": "瞬時電力計測値"
+      },
+      "class_028e_epc_d2": {
+        "name": "公差階級",
+        "state": {
+          "n1": "n1",
+          "n2": "n2",
+          "n3": "n3",
+          "n4": "n4",
+          "n5": "n5",
+          "n6": "n6",
+          "n7": "n7",
+          "others": "その他"
+        }
+      },
+      "class_028e_epc_db": {
+        "name": "時刻同期状態",
+        "state": {
+          "fail": "時刻同期失敗",
+          "no_sync": "時刻同期なし",
+          "not_implemented": "時刻同期機能未搭載",
+          "success": "時刻同期成功"
+        }
+      },
+      "class_028e_epc_e0": {
+        "name": "積算電力量計測値(交流入力)"
+      },
+      "class_028e_epc_e2": {
+        "name": "積算電力量計測値(交流出力)"
+      },
+      "class_028e_epc_e4": {
+        "name": "積算電力量計測値(自立出力)"
+      },
+      "class_028e_epc_e9": {
+        "name": "瞬時電力計測値(交流入出力)"
+      },
+      "class_028e_epc_ea": {
+        "name": "瞬時電力計測値(自立出力)"
+      },
+      "class_028f_epc_c4": {
+        "name": "需要電力有効桁数"
+      },
+      "class_028f_epc_cc": {
+        "name": "積算無効電力量有効桁数"
+      },
+      "class_028f_epc_e5": {
+        "name": "積算有効電力量有効桁数"
+      },
+      "class_028f_epc_ea": {
+        "name": "瞬時電力計測値"
+      },
+      "class_0290_epc_bf": {
+        "name": "自動モード時点灯モード状態",
+        "state": {
+          "color": "カラー灯",
+          "night": "常夜灯",
+          "normal": "通常灯",
+          "off": "消灯"
+        }
+      },
+      "class_02a1_epc_c5": {
+        "name": "定格充電能力"
+      },
+      "class_02a1_epc_c7": {
+        "name": "車両接続・充電可否状態",
+        "state": {
+          "chargeable": "車両接続・充電可",
+          "not_chargeable": "車両接続・充電不可",
+          "not_connected": "車両未接続",
+          "undefined": "不定",
+          "unknown": "車両接続・充電可否不明"
+        }
+      },
+      "class_02a1_epc_cc": {
+        "name": "充電器タイプ",
+        "state": {
+          "ac_cplt": "AC_CPLT",
+          "ac_hlc_charge": "AC_HLC (充電のみ)",
+          "ac_no_communication": "AC_通信無し",
+          "dc_aa_charge": "DCタイプ_AA (充電のみ)",
+          "dc_bb_charge": "DCタイプ_BB (充電のみ)",
+          "dc_ee_charge": "DCタイプ_EE (充電のみ)",
+          "dc_ff_charge": "DCタイプ_FF (充電のみ)"
+        }
+      },
+      "class_02a1_epc_ce": {
+        "name": "車載電池の充電可能容量値"
+      },
+      "class_02a1_epc_cf": {
+        "name": "車載電池の充電可能残容量値"
+      },
+      "class_02a1_epc_d0": {
+        "name": "車載電池の使用容量値1"
+      },
+      "class_02a1_epc_d2": {
+        "name": "定格電圧"
+      },
+      "class_02a1_epc_d3": {
+        "name": "瞬時充電電力計測値"
+      },
+      "class_02a1_epc_d8": {
+        "name": "積算充電電力量計測値"
+      },
+      "class_02a1_epc_e2": {
+        "name": "車載電池の電池残容量1"
+      },
+      "class_02a1_epc_e4": {
+        "name": "車載電池の電池残容量3"
+      },
+      "class_02a4_epc_c3": {
+        "name": "全灯時消費電力"
+      },
+      "class_02a4_epc_c4": {
+        "name": "節電可能消費電力"
+      },
+      "class_02a5_epc_d0": {
+        "name": "系統連系状態",
+        "state": {
+          "independent": "独立",
+          "reverse_power_flow_acceptable": "系統連系(逆潮流可)",
+          "reverse_power_flow_not_acceptable": "系統連系(逆潮流不可)"
+        }
+      },
+      "class_02a5_epc_e0": {
+        "name": "積算電力量計測値(正方向)"
+      },
+      "class_02a5_epc_e3": {
+        "name": "積算電力量計測値(逆方向)"
+      },
+      "class_02a5_epc_e7": {
+        "name": "瞬時電力計測値"
+      },
+      "class_02a6_epc_e1": {
+        "name": "残湯量計測値"
+      },
+      "class_02a6_epc_e2": {
+        "name": "タンク容量値"
+      },
+      "class_02a7_epc_d0": {
+        "name": "送受信可能周期"
+      },
+      "class_02a7_epc_d3": {
+        "name": "契約電力値"
+      },
+      "class_03b7_epc_d1": {
+        "name": "冷蔵室温度計測値"
+      },
+      "class_03b7_epc_d2": {
+        "name": "冷凍室温度計測値"
+      },
+      "class_03b7_epc_d3": {
+        "name": "氷温室温度計測値"
+      },
+      "class_03b7_epc_d4": {
+        "name": "野菜室温度計測値"
+      },
+      "class_03b7_epc_d5": {
+        "name": "切換室温度計測値"
+      },
+      "class_03b7_epc_da": {
+        "name": "消費電流計測値"
+      },
+      "class_03b7_epc_dc": {
+        "name": "定格消費電力値"
+      },
+      "class_03bb_epc_b1": {
+        "name": "炊飯状態",
+        "state": {
+          "completion": "炊飯完了",
+          "cooking": "炊飯",
+          "preheating": "予熱",
+          "steaming": "蒸らし",
+          "stop": "停止"
+        }
+      },
+      "class_03ce_epc_bd": {
+        "name": "吐出温度計測値"
+      },
+      "class_03ce_epc_d0": {
+        "name": "ショーケースタイプ情報",
+        "state": {
+          "inverter": "インバータ",
+          "non_fluorocarbon_inverter": "ノンフロンインバータ (CO2)",
+          "other": "その他"
+        }
+      },
+      "class_03ce_epc_d3": {
+        "name": "ショーケース形状情報",
+        "state": {
+          "box": "箱形",
+          "desktop": "卓上形",
+          "flat": "平形",
+          "glass_top": "ガラストップ",
+          "multistage_open_and_backside_blowoff": "多段形オープン (背面吹出形)",
+          "multistage_open_and_ceiling_blowoff": "多段形オープン (天井吹出形)",
+          "other": "その他",
+          "quadruple_quintuple_glass": "四面 (五面) ガラス式",
+          "reach_in": "リーチイン",
+          "triple_glass": "三面ガラス式",
+          "walk_in": "ウォークイン"
+        }
+      },
+      "class_03ce_epc_e3": {
+        "name": "庫内温度計測値"
+      },
+      "class_03ce_epc_e4": {
+        "name": "冷却時に要する定格消費電力 (冷凍能力値)"
+      },
+      "class_03ce_epc_e5": {
+        "name": "霜取りヒータ稼働時の定格消費電力"
+      },
+      "class_03ce_epc_e6": {
+        "name": "ファンモータ稼働時の定格消費電力"
+      },
+      "class_03ce_epc_eb": {
+        "name": "庫内照明タイプ",
+        "state": {
+          "fluorescent": "蛍光灯",
+          "led": "LED",
+          "no_lighting": "照明無し",
+          "other": "その他"
+        }
+      },
+      "class_03ce_epc_ec": {
+        "name": "庫外照明タイプ",
+        "state": {
+          "fluorescent": "蛍光灯",
+          "led": "LED",
+          "no_lighting": "照明無し",
+          "other": "その他"
+        }
+      },
+      "class_03d3_epc_e2": {
+        "name": "洗濯乾燥遷移状態",
+        "state": {
+          "1st_rinsing": "第1すすぎ",
+          "1st_spin_drying": "第1脱水",
+          "2nd_rinsing": "第2すすぎ",
+          "2nd_spin_drying": "第2脱水",
+          "3rd_rinsing": "第3すすぎ",
+          "3rd_spin_drying": "第3脱水",
+          "4th_rinsing": "第4すすぎ",
+          "4th_spin_drying": "第4脱水",
+          "5th_rinsing": "第5すすぎ",
+          "5th_spin_drying": "第5脱水",
+          "6th_rinsing": "第6すすぎ",
+          "6th_spin_drying": "第6脱水",
+          "7th_rinsing": "第7すすぎ",
+          "7th_spin_drying": "第7脱水",
+          "8th_rinsing": "第8すすぎ",
+          "8th_spin_drying": "第8脱水",
+          "drying": "乾燥",
+          "drying_wrinkle_minimizing_completed": "乾燥 (ソフトキープあり) 完了",
+          "preheat_spin_drying": "プリヒート脱水",
+          "rinsing": "すすぎ",
+          "spin_drying": "脱水",
+          "standby": "運転前待機中",
+          "suspended": "一時停止",
+          "washing": "洗い",
+          "washing_completed": "洗濯完了",
+          "washing_drying_completed": "洗濯／乾燥 (ソフトキープなし) 完了",
+          "wrinkle_minimizing": "ソフトキープ"
+        }
+      },
+      "class_03d4_epc_be": {
+        "name": "外気温度計測値"
+      },
+      "class_05ff_epc_c6": {
+        "name": "接続状態",
+        "state": {
+          "connected": "接続中",
+          "deleted": "削除",
+          "disconnected": "離脱中",
+          "not_registered": "未登録"
+        }
+      }
+    },
+    "switch": {
+      "class_0000_epc_80": {
+        "name": "動作状態",
+        "state": {
+          "off": "OFF",
+          "on": "ON"
+        }
+      },
+      "class_0000_epc_8f": {
+        "name": "節電動作設定",
+        "state": {
+          "off": "通常動作中",
+          "on": "節電動作中"
+        }
+      },
+      "class_0130_epc_b1": {
+        "name": "温度自動設定",
+        "state": {
+          "off": "非AUTO",
+          "on": "AUTO"
+        }
+      },
+      "class_0130_epc_c1": {
+        "name": "加湿モード設定",
+        "state": {
+          "off": "加湿OFF",
+          "on": "加湿ON"
+        }
+      },
+      "class_0130_epc_cf": {
+        "name": "空気清浄モード設定",
+        "state": {
+          "off": "空気清浄OFF",
+          "on": "空気清浄ON"
+        }
+      },
+      "class_0133_epc_bf": {
+        "name": "換気自動設定",
+        "state": {
+          "off": "非AUTO",
+          "on": "AUTO"
+        }
+      },
+      "class_0134_epc_b0": {
+        "name": "換気モード自動設定",
+        "state": {
+          "off": "非AUTO",
+          "on": "AUTO"
+        }
+      },
+      "class_0134_epc_b1": {
+        "name": "換気方式設定",
+        "state": {
+          "off": "空調換気",
+          "on": "送風換気"
+        }
+      },
+      "class_0134_epc_bf": {
+        "name": "換気自動設定",
+        "state": {
+          "off": "非AUTO",
+          "on": "AUTO"
+        }
+      },
+      "class_0134_epc_e0": {
+        "name": "熱交換機動作設定",
+        "state": {
+          "off": "熱交換機OFF",
+          "on": "熱交換機ON"
+        }
+      },
+      "class_0135_epc_c2": {
+        "name": "光触媒動作設定",
+        "state": {
+          "off": "光触媒OFF",
+          "on": "光触媒ON"
+        }
+      },
+      "class_0260_epc_90": {
+        "name": "タイマ動作設定",
+        "state": {
+          "off": "OFF",
+          "on": "ON"
+        }
+      },
+      "class_0260_epc_d4": {
+        "name": "自動動作設定",
+        "state": {
+          "off": "OFF",
+          "on": "ON"
+        }
+      },
+      "class_0260_epc_e5": {
+        "name": "電気錠設定",
+        "state": {
+          "off": "解錠",
+          "on": "施錠"
+        }
+      },
+      "class_0263_epc_90": {
+        "name": "タイマ動作設定",
+        "state": {
+          "off": "OFF",
+          "on": "ON"
+        }
+      },
+      "class_0263_epc_e5": {
+        "name": "電気錠設定",
+        "state": {
+          "off": "解錠",
+          "on": "施錠"
+        }
+      },
+      "class_026b_epc_90": {
+        "name": "ONタイマ予約設定",
+        "state": {
+          "off": "予約切",
+          "on": "予約入"
+        }
+      },
+      "class_026b_epc_b1": {
+        "name": "沸き上げ湯温自動設定",
+        "state": {
+          "off": "非Auto",
+          "on": "Auto"
+        }
+      },
+      "class_026b_epc_c0": {
+        "name": "昼間沸き増し許可設定",
+        "state": {
+          "off": "昼間沸き増し禁止",
+          "on": "昼間沸き増し許可"
+        }
+      },
+      "class_026b_epc_c7": {
+        "name": "エネルギーシフト参加状態",
+        "state": {
+          "off": "不参加",
+          "on": "参加"
+        }
+      },
+      "class_026b_epc_d7": {
+        "name": "ミュート設定",
+        "state": {
+          "off": "ミュートOFF",
+          "on": "ミュートON"
+        }
+      },
+      "class_026b_epc_e3": {
+        "name": "風呂自動モード設定",
+        "state": {
+          "off": "自動解除",
+          "on": "自動入"
+        }
+      },
+      "class_026b_epc_e4": {
+        "name": "手動風呂追い焚き動作設定",
+        "state": {
+          "off": "追い焚き切",
+          "on": "追い焚き入"
+        }
+      },
+      "class_026b_epc_e5": {
+        "name": "手動風呂足し湯動作設定",
+        "state": {
+          "off": "足し湯切",
+          "on": "足し湯入"
+        }
+      },
+      "class_026b_epc_e6": {
+        "name": "手動風呂ぬるめ動作設定",
+        "state": {
+          "off": "ぬるめ切",
+          "on": "ぬるめ入"
+        }
+      },
+      "class_026f_epc_e0": {
+        "name": "施錠設定1",
+        "state": {
+          "off": "解錠",
+          "on": "施錠"
+        }
+      },
+      "class_026f_epc_e1": {
+        "name": "施錠設定2",
+        "state": {
+          "off": "解錠",
+          "on": "施錠"
+        }
+      },
+      "class_026f_epc_e6": {
+        "name": "自動施錠モード設定",
+        "state": {
+          "off": "切",
+          "on": "入"
+        }
+      },
+      "class_026f_epc_e7": {
+        "name": "電池残量状態",
+        "state": {
+          "off": "通常",
+          "on": "交換通知有"
+        }
+      },
+      "class_0272_epc_90": {
+        "name": "風呂自動ONタイマ予約設定",
+        "state": {
+          "off": "予約切",
+          "on": "予約入"
+        }
+      },
+      "class_0272_epc_d2": {
+        "name": "給湯保温設定",
+        "state": {
+          "off": "給湯保温動作解除",
+          "on": "給湯保温動作"
+        }
+      },
+      "class_0272_epc_d7": {
+        "name": "ミュート設定",
+        "state": {
+          "off": "ミュートOFF",
+          "on": "ミュートON"
+        }
+      },
+      "class_0272_epc_e3": {
+        "name": "風呂自動モード設定",
+        "state": {
+          "off": "自動切",
+          "on": "自動入"
+        }
+      },
+      "class_0272_epc_e4": {
+        "name": "風呂追い炊き動作設定",
+        "state": {
+          "off": "追い焚き切",
+          "on": "追い焚き入"
+        }
+      },
+      "class_0272_epc_e5": {
+        "name": "風呂足し湯動作設定",
+        "state": {
+          "off": "足し湯切",
+          "on": "足し湯入"
+        }
+      },
+      "class_0272_epc_e6": {
+        "name": "風呂ぬるめ動作設定",
+        "state": {
+          "off": "ぬるめ切",
+          "on": "ぬるめ入"
+        }
+      },
+      "class_0272_epc_ec": {
+        "name": "給湯保温ONタイマ予約設定",
+        "state": {
+          "off": "予約無",
+          "on": "予約入"
+        }
+      },
+      "class_0273_epc_90": {
+        "name": "ONタイマ予約設定1",
+        "state": {
+          "off": "予約切",
+          "on": "予約入"
+        }
+      },
+      "class_0273_epc_94": {
+        "name": "OFFタイマ予約設定",
+        "state": {
+          "off": "予約切",
+          "on": "予約入"
+        }
+      },
+      "class_0273_epc_cf": {
+        "name": "フィルタサイン設定",
+        "state": {
+          "off": "消灯",
+          "on": "点灯"
+        }
+      },
+      "class_0279_epc_a2": {
+        "name": "余剰買取制御機能設定",
+        "state": {
+          "off": "無効",
+          "on": "有効"
+        }
+      },
+      "class_027a_epc_90": {
+        "name": "ONタイマ予約設定",
+        "state": {
+          "off": "予約切",
+          "on": "予約入"
+        }
+      },
+      "class_027a_epc_94": {
+        "name": "OFFタイマ予約設定",
+        "state": {
+          "off": "予約切",
+          "on": "予約入"
+        }
+      },
+      "class_027a_epc_e0": {
+        "name": "運転モード設定",
+        "state": {
+          "off": "冷房",
+          "on": "暖房"
+        }
+      },
+      "class_027b_epc_90": {
+        "name": "ON タイマ予約設定",
+        "state": {
+          "off": "予約切",
+          "on": "予約入"
+        }
+      },
+      "class_027b_epc_94": {
+        "name": "OFF タイマ予約設定",
+        "state": {
+          "off": "予約切",
+          "on": "予約入"
+        }
+      },
+      "class_027c_epc_ca": {
+        "name": "発電動作設定",
+        "state": {
+          "off": "発電停止",
+          "on": "発電動作"
+        }
+      },
+      "class_027c_epc_d2": {
+        "name": "指定発電状態",
+        "state": {
+          "off": "負荷追従での発電",
+          "on": "定格最大での発電"
+        }
+      },
+      "class_027d_epc_cc": {
+        "name": "再連系許可設定",
+        "state": {
+          "off": "禁止",
+          "on": "許可"
+        }
+      },
+      "class_027d_epc_cd": {
+        "name": "運転許可設定",
+        "state": {
+          "off": "禁止",
+          "on": "許可"
+        }
+      },
+      "class_027d_epc_ce": {
+        "name": "自立運転許可設定",
+        "state": {
+          "off": "禁止",
+          "on": "許可"
+        }
+      },
+      "class_027e_epc_df": {
+        "name": "再連系許可設定",
+        "state": {
+          "off": "禁止",
+          "on": "許可"
+        }
+      },
+      "class_0290_epc_90": {
+        "name": "ONタイマ予約設定",
+        "state": {
+          "off": "予約切",
+          "on": "予約入"
+        }
+      },
+      "class_0290_epc_94": {
+        "name": "OFFタイマ予約設定",
+        "state": {
+          "off": "予約切",
+          "on": "予約入"
+        }
+      },
+      "class_02a4_epc_c6": {
+        "name": "自動動作制御設定",
+        "state": {
+          "off": "OFF",
+          "on": "ON"
+        }
+      },
+      "class_02a6_epc_b6": {
+        "name": "補助熱源機給湯モード設定",
+        "state": {
+          "off": "設定しない",
+          "on": "設定する"
+        }
+      },
+      "class_02a6_epc_b7": {
+        "name": "補助熱源機暖房モード設定",
+        "state": {
+          "off": "設定しない",
+          "on": "設定する"
+        }
+      },
+      "class_02a7_epc_c0": {
+        "name": "制御ポイント",
+        "state": {
+          "off": "受電点",
+          "on": "機器点"
+        }
+      },
+      "class_03b7_epc_a8": {
+        "name": "冷蔵室加湿動作設定",
+        "state": {
+          "off": "加湿OFF",
+          "on": "加湿ON"
+        }
+      },
+      "class_03b7_epc_a9": {
+        "name": "野菜室加湿動作設定",
+        "state": {
+          "off": "加湿OFF",
+          "on": "加湿ON"
+        }
+      },
+      "class_03b7_epc_ad": {
+        "name": "脱臭動作設定",
+        "state": {
+          "off": "脱臭OFF",
+          "on": "脱臭ON"
+        }
+      },
+      "class_03b9_epc_a1": {
+        "name": "チャイルドロック設定",
+        "state": {
+          "off": "チャイルドロックOFF",
+          "on": "チャイルドロックON"
+        }
+      },
+      "class_03b9_epc_a2": {
+        "name": "ラジエントヒータロック設定",
+        "state": {
+          "off": "ラジエントヒータロックOFF",
+          "on": "ラジエントヒータロックON"
+        }
+      },
+      "class_03bb_epc_90": {
+        "name": "炊飯予約設定",
+        "state": {
+          "off": "予約無",
+          "on": "予約有"
+        }
+      },
+      "class_03bb_epc_b2": {
+        "name": "炊飯制御設定",
+        "state": {
+          "off": "炊飯一時停止",
+          "on": "炊飯開始・炊飯再開"
+        }
+      },
+      "class_03bb_epc_e1": {
+        "name": "保温設定",
+        "state": {
+          "off": "保温無",
+          "on": "保温有"
+        }
+      },
+      "class_03ce_epc_e0": {
+        "name": "庫内照明動作状態",
+        "state": {
+          "off": "OFF",
+          "on": "ON"
+        }
+      },
+      "class_03ce_epc_e1": {
+        "name": "庫外照明動作状態",
+        "state": {
+          "off": "OFF",
+          "on": "ON"
+        }
+      },
+      "class_03ce_epc_e2": {
+        "name": "コンプレッサ動作状態",
+        "state": {
+          "off": "OFF",
+          "on": "ON"
+        }
+      },
+      "class_03d3_epc_90": {
+        "name": "ONタイマ予約設定",
+        "state": {
+          "off": "予約切",
+          "on": "予約入"
+        }
+      },
+      "class_03d3_epc_ec": {
+        "name": "ソフトキープ設定",
+        "state": {
+          "off": "ソフトキープ切り",
+          "on": "ソフトキープ入り"
+        }
+      },
+      "class_03d3_epc_ee": {
+        "name": "運転中扉・蓋ロック設定",
+        "state": {
+          "off": "アンロック",
+          "on": "ロック"
+        }
+      },
+      "class_03d4_epc_b0": {
+        "name": "運転モード設定",
+        "state": {
+          "off": "非冷",
+          "on": "冷却"
+        }
+      },
+      "class_03d4_epc_e2": {
+        "name": "コンプレッサ動作状態",
+        "state": {
+          "off": "OFF",
+          "on": "ON"
+        }
+      },
+      "class_0602_epc_b0": {
+        "name": "表示制御設定",
+        "state": {
+          "off": "非表示",
+          "on": "表示"
+        }
+      }
+    }
+  },
+  "issues": {
+    "runtime_client_error": {
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "description": "ECHONET Liteインテグレーションでエラーが発生しました: {error}。ネットワークの問題やデバイスの切断が原因の可能性があります。\n\n送信を押すとECHONET Liteインテグレーションを再起動し、復旧を試みます。問題が解決しない場合は、ネットワーク設定を確認してください。",
+            "title": "ECHONET Liteインテグレーションを再起動"
+          }
+        }
+      },
+      "title": "ECHONET Liteランタイムエラー"
+    },
+    "runtime_inactive": {
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "description": "ECHONET Liteデバイスから{minutes}分以上フレームを受信していません。デバイスがオフラインであるか、ネットワークに問題がある可能性があります。\n\n送信を押すとECHONET Liteインテグレーションを再起動します。ECHONET Liteデバイスの電源が入っており、ネットワークに接続されていることを確認してください。",
+            "title": "ECHONET Liteインテグレーションを再起動"
+          }
+        }
+      },
+      "title": "ECHONET Liteデバイスが応答していません"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "enable_experimental": "実験的なデバイスクラスを有効にする",
+          "poll_interval": "ポーリング間隔"
+        },
+        "data_description": {
+          "enable_experimental": "有効にすると、実機での検証が行われていないデバイスクラスも登録されます。正しく動作しない場合があります。",
+          "poll_interval": "デバイスプロパティのポーリング間隔（秒）。値を小さくすると更新が速くなりますが、ネットワークトラフィックが増加します。"
+        }
+      }
+    }
+  }
+}
