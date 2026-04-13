@@ -283,6 +283,9 @@ async def async_unload_entry(
     hass: HomeAssistant, entry: EchonetLiteConfigEntry
 ) -> bool:
     """Unload a config entry."""
+    if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
+        return False
+
     runtime = entry.runtime_data
     if runtime:
         runtime.unsubscribe_runtime()
@@ -291,13 +294,9 @@ async def async_unload_entry(
         runtime.discovery_task.cancel()
         with suppress(asyncio.CancelledError):
             await runtime.discovery_task
-
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-
-    if runtime:
         await runtime.client.stop()
 
-    return unload_ok
+    return True
 
 
 class _RuntimeIssueMonitor:
