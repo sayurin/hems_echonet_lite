@@ -70,10 +70,27 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     return True
 
 
+async def async_migrate_entry(
+    hass: HomeAssistant, entry: EchonetLiteConfigEntry
+) -> bool:
+    """Migrate old config entry to new format."""
+    if entry.version == 1 and entry.minor_version < 1:
+        # Version 1.0 → 1.1: Move CONF_INTERFACE from options to data
+        new_data = dict(entry.data)
+        new_options = dict(entry.options)
+        if CONF_INTERFACE in new_options:
+            new_data[CONF_INTERFACE] = new_options.pop(CONF_INTERFACE)
+        hass.config_entries.async_update_entry(
+            entry, data=new_data, options=new_options, minor_version=1
+        )
+        _LOGGER.debug("Migrated config entry to version 1.1")
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) -> bool:
     """Set up HEMS echonet lite from a config entry."""
 
-    interface = entry.options.get(CONF_INTERFACE, DEFAULT_INTERFACE)
+    interface = entry.data.get(CONF_INTERFACE, DEFAULT_INTERFACE)
     enable_experimental = entry.options.get(CONF_ENABLE_EXPERIMENTAL, False)
 
     _LOGGER.debug("Setting up ECHONET Lite with interface %s", interface)

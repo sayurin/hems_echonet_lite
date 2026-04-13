@@ -39,7 +39,7 @@ class EchonetLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """
 
     VERSION = 1
-    MINOR_VERSION = 0
+    MINOR_VERSION = 1
 
     @staticmethod
     def async_get_options_flow(
@@ -69,7 +69,7 @@ class EchonetLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle interface selection for both user and reconfigure steps."""
         entry = self._get_reconfigure_entry() if step_id == "reconfigure" else None
         current_interface = (
-            entry.options.get(CONF_INTERFACE, DEFAULT_INTERFACE)
+            entry.data.get(CONF_INTERFACE, DEFAULT_INTERFACE)
             if entry
             else DEFAULT_INTERFACE
         )
@@ -111,13 +111,13 @@ class EchonetLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if entry is None:
             return self.async_create_entry(
                 title="HEMS",
-                data={},
-                options=_build_default_options(interface),
+                data={CONF_INTERFACE: interface},
+                options=_build_default_options(),
             )
-        # Preserve existing options, only update interface
-        new_options = dict(entry.options)
-        new_options[CONF_INTERFACE] = interface
-        return self.async_update_reload_and_abort(entry, options=new_options)
+        # Update interface in data; preserve existing options
+        return self.async_update_reload_and_abort(
+            entry, data={CONF_INTERFACE: interface}
+        )
 
     async def async_step_import(
         self, import_info: Mapping[str, Any] | None = None
@@ -144,8 +144,8 @@ class EchonetLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_create_entry(
             title="HEMS",
-            data={},
-            options=_build_default_options(interface),
+            data={CONF_INTERFACE: interface},
+            options=_build_default_options(),
         )
 
     async def _async_test_multicast(self, interface: str) -> str | None:
@@ -174,16 +174,14 @@ class EchonetLiteOptionsFlow(config_entries.OptionsFlow):
     ) -> config_entries.ConfigFlowResult:
         """Manage the options."""
         if user_input is not None:
-            # Preserve interface from existing options
-            new_options = {
-                CONF_INTERFACE: self.config_entry.options.get(
-                    CONF_INTERFACE, DEFAULT_INTERFACE
-                ),
-                CONF_ENABLE_EXPERIMENTAL: user_input.get(
-                    CONF_ENABLE_EXPERIMENTAL, False
-                ),
-            }
-            return self.async_create_entry(title="", data=new_options)
+            return self.async_create_entry(
+                title="",
+                data={
+                    CONF_ENABLE_EXPERIMENTAL: user_input.get(
+                        CONF_ENABLE_EXPERIMENTAL, False
+                    ),
+                },
+            )
 
         current_experimental = self.config_entry.options.get(
             CONF_ENABLE_EXPERIMENTAL, False
@@ -199,10 +197,9 @@ class EchonetLiteOptionsFlow(config_entries.OptionsFlow):
         return self.async_show_form(step_id="init", data_schema=schema)
 
 
-def _build_default_options(interface: str) -> dict[str, Any]:
-    """Build default options with the specified interface."""
+def _build_default_options() -> dict[str, Any]:
+    """Build default options."""
     return {
-        CONF_INTERFACE: interface,
         CONF_ENABLE_EXPERIMENTAL: False,
     }
 
