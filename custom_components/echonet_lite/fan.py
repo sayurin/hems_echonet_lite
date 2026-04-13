@@ -61,7 +61,6 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite fan entities from a config entry."""
-    assert entry.runtime_data is not None
     coordinator = entry.runtime_data.coordinator
 
     @callback
@@ -202,7 +201,7 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the fan."""
-        await self.async_turn_on(percentage=0)
+        await self._async_send_property(EPC_OPERATION_STATUS, b"\x31")
 
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed percentage of the fan."""

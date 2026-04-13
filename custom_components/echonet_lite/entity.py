@@ -241,10 +241,11 @@ class EchonetLiteDescribedEntity[DescriptionT: EchonetLiteEntityDescription](
         Raises:
             AssertionError: If description.should_create(node) returns False.
         """
-        assert description.should_create(node), (
-            f"Entity created for EPC 0x{description.epc:02X} "
-            "that doesn't meet creation criteria"
-        )
+        if not description.should_create(node):
+            raise ValueError(
+                f"Entity created for EPC 0x{description.epc:02X} "
+                "that doesn't meet creation criteria"
+            )
         super().__init__(coordinator, node)
         self.description = description
         self.entity_description = description  # HA standard attribute
@@ -286,7 +287,6 @@ def setup_echonet_lite_platform[DescriptionT: EchonetLiteEntityDescription](
 
     """
     runtime_data = entry.runtime_data
-    assert runtime_data is not None
     coordinator = runtime_data.coordinator
     definitions = runtime_data.definitions
 

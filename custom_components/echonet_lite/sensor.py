@@ -87,9 +87,9 @@ def _infer_device_class(
     # Context-specific inference for % unit
     if unit == "%" and device_class is None:
         name_lower = entity_def.name_en.lower()
-        for keyword, device_class in _PERCENTAGE_DEVICE_CLASS_KEYWORDS.items():
+        for keyword, matched_class in _PERCENTAGE_DEVICE_CLASS_KEYWORDS.items():
             if keyword in name_lower:
-                return device_class
+                return matched_class
 
     return device_class
 
@@ -176,7 +176,11 @@ def _create_sensor_description(
         )
 
     # Numeric sensor
-    assert entity_def.format is not None
+    if entity_def.format is None:
+        raise ValueError(
+            f"Numeric sensor EPC 0x{entity_def.epc:02X} for class 0x{class_code:04X} "
+            "has no format defined"
+        )
     return EchonetLiteSensorEntityDescription(
         key=f"{entity_def.epc:02x}_{entity_def.byte_offset}",
         translation_key=entity_def.id,

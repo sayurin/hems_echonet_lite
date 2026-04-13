@@ -196,6 +196,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
             # Initialize with empty state; nodes are discovered through runtime events
             coordinator.async_set_updated_data({})
 
+    @callback
     def _handle_runtime_event(event: RuntimeEvent) -> None:
         """Handle runtime events without blocking the receiver loop.
 
@@ -215,7 +216,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
 
             # Schedule frame processing as background task to avoid
             # blocking receiver loop
-            hass.async_create_task(_process_frame(), name="echonet_lite_process_frame")
+            entry.async_create_background_task(
+                hass, _process_frame(), name="echonet_lite_process_frame"
+            )
             return
 
         if isinstance(event, HemsInstanceListEvent):
@@ -231,8 +234,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
 
             # Schedule instance list processing as background task to avoid
             # blocking receiver loop
-            hass.async_create_task(
-                _process_instance_list(), name="echonet_lite_process_instance_list"
+            entry.async_create_background_task(
+                hass,
+                _process_instance_list(),
+                name="echonet_lite_process_instance_list",
             )
             return
 
@@ -248,7 +253,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
                 await _async_restart_runtime()
 
             # Schedule error handling as background task
-            hass.async_create_task(_handle_error(), name="echonet_lite_handle_error")
+            entry.async_create_background_task(
+                hass, _handle_error(), name="echonet_lite_handle_error"
+            )
 
     unsubscribe_runtime = client.subscribe(_handle_runtime_event)
 
@@ -268,7 +275,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
         device_manager, poll_interval=DEFAULT_POLL_INTERVAL
     )
     property_poller.start()
-    discovery_task = hass.async_create_task(client.probe_nodes())
+    discovery_task = entry.async_create_background_task(
+        hass, client.probe_nodes(), name="echonet_lite_discovery"
+    )
 
     entry.runtime_data = EchonetLiteRuntimeData(
         interface=interface,

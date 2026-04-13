@@ -75,9 +75,9 @@ def _infer_device_class(
 
     if unit == "%" and device_class is None:
         name_lower = entity_def.name_en.lower()
-        for keyword, device_class in _PERCENTAGE_DEVICE_CLASS_KEYWORDS.items():
+        for keyword, matched_class in _PERCENTAGE_DEVICE_CLASS_KEYWORDS.items():
             if keyword in name_lower:
-                return device_class
+                return matched_class
 
     return device_class
 
@@ -112,7 +112,11 @@ def _create_number_description(
     entity_def: EntityDefinition,
 ) -> EchonetLiteNumberEntityDescription:
     """Create a number entity description from an EntityDefinition."""
-    assert entity_def.format is not None
+    if entity_def.format is None:
+        raise ValueError(
+            f"Number entity EPC 0x{entity_def.epc:02X} for class 0x{class_code:04X} "
+            "has no format defined"
+        )
     return EchonetLiteNumberEntityDescription(
         key=f"{entity_def.epc:02x}_{entity_def.byte_offset}",
         translation_key=entity_def.id,

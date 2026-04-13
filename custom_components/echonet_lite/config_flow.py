@@ -155,9 +155,6 @@ class EchonetLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             protocol.close()
         except OSError:
             return "cannot_connect"
-        except Exception:  # pylint: disable=broad-except
-            _LOGGER.exception("Unexpected exception during network validation")
-            return "unknown"
         else:
             return None
 
