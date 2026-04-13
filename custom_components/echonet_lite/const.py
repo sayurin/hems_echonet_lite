@@ -14,12 +14,9 @@ from pyhems import (
 
 DOMAIN = "echonet_lite"
 CONF_INTERFACE = "interface"
-CONF_POLL_INTERVAL = "poll_interval"
 CONF_ENABLE_EXPERIMENTAL = "enable_experimental"
 DEFAULT_INTERFACE = "0.0.0.0"
 DEFAULT_POLL_INTERVAL = 60
-MIN_POLL_INTERVAL = 10
-MAX_POLL_INTERVAL = 3600
 UNIQUE_ID = "echonet_lite_singleton"
 ISSUE_RUNTIME_CLIENT_ERROR = "runtime_client_error"
 ISSUE_RUNTIME_INACTIVE = "runtime_inactive"
@@ -86,7 +83,6 @@ def camel_to_snake(name: str) -> str:
 __all__ = [
     "CONF_ENABLE_EXPERIMENTAL",
     "CONF_INTERFACE",
-    "CONF_POLL_INTERVAL",
     "DEDICATED_PLATFORM_EPCS",
     "DEFAULT_INTERFACE",
     "DEFAULT_POLL_INTERVAL",
@@ -94,8 +90,6 @@ __all__ = [
     "DOMAIN",
     "ISSUE_RUNTIME_CLIENT_ERROR",
     "ISSUE_RUNTIME_INACTIVE",
-    "MAX_POLL_INTERVAL",
-    "MIN_POLL_INTERVAL",
     "RUNTIME_MONITOR_INTERVAL",
     "RUNTIME_MONITOR_MAX_SILENCE",
     "STABLE_CLASS_CODES",

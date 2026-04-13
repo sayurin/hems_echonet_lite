@@ -35,7 +35,6 @@ from homeassistant.helpers.typing import ConfigType
 from .const import (
     CONF_ENABLE_EXPERIMENTAL,
     CONF_INTERFACE,
-    CONF_POLL_INTERVAL,
     DEDICATED_PLATFORM_EPCS,
     DEFAULT_INTERFACE,
     DEFAULT_POLL_INTERVAL,
@@ -75,7 +74,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     """Set up HEMS echonet lite from a config entry."""
 
     interface = entry.options.get(CONF_INTERFACE, DEFAULT_INTERFACE)
-    poll_interval = entry.options.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL)
     enable_experimental = entry.options.get(CONF_ENABLE_EXPERIMENTAL, False)
 
     _LOGGER.debug("Setting up ECHONET Lite with interface %s", interface)
@@ -249,7 +247,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     issue_monitor.start()
 
     # Property poller requests EPCs defined in node.poll_epcs (computed at node creation)
-    property_poller = PropertyPoller(device_manager, poll_interval=poll_interval)
+    property_poller = PropertyPoller(
+        device_manager, poll_interval=DEFAULT_POLL_INTERVAL
+    )
     property_poller.start()
     discovery_task = hass.async_create_task(client.probe_nodes())
 

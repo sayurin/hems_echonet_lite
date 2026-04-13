@@ -13,9 +13,6 @@ from homeassistant import config_entries
 from homeassistant.components import network
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.selector import (
-    NumberSelector,
-    NumberSelectorConfig,
-    NumberSelectorMode,
     SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
@@ -26,12 +23,8 @@ from homeassistant.util.network import is_ipv4_address
 from .const import (
     CONF_ENABLE_EXPERIMENTAL,
     CONF_INTERFACE,
-    CONF_POLL_INTERVAL,
     DEFAULT_INTERFACE,
-    DEFAULT_POLL_INTERVAL,
     DOMAIN,
-    MAX_POLL_INTERVAL,
-    MIN_POLL_INTERVAL,
     UNIQUE_ID,
 )
 
@@ -172,7 +165,7 @@ class EchonetLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class EchonetLiteOptionsFlow(config_entries.OptionsFlow):
     """Handle options flow for ECHONET Lite.
 
-    OptionsFlow manages polling interval and experimental features.
+    OptionsFlow manages experimental features.
     Network interface is configured in ConfigFlow/Reconfigure.
     """
 
@@ -186,35 +179,18 @@ class EchonetLiteOptionsFlow(config_entries.OptionsFlow):
                 CONF_INTERFACE: self.config_entry.options.get(
                     CONF_INTERFACE, DEFAULT_INTERFACE
                 ),
-                CONF_POLL_INTERVAL: user_input.get(
-                    CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL
-                ),
                 CONF_ENABLE_EXPERIMENTAL: user_input.get(
                     CONF_ENABLE_EXPERIMENTAL, False
                 ),
             }
             return self.async_create_entry(title="", data=new_options)
 
-        current_poll = self.config_entry.options.get(
-            CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL
-        )
         current_experimental = self.config_entry.options.get(
             CONF_ENABLE_EXPERIMENTAL, False
         )
 
         schema = vol.Schema(
             {
-                vol.Optional(CONF_POLL_INTERVAL, default=current_poll): (
-                    NumberSelector(
-                        NumberSelectorConfig(
-                            min=MIN_POLL_INTERVAL,
-                            max=MAX_POLL_INTERVAL,
-                            step=1,
-                            unit_of_measurement="seconds",
-                            mode=NumberSelectorMode.BOX,
-                        )
-                    )
-                ),
                 vol.Optional(
                     CONF_ENABLE_EXPERIMENTAL, default=current_experimental
                 ): bool,
@@ -227,7 +203,6 @@ def _build_default_options(interface: str) -> dict[str, Any]:
     """Build default options with the specified interface."""
     return {
         CONF_INTERFACE: interface,
-        CONF_POLL_INTERVAL: DEFAULT_POLL_INTERVAL,
         CONF_ENABLE_EXPERIMENTAL: False,
     }
 

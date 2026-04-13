@@ -3456,12 +3456,10 @@
     "step": {
       "init": {
         "data": {
-          "enable_experimental": "Enable experimental device classes",
-          "poll_interval": "Polling interval"
+          "enable_experimental": "Enable experimental device classes"
         },
         "data_description": {
-          "enable_experimental": "When enabled, device classes that have not been verified with real hardware will also be registered. These may not work correctly.",
-          "poll_interval": "How often to poll device properties (in seconds). Lower values provide faster updates but increase network traffic."
+          "enable_experimental": "When enabled, device classes that have not been verified with real hardware will also be registered. These may not work correctly."
         }
       }
     }
