@@ -383,10 +383,14 @@ class _RuntimeIssueMonitor:
             DOMAIN,
             ISSUE_RUNTIME_INACTIVE,
             issue_domain=DOMAIN,
-            is_fixable=True,
+            is_fixable=False,
             severity=ir.IssueSeverity.WARNING,
             translation_key="runtime_inactive",
             translation_placeholders={"minutes": str(minutes)},
+        )
+        _LOGGER.warning(
+            "No ECHONET Lite frames received for %d minutes; devices may be offline",
+            minutes,
         )
         self._inactivity_issue_active = True
 
@@ -395,6 +399,7 @@ class _RuntimeIssueMonitor:
         if self._inactivity_issue_active:
             ir.async_delete_issue(self._hass, DOMAIN, ISSUE_RUNTIME_INACTIVE)
             self._inactivity_issue_active = False
+            _LOGGER.info("ECHONET Lite communication restored")
 
     @callback
     def record_client_error(self, message: str) -> None:
@@ -404,7 +409,7 @@ class _RuntimeIssueMonitor:
             DOMAIN,
             ISSUE_RUNTIME_CLIENT_ERROR,
             issue_domain=DOMAIN,
-            is_fixable=True,
+            is_fixable=False,
             severity=ir.IssueSeverity.ERROR,
             translation_key="runtime_client_error",
             translation_placeholders={"error": message},

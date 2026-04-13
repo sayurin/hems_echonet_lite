@@ -145,14 +145,21 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
         ]
         if not_writable:
             hex_list = ", ".join(f"0x{epc:02X}" for epc in not_writable)
-            raise HomeAssistantError(f"EPC {hex_list} is not writable by the device")
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="epc_not_writable",
+                translation_placeholders={"epc_list": hex_list},
+            )
         sent = await self.coordinator.config_entry.runtime_data.client.set_properties(
             node_id=node.node_id,
             deoj=node.eoj,
             properties=properties,
         )
         if not sent:
-            raise HomeAssistantError("The target node address is unknown")
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="target_node_unknown",
+            )
 
         # After a Set operation, schedule an earlier poll so the UI reflects the
         # updated device state sooner.

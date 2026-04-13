@@ -23,6 +23,7 @@ from homeassistant.util.percentage import (
 )
 from homeassistant.util.scaling import int_states_in_range
 
+from .const import DOMAIN
 from .coordinator import EchonetLiteCoordinator
 from .entity import EchonetLiteEntity
 from .types import EchonetLiteConfigEntry
@@ -173,7 +174,10 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
     ) -> None:
         """Turn on the fan."""
         if EPC_OPERATION_STATUS not in self._node.set_epcs:
-            raise HomeAssistantError("Operation status is not writable")
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="operation_status_not_writable",
+            )
 
         # Turn off the fan if percentage is explicitly set to 0
         if percentage == 0:

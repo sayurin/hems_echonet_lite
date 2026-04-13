@@ -30,9 +30,10 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import PRECISION_WHOLE, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
+from .const import DOMAIN
 from .coordinator import EchonetLiteCoordinator
 from .entity import EchonetLiteEntity
 from .types import EchonetLiteConfigEntry
@@ -247,12 +248,22 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
             return
 
         if EPC_OPERATION_MODE not in self._node.set_epcs:
-            raise HomeAssistantError("Operation mode is not writable")
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="operation_mode_not_writable",
+            )
         if EPC_OPERATION_STATUS not in self._node.set_epcs:
-            raise HomeAssistantError("Operation status is not writable")
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="operation_status_not_writable",
+            )
         echonet_mode = _HA_TO_ECHONET_MODE.get(hvac_mode)
         if echonet_mode is None:
-            raise HomeAssistantError(f"Unsupported HVAC mode: {hvac_mode}")
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="unsupported_hvac_mode",
+                translation_placeholders={"hvac_mode": str(hvac_mode)},
+            )
         await self._async_send_properties(
             [
                 Property(epc=EPC_OPERATION_MODE, edt=bytes([echonet_mode])),
@@ -263,23 +274,33 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
     async def async_turn_on(self) -> None:
         """Turn on the climate device."""
         if EPC_OPERATION_STATUS not in self._node.set_epcs:
-            raise HomeAssistantError("Operation status is not writable")
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="operation_status_not_writable",
+            )
         await self._async_send_property(EPC_OPERATION_STATUS, b"\x30")
 
     async def async_turn_off(self) -> None:
         """Turn off the climate device."""
         if EPC_OPERATION_STATUS not in self._node.set_epcs:
-            raise HomeAssistantError("Operation status is not writable")
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="operation_status_not_writable",
+            )
         await self._async_send_property(EPC_OPERATION_STATUS, b"\x31")
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set the target temperature for the current mode."""
         if ATTR_TEMPERATURE not in kwargs or kwargs[ATTR_TEMPERATURE] is None:
-            raise HomeAssistantError("Target temperature is required")
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="target_temperature_required",
+            )
         temperature = float(kwargs[ATTR_TEMPERATURE])
         if EPC_TARGET_TEMPERATURE not in self._node.set_epcs:
             raise HomeAssistantError(
-                f"Temperature setpoint (0x{EPC_TARGET_TEMPERATURE:02X}) is not writable"
+                translation_domain=DOMAIN,
+                translation_key="temperature_not_writable",
             )
         await self._async_send_property(
             EPC_TARGET_TEMPERATURE, _encode_temperature(temperature)
@@ -288,19 +309,33 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
     async def async_set_fan_mode(self, fan_mode: str) -> None:
         """Set the fan mode."""
         if EPC_FAN_SPEED not in self._node.set_epcs:
-            raise HomeAssistantError("Fan mode is not writable by this device")
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="fan_mode_not_writable",
+            )
         fan_value = _HA_TO_ECHONET_FAN.get(fan_mode)
         if fan_value is None:
-            raise HomeAssistantError(f"Unsupported fan mode: {fan_mode}")
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="unsupported_fan_mode",
+                translation_placeholders={"fan_mode": fan_mode},
+            )
         await self._async_send_property(EPC_FAN_SPEED, bytes([fan_value]))
 
     async def async_set_swing_mode(self, swing_mode: str) -> None:
         """Set the swing mode."""
         if EPC_SWING_AIR_FLOW not in self._node.set_epcs:
-            raise HomeAssistantError("Swing mode is not writable by this device")
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="swing_mode_not_writable",
+            )
         swing_value = _HA_TO_ECHONET_SWING.get(swing_mode)
         if swing_value is None:
-            raise HomeAssistantError(f"Unsupported swing mode: {swing_mode}")
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="unsupported_swing_mode",
+                translation_placeholders={"swing_mode": swing_mode},
+            )
         await self._async_send_property(EPC_SWING_AIR_FLOW, bytes([swing_value]))
 
     def _get_value(self, epc: int, converter: Callable[[bytes], Any]) -> Any:
