@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 import logging
-from typing import Any
+from typing import Any, TypeVar
 
 from pyhems import (
     CLASS_CODE_HOME_AIR_CONDITIONER,
@@ -39,6 +39,8 @@ from .entity import EchonetLiteEntity
 from .types import EchonetLiteConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
+
+_T = TypeVar("_T")
 
 PARALLEL_UPDATES = 0
 
@@ -338,7 +340,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
             )
         await self._async_send_property(EPC_SWING_AIR_FLOW, bytes([swing_value]))
 
-    def _get_value(self, epc: int, converter: Callable[[bytes], Any]) -> Any:
+    def _get_value(self, epc: int, converter: Callable[[bytes], _T]) -> _T | None:
         """Helper to get and decode a property value from the node."""
         if edt := self._node.properties.get(epc):
             return converter(edt)

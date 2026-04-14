@@ -27,6 +27,7 @@ from .const import (
     DOMAIN,
     UNIQUE_ID,
 )
+from .types import EchonetLiteConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,7 +44,7 @@ class EchonetLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     def async_get_options_flow(
-        config_entry: config_entries.ConfigEntry,
+        config_entry: EchonetLiteConfigEntry,
     ) -> EchonetLiteOptionsFlow:
         """Get the options flow for this handler."""
         return EchonetLiteOptionsFlow()

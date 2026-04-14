@@ -258,8 +258,9 @@ def _load_common_states() -> dict[str, str]:
         (e.g., {"auto": "Auto", "on": "On"}).
     """
     with HA_STRINGS_FILE.open(encoding="utf-8") as f:
-        ha_strings = json.load(f)
-    return ha_strings.get("common", {}).get("state", {})
+        ha_strings: dict[str, Any] = json.load(f)
+    result: dict[str, str] = ha_strings.get("common", {}).get("state", {})
+    return result
 
 
 def _build_reverse_lookup(common_states: dict[str, str]) -> dict[str, str]:
