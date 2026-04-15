@@ -23,6 +23,7 @@ from homeassistant.util.percentage import (
 )
 from homeassistant.util.scaling import int_states_in_range
 
+from .const import DOMAIN
 from .coordinator import EchonetLiteCoordinator
 from .entity import EchonetLiteEntity
 from .types import EchonetLiteConfigEntry
@@ -61,7 +62,6 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite fan entities from a config entry."""
-    assert entry.runtime_data is not None
     coordinator = entry.runtime_data.coordinator
 
     @callback
@@ -174,7 +174,10 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
     ) -> None:
         """Turn on the fan."""
         if EPC_OPERATION_STATUS not in self._node.set_epcs:
-            raise HomeAssistantError("Operation status is not writable")
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="operation_status_not_writable",
+            )
 
         # Turn off the fan if percentage is explicitly set to 0
         if percentage == 0:
@@ -202,7 +205,7 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the fan."""
-        await self.async_turn_on(percentage=0)
+        await self._async_send_property(EPC_OPERATION_STATUS, b"\x31")
 
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed percentage of the fan."""

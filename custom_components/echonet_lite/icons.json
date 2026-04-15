@@ -1,0 +1,14 @@
+{
+  "entity": {
+    "climate": {
+      "climate": {
+        "default": "mdi:air-conditioner"
+      }
+    },
+    "fan": {
+      "fan": {
+        "default": "mdi:fan"
+      }
+    }
+  }
+}

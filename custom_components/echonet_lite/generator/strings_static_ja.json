@@ -67,27 +67,51 @@
       }
     }
   },
+  "exceptions": {
+    "epc_not_writable": {
+      "message": "EPC {epc_list} はデバイスによって書き込みできません。"
+    },
+    "fan_mode_not_writable": {
+      "message": "このデバイスの風量モードプロパティは書き込みできません。"
+    },
+    "operation_mode_not_writable": {
+      "message": "このデバイスの運転モードプロパティは書き込みできません。"
+    },
+    "operation_status_not_writable": {
+      "message": "このデバイスの動作状態プロパティは書き込みできません。"
+    },
+    "swing_mode_not_writable": {
+      "message": "このデバイスの風向モードプロパティは書き込みできません。"
+    },
+    "target_node_unknown": {
+      "message": "対象ノードのアドレスが不明です。"
+    },
+    "target_temperature_required": {
+      "message": "目標温度の値が必要です。"
+    },
+    "temperature_not_writable": {
+      "message": "このデバイスの温度設定プロパティは書き込みできません。"
+    },
+    "unsupported_fan_mode": {
+      "message": "サポートされていない風量モード: {fan_mode}"
+    },
+    "unsupported_hvac_mode": {
+      "message": "サポートされていないHVACモード: {hvac_mode}"
+    },
+    "unsupported_option": {
+      "message": "サポートされていないオプション: {option}"
+    },
+    "unsupported_swing_mode": {
+      "message": "サポートされていない風向モード: {swing_mode}"
+    }
+  },
   "issues": {
     "runtime_client_error": {
-      "fix_flow": {
-        "step": {
-          "confirm": {
-            "description": "ECHONET Liteインテグレーションでエラーが発生しました: {error}。ネットワークの問題やデバイスの切断が原因の可能性があります。\n\n送信を押すとECHONET Liteインテグレーションを再起動し、復旧を試みます。問題が解決しない場合は、ネットワーク設定を確認してください。",
-            "title": "ECHONET Liteインテグレーションを再起動"
-          }
-        }
-      },
+      "description": "ECHONET Liteインテグレーションでエラーが発生しました: {error}。ネットワークの問題やデバイスの切断が原因の可能性があります。ネットワーク設定を確認し、ECHONET Liteデバイスの電源が入っていることを確認してください。",
       "title": "ECHONET Liteランタイムエラー"
     },
     "runtime_inactive": {
-      "fix_flow": {
-        "step": {
-          "confirm": {
-            "description": "ECHONET Liteデバイスから{minutes}分以上フレームを受信していません。デバイスがオフラインであるか、ネットワークに問題がある可能性があります。\n\n送信を押すとECHONET Liteインテグレーションを再起動します。ECHONET Liteデバイスの電源が入っており、ネットワークに接続されていることを確認してください。",
-            "title": "[%key:component::echonet_lite::issues::runtime_client_error::fix_flow::step::confirm::title%]"
-          }
-        }
-      },
+      "description": "ECHONET Liteデバイスから{minutes}分以上フレームを受信していません。デバイスがオフラインであるか、ネットワークに問題がある可能性があります。ECHONET Liteデバイスの電源が入っており、ネットワークに接続されていることを確認してください。",
       "title": "ECHONET Liteデバイスが応答していません"
     }
   },
@@ -95,12 +119,10 @@
     "step": {
       "init": {
         "data": {
-          "enable_experimental": "実験的なデバイスクラスを有効にする",
-          "poll_interval": "ポーリング間隔"
+          "enable_experimental": "実験的なデバイスクラスを有効にする"
         },
         "data_description": {
-          "enable_experimental": "有効にすると、実機での検証が行われていないデバイスクラスも登録されます。正しく動作しない場合があります。",
-          "poll_interval": "デバイスプロパティのポーリング間隔（秒）。値を小さくすると更新が速くなりますが、ネットワークトラフィックが増加します。"
+          "enable_experimental": "有効にすると、実機での検証が行われていないデバイスクラスも登録されます。正しく動作しない場合があります。"
         }
       }
     }

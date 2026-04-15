@@ -67,27 +67,51 @@
       }
     }
   },
+  "exceptions": {
+    "epc_not_writable": {
+      "message": "EPC {epc_list} is not writable by the device."
+    },
+    "fan_mode_not_writable": {
+      "message": "The fan mode property is not writable on this device."
+    },
+    "operation_mode_not_writable": {
+      "message": "The operation mode property is not writable on this device."
+    },
+    "operation_status_not_writable": {
+      "message": "The operation status property is not writable on this device."
+    },
+    "swing_mode_not_writable": {
+      "message": "The swing mode property is not writable on this device."
+    },
+    "target_node_unknown": {
+      "message": "The target node address is unknown."
+    },
+    "target_temperature_required": {
+      "message": "A target temperature value is required."
+    },
+    "temperature_not_writable": {
+      "message": "The temperature setpoint property is not writable on this device."
+    },
+    "unsupported_fan_mode": {
+      "message": "Unsupported fan mode: {fan_mode}"
+    },
+    "unsupported_hvac_mode": {
+      "message": "Unsupported HVAC mode: {hvac_mode}"
+    },
+    "unsupported_option": {
+      "message": "Unsupported option: {option}"
+    },
+    "unsupported_swing_mode": {
+      "message": "Unsupported swing mode: {swing_mode}"
+    }
+  },
   "issues": {
     "runtime_client_error": {
-      "fix_flow": {
-        "step": {
-          "confirm": {
-            "description": "The ECHONET Lite integration encountered an error: {error}. This may be caused by network issues or device disconnection.\n\nPress Submit to restart the ECHONET Lite integration and attempt recovery. If the problem persists, check your network configuration.",
-            "title": "Restart ECHONET Lite integration"
-          }
-        }
-      },
+      "description": "The ECHONET Lite integration encountered an error: {error}. This may be caused by network issues or device disconnection. Check your network configuration and ensure your ECHONET Lite devices are powered on.",
       "title": "ECHONET Lite runtime error"
     },
     "runtime_inactive": {
-      "fix_flow": {
-        "step": {
-          "confirm": {
-            "description": "No frames have been received from ECHONET Lite devices for more than {minutes} minutes. This may indicate that devices are offline or there is a network issue.\n\nPress Submit to restart the ECHONET Lite integration. Check that your ECHONET Lite devices are powered on and connected to the network.",
-            "title": "[%key:component::echonet_lite::issues::runtime_client_error::fix_flow::step::confirm::title%]"
-          }
-        }
-      },
+      "description": "No frames have been received from ECHONET Lite devices for more than {minutes} minutes. This may indicate that devices are offline or there is a network issue. Check that your ECHONET Lite devices are powered on and connected to the network.",
       "title": "ECHONET Lite devices not responding"
     }
   },
@@ -95,12 +119,10 @@
     "step": {
       "init": {
         "data": {
-          "enable_experimental": "Enable experimental device classes",
-          "poll_interval": "Polling interval"
+          "enable_experimental": "Enable experimental device classes"
         },
         "data_description": {
-          "enable_experimental": "When enabled, device classes that have not been verified with real hardware will also be registered. These may not work correctly.",
-          "poll_interval": "How often to poll device properties (in seconds). Lower values provide faster updates but increase network traffic."
+          "enable_experimental": "When enabled, device classes that have not been verified with real hardware will also be registered. These may not work correctly."
         }
       }
     }

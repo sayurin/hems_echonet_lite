@@ -35,7 +35,6 @@ from homeassistant.helpers.typing import ConfigType
 from .const import (
     CONF_ENABLE_EXPERIMENTAL,
     CONF_INTERFACE,
-    CONF_POLL_INTERVAL,
     DEDICATED_PLATFORM_EPCS,
     DEFAULT_INTERFACE,
     DEFAULT_POLL_INTERVAL,
@@ -71,11 +70,27 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     return True
 
 
+async def async_migrate_entry(
+    hass: HomeAssistant, entry: EchonetLiteConfigEntry
+) -> bool:
+    """Migrate old config entry to new format."""
+    if entry.version == 1 and entry.minor_version < 1:
+        # Version 1.0 → 1.1: Move CONF_INTERFACE from options to data
+        new_data = dict(entry.data)
+        new_options = dict(entry.options)
+        if CONF_INTERFACE in new_options:
+            new_data[CONF_INTERFACE] = new_options.pop(CONF_INTERFACE)
+        hass.config_entries.async_update_entry(
+            entry, data=new_data, options=new_options, minor_version=1
+        )
+        _LOGGER.debug("Migrated config entry to version 1.1")
+    return True
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) -> bool:
     """Set up HEMS echonet lite from a config entry."""
 
-    interface = entry.options.get(CONF_INTERFACE, DEFAULT_INTERFACE)
-    poll_interval = entry.options.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL)
+    interface = entry.data.get(CONF_INTERFACE, DEFAULT_INTERFACE)
     enable_experimental = entry.options.get(CONF_ENABLE_EXPERIMENTAL, False)
 
     _LOGGER.debug("Setting up ECHONET Lite with interface %s", interface)
@@ -181,6 +196,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
             # Initialize with empty state; nodes are discovered through runtime events
             coordinator.async_set_updated_data({})
 
+    @callback
     def _handle_runtime_event(event: RuntimeEvent) -> None:
         """Handle runtime events without blocking the receiver loop.
 
@@ -200,7 +216,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
 
             # Schedule frame processing as background task to avoid
             # blocking receiver loop
-            hass.async_create_task(_process_frame(), name="echonet_lite_process_frame")
+            entry.async_create_background_task(
+                hass, _process_frame(), name="echonet_lite_process_frame"
+            )
             return
 
         if isinstance(event, HemsInstanceListEvent):
@@ -216,8 +234,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
 
             # Schedule instance list processing as background task to avoid
             # blocking receiver loop
-            hass.async_create_task(
-                _process_instance_list(), name="echonet_lite_process_instance_list"
+            entry.async_create_background_task(
+                hass,
+                _process_instance_list(),
+                name="echonet_lite_process_instance_list",
             )
             return
 
@@ -233,7 +253,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
                 await _async_restart_runtime()
 
             # Schedule error handling as background task
-            hass.async_create_task(_handle_error(), name="echonet_lite_handle_error")
+            entry.async_create_background_task(
+                hass, _handle_error(), name="echonet_lite_handle_error"
+            )
 
     unsubscribe_runtime = client.subscribe(_handle_runtime_event)
 
@@ -249,9 +271,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     issue_monitor.start()
 
     # Property poller requests EPCs defined in node.poll_epcs (computed at node creation)
-    property_poller = PropertyPoller(device_manager, poll_interval=poll_interval)
+    property_poller = PropertyPoller(
+        device_manager, poll_interval=DEFAULT_POLL_INTERVAL
+    )
     property_poller.start()
-    discovery_task = hass.async_create_task(client.probe_nodes())
+    discovery_task = entry.async_create_background_task(
+        hass, client.probe_nodes(), name="echonet_lite_discovery"
+    )
 
     entry.runtime_data = EchonetLiteRuntimeData(
         interface=interface,
@@ -283,6 +309,9 @@ async def async_unload_entry(
     hass: HomeAssistant, entry: EchonetLiteConfigEntry
 ) -> bool:
     """Unload a config entry."""
+    if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
+        return False
+
     runtime = entry.runtime_data
     if runtime:
         runtime.unsubscribe_runtime()
@@ -291,13 +320,9 @@ async def async_unload_entry(
         runtime.discovery_task.cancel()
         with suppress(asyncio.CancelledError):
             await runtime.discovery_task
-
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-
-    if runtime:
         await runtime.client.stop()
 
-    return unload_ok
+    return True
 
 
 class _RuntimeIssueMonitor:
@@ -358,10 +383,14 @@ class _RuntimeIssueMonitor:
             DOMAIN,
             ISSUE_RUNTIME_INACTIVE,
             issue_domain=DOMAIN,
-            is_fixable=True,
+            is_fixable=False,
             severity=ir.IssueSeverity.WARNING,
             translation_key="runtime_inactive",
             translation_placeholders={"minutes": str(minutes)},
+        )
+        _LOGGER.warning(
+            "No ECHONET Lite frames received for %d minutes; devices may be offline",
+            minutes,
         )
         self._inactivity_issue_active = True
 
@@ -370,6 +399,7 @@ class _RuntimeIssueMonitor:
         if self._inactivity_issue_active:
             ir.async_delete_issue(self._hass, DOMAIN, ISSUE_RUNTIME_INACTIVE)
             self._inactivity_issue_active = False
+            _LOGGER.info("ECHONET Lite communication restored")
 
     @callback
     def record_client_error(self, message: str) -> None:
@@ -379,7 +409,7 @@ class _RuntimeIssueMonitor:
             DOMAIN,
             ISSUE_RUNTIME_CLIENT_ERROR,
             issue_domain=DOMAIN,
-            is_fixable=True,
+            is_fixable=False,
             severity=ir.IssueSeverity.ERROR,
             translation_key="runtime_client_error",
             translation_placeholders={"error": message},

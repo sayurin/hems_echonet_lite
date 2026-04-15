@@ -9,9 +9,10 @@ from pyhems import EntityDefinition, NodeState, create_enum_decoder
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import camel_to_snake
+from .const import DOMAIN, camel_to_snake
 from .coordinator import EchonetLiteCoordinator
 from .entity import (
     EchonetLiteDescribedEntity,
@@ -52,10 +53,11 @@ def _create_select_description(
         value_to_option[enum_val.edt] = option_key
         option_to_value[option_key] = enum_val.edt
 
-    assert option_to_value, (
-        f"Select entity EPC 0x{entity_def.epc:02X} for class 0x{class_code:04X} "
-        "has no valid enum values - this should be caught during generation"
-    )
+    if not option_to_value:
+        raise ValueError(
+            f"Select entity EPC 0x{entity_def.epc:02X} for class 0x{class_code:04X} "
+            "has no valid enum values - this should be caught during generation"
+        )
 
     return EchonetLiteSelectEntityDescription(
         key=f"{entity_def.epc:02x}",
@@ -116,5 +118,10 @@ class EchonetLiteSelect(
     async def async_select_option(self, option: str) -> None:
         """Select the given option by sending the corresponding payload."""
         if (value := self.description.option_to_value.get(option)) is None:
-            raise ValueError(f"Unsupported option: {option}")
+            raise ServiceValidationError(
+                f"Unsupported option: {option}",
+                translation_domain=DOMAIN,
+                translation_key="unsupported_option",
+                translation_placeholders={"option": option},
+            )
         await self._async_send_property(self._epc, bytes([value]))
