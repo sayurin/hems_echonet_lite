@@ -51,8 +51,10 @@ CLIMATE_CLASS_CODES: frozenset[int] = frozenset({CLASS_CODE_HOME_AIR_CONDITIONER
 EPC_OPERATION_STATUS = 0x80
 EPC_FAN_SPEED = 0xA0
 EPC_SWING_AIR_FLOW = 0xA3
+EPC_SPECIAL_STATE = 0xAA
 EPC_OPERATION_MODE = 0xB0
 EPC_TARGET_TEMPERATURE = 0xB3
+EPC_ROOM_HUMIDITY = 0xBA
 EPC_ROOM_TEMPERATURE = 0xBB
 
 _SUPPORTED_HVAC_MODES: list[HVACMode] = [
@@ -71,13 +73,30 @@ _HA_TO_ECHONET_MODE: dict[HVACMode, int] = {
     HVACMode.DRY: 0x44,
     HVACMode.FAN_ONLY: 0x45,
 }
-_ECHONET_TO_HA_MODE = {v: k for k, v in _HA_TO_ECHONET_MODE.items()}
+_ECHONET_TO_HA_MODE: dict[int, HVACMode] = {
+    0x40: HVACMode.OFF,  # "other" — no HA equivalent, mapped to OFF
+    0x41: HVACMode.AUTO,
+    0x42: HVACMode.COOL,
+    0x43: HVACMode.HEAT,
+    0x44: HVACMode.DRY,
+    0x45: HVACMode.FAN_ONLY,
+}
 
-_ECHONET_TO_HA_ACTION: dict[int, HVACAction] = {
+_ECHONET_TO_HA_ACTION: dict[int, HVACAction | None] = {
+    0x40: HVACAction.OFF,
+    0x41: None,  # auto — see _infer_auto_action()
     0x42: HVACAction.COOLING,
     0x43: HVACAction.HEATING,
     0x44: HVACAction.DRYING,
     0x45: HVACAction.FAN,
+}
+
+# Special state mapping (EPC 0xAA)
+_ECHONET_SPECIAL_STATE_TO_ACTION: dict[int, HVACAction | None] = {
+    0x40: None,  # normal — falls through to operation mode logic
+    0x41: HVACAction.DEFROSTING,
+    0x42: HVACAction.PREHEATING,
+    0x43: HVACAction.IDLE,  # heat removal
 }
 
 # Fan speed mapping (0xA0 Air flow rate setting)
@@ -199,20 +218,33 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
     @property
     def hvac_mode(self) -> HVACMode | None:
         """Return the current HVAC mode."""
-        if self._get_value(EPC_OPERATION_STATUS, lambda edt: edt == b"\x30"):
+        status = self._get_value(EPC_OPERATION_STATUS, lambda edt: edt[0])
+        if status == 0x30:
             return self._get_value(
                 EPC_OPERATION_MODE, lambda edt: _ECHONET_TO_HA_MODE.get(edt[0])
             )
-        return HVACMode.OFF
+        if status == 0x31:
+            return HVACMode.OFF
+        return None
 
     @property
     def hvac_action(self) -> HVACAction | None:
         """Return the current HVAC action."""
-        if self._get_value(EPC_OPERATION_STATUS, lambda edt: edt == b"\x30"):
-            return self._get_value(
-                EPC_OPERATION_MODE, lambda edt: _ECHONET_TO_HA_ACTION.get(edt[0])
-            )
-        return HVACAction.OFF
+        special_raw = self._get_value(EPC_SPECIAL_STATE, lambda edt: edt[0])
+        if special_raw is not None and special_raw in _ECHONET_SPECIAL_STATE_TO_ACTION:
+            if (action := _ECHONET_SPECIAL_STATE_TO_ACTION[special_raw]) is not None:
+                return action
+        status = self._get_value(EPC_OPERATION_STATUS, lambda edt: edt[0])
+        if status == 0x31:
+            return HVACAction.OFF
+        if status != 0x30:
+            return None
+        mode = self._get_value(EPC_OPERATION_MODE, lambda edt: edt[0])
+        if mode is not None and mode in _ECHONET_TO_HA_ACTION:
+            if (action := _ECHONET_TO_HA_ACTION[mode]) is not None:
+                return action
+            return self._infer_auto_action()
+        return None
 
     @property
     def fan_mode(self) -> str | None:
@@ -232,6 +264,11 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
     def current_temperature(self) -> float | None:
         """Return the measured indoor temperature."""
         return self._get_value(EPC_ROOM_TEMPERATURE, _SIGNED_BYTE_TEMPERATURE_DECODER)
+
+    @property
+    def current_humidity(self) -> float | None:
+        """Return the measured indoor relative humidity."""
+        return self._get_value(EPC_ROOM_HUMIDITY, _HUMIDITY_DECODER)
 
     @property
     def target_temperature(self) -> float | None:
@@ -340,6 +377,16 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
             )
         await self._async_send_property(EPC_SWING_AIR_FLOW, bytes([swing_value]))
 
+    def _infer_auto_action(self) -> HVACAction:
+        """Infer HVAC action for AUTO mode from temperatures."""
+        target = self.target_temperature
+        current = self.current_temperature
+        if target is None or current is None:
+            return HVACAction.IDLE
+        if target <= current:
+            return HVACAction.COOLING
+        return HVACAction.HEATING
+
     def _get_value(self, epc: int, converter: Callable[[bytes], _T]) -> _T | None:
         """Helper to get and decode a property value from the node."""
         if edt := self._node.properties.get(epc):
@@ -360,6 +407,10 @@ def _decode_unsigned_temperature(edt: bytes) -> float | None:
 _SIGNED_BYTE_TEMPERATURE_DECODER = create_numeric_decoder(
     mra_format="int8", minimum=-127, maximum=125
 )
+
+# Decoder for unsigned byte humidity (ECHONET Lite specification)
+# Range 0-100%, 0xFD (253) and above are special/overflow values
+_HUMIDITY_DECODER = create_numeric_decoder(mra_format="uint8", minimum=0, maximum=100)
 
 
 def _encode_temperature(value: float) -> bytes:

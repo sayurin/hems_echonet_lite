@@ -46,6 +46,7 @@ DEDICATED_PLATFORM_EPCS: dict[int, frozenset[int]] = {
             0x80,  # Operation status (on/off)
             0xA0,  # Fan speed
             0xA3,  # Swing mode
+            0xAA,  # Special state (defrosting/preheating/heat removal)
             0xB0,  # HVAC mode
             0xB3,  # Target temperature
         }
