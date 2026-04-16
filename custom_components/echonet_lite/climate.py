@@ -83,7 +83,7 @@ _ECHONET_TO_HA_MODE: dict[int, HVACMode] = {
 }
 
 _ECHONET_TO_HA_ACTION: dict[int, HVACAction | None] = {
-    0x40: HVACAction.OFF,
+    0x40: HVACAction.IDLE,
     0x41: None,  # auto — see _infer_auto_action()
     0x42: HVACAction.COOLING,
     0x43: HVACAction.HEATING,
