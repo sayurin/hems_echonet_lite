@@ -499,6 +499,16 @@
       }
     },
     "fan": {
+      "air_cleaner": {
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "auto": "自動",
+              "manual": "手動"
+            }
+          }
+        }
+      },
       "fan": {
         "state_attributes": {
           "preset_mode": {

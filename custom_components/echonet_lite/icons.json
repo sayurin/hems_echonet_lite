@@ -6,8 +6,33 @@
       }
     },
     "fan": {
+      "air_cleaner": {
+        "default": "mdi:air-purifier-off",
+        "state": {
+          "on": "mdi:air-purifier"
+        },
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "auto": "mdi:fan-auto",
+              "manual": "mdi:fan"
+            }
+          }
+        }
+      },
       "fan": {
-        "default": "mdi:fan"
+        "default": "mdi:fan-off",
+        "state": {
+          "on": "mdi:fan"
+        },
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "auto": "mdi:fan-auto",
+              "manual": "mdi:fan"
+            }
+          }
+        }
       }
     }
   }

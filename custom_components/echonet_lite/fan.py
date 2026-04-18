@@ -101,7 +101,6 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
     """
 
     _attr_has_entity_name = True
-    _attr_translation_key = "fan"
     _attr_preset_modes = [PRESET_MODE_AUTO, PRESET_MODE_MANUAL]
     _attr_speed_count = int_states_in_range(_SPEED_RANGE)
 
@@ -113,6 +112,9 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         """Initialize an ECHONET Lite fan entity."""
         super().__init__(coordinator, node)
         self._attr_unique_id = f"{node.device_key}-fan"
+        self._attr_translation_key = (
+            "air_cleaner" if node.eoj.class_code == CLASS_CODE_AIR_CLEANER else "fan"
+        )
         features = FanEntityFeature(0)
 
         if EPC_OPERATION_STATUS in node.set_epcs:
