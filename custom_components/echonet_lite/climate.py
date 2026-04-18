@@ -186,6 +186,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_translation_key = "climate"
     _attr_precision = PRECISION_WHOLE
+    _attr_target_temperature_step = 1.0
     _attr_hvac_modes = _SUPPORTED_HVAC_MODES
     _attr_fan_modes = list(_HA_TO_ECHONET_FAN.keys())
     _attr_min_temp = 0.0
