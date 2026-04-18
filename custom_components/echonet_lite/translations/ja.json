@@ -485,20 +485,30 @@
           "fan_mode": {
             "state": {
               "auto": "自動",
-              "high": "強",
+              "level_1": "レベル1",
               "level_2": "レベル2",
               "level_3": "レベル3",
               "level_4": "レベル4",
               "level_5": "レベル5",
               "level_6": "レベル6",
               "level_7": "レベル7",
-              "low": "弱"
+              "level_8": "レベル8"
             }
           }
         }
       }
     },
     "fan": {
+      "air_cleaner": {
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "auto": "自動",
+              "manual": "手動"
+            }
+          }
+        }
+      },
       "fan": {
         "state_attributes": {
           "preset_mode": {

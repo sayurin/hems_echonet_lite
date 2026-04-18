@@ -41,20 +41,30 @@
           "fan_mode": {
             "state": {
               "auto": "[%key:common::state::auto%]",
-              "high": "[%key:common::state::high%]",
+              "level_1": "Level 1",
               "level_2": "Level 2",
               "level_3": "Level 3",
               "level_4": "Level 4",
               "level_5": "Level 5",
               "level_6": "Level 6",
               "level_7": "Level 7",
-              "low": "[%key:common::state::low%]"
+              "level_8": "Level 8"
             }
           }
         }
       }
     },
     "fan": {
+      "air_cleaner": {
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "auto": "[%key:common::state::auto%]",
+              "manual": "[%key:common::state::manual%]"
+            }
+          }
+        }
+      },
       "fan": {
         "state_attributes": {
           "preset_mode": {
