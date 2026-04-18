@@ -16,8 +16,6 @@ from pyhems import (
 from homeassistant.components.climate import (
     ATTR_TEMPERATURE,
     FAN_AUTO,
-    FAN_HIGH,
-    FAN_LOW,
     SWING_BOTH,
     SWING_HORIZONTAL,
     SWING_OFF,
@@ -102,14 +100,14 @@ _ECHONET_SPECIAL_STATE_TO_ACTION: dict[int, HVACAction | None] = {
 # Fan speed mapping (0xA0 Air flow rate setting)
 _HA_TO_ECHONET_FAN: dict[str, int] = {
     FAN_AUTO: 0x41,
-    FAN_LOW: 0x31,  # Level 1
-    "level_2": 0x32,  # Level 2
-    "level_3": 0x33,  # Level 3
-    "level_4": 0x34,  # Level 4
-    "level_5": 0x35,  # Level 5
-    "level_6": 0x36,  # Level 6
-    "level_7": 0x37,  # Level 7
-    FAN_HIGH: 0x38,  # Level 8
+    "level_1": 0x31,
+    "level_2": 0x32,
+    "level_3": 0x33,
+    "level_4": 0x34,
+    "level_5": 0x35,
+    "level_6": 0x36,
+    "level_7": 0x37,
+    "level_8": 0x38,
 }
 _ECHONET_TO_HA_FAN = {v: k for k, v in _HA_TO_ECHONET_FAN.items()}
 

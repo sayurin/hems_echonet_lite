@@ -2,7 +2,22 @@
   "entity": {
     "climate": {
       "climate": {
-        "default": "mdi:air-conditioner"
+        "default": "mdi:air-conditioner",
+        "state_attributes": {
+          "fan_mode": {
+            "state": {
+              "auto": "mdi:fan-auto",
+              "level_1": "mdi:fan-speed-1",
+              "level_2": "mdi:fan-speed-1",
+              "level_3": "mdi:fan-speed-1",
+              "level_4": "mdi:fan-speed-2",
+              "level_5": "mdi:fan-speed-2",
+              "level_6": "mdi:fan-speed-3",
+              "level_7": "mdi:fan-speed-3",
+              "level_8": "mdi:fan-speed-3"
+            }
+          }
+        }
       }
     },
     "fan": {

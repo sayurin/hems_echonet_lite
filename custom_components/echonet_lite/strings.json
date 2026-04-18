@@ -653,14 +653,14 @@
           "fan_mode": {
             "state": {
               "auto": "[%key:common::state::auto%]",
-              "high": "[%key:common::state::high%]",
+              "level_1": "[%key:component::echonet_lite::common::level_1%]",
               "level_2": "[%key:component::echonet_lite::common::level_2%]",
               "level_3": "[%key:component::echonet_lite::common::level_3%]",
               "level_4": "[%key:component::echonet_lite::common::level_4%]",
               "level_5": "[%key:component::echonet_lite::common::level_5%]",
               "level_6": "[%key:component::echonet_lite::common::level_6%]",
               "level_7": "[%key:component::echonet_lite::common::level_7%]",
-              "low": "[%key:common::state::low%]"
+              "level_8": "[%key:component::echonet_lite::common::level_8%]"
             }
           }
         }
