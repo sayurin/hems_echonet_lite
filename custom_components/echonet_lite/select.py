@@ -12,7 +12,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN, camel_to_snake
+from .const import DOMAIN, camel_to_snake, infer_entity_category
 from .coordinator import EchonetLiteCoordinator
 from .entity import (
     EchonetLiteDescribedEntity,
@@ -64,6 +64,7 @@ def _create_select_description(
         translation_key=entity_def.id,
         class_code=class_code,
         epc=entity_def.epc,
+        entity_category=infer_entity_category(entity_def),
         decoder=create_enum_decoder(),
         value_to_option=value_to_option,
         option_to_value=option_to_value,

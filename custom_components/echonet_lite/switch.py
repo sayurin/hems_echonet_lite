@@ -12,6 +12,7 @@ from homeassistant.components.switch import SwitchEntity, SwitchEntityDescriptio
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
+from .const import infer_entity_category
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
@@ -46,6 +47,7 @@ def _create_switch_description(
         class_code=class_code,
         epc=entity_def.epc,
         device_class=None,
+        entity_category=infer_entity_category(entity_def),
         decoder=create_binary_decoder(on_value),
         on_value=on_value,
         off_value=off_value,
