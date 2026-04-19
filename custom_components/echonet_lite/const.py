@@ -22,6 +22,7 @@ from homeassistant.const import (
     LIGHT_LUX,
     PERCENTAGE,
     REVOLUTIONS_PER_MINUTE,
+    EntityCategory,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfEnergy,
@@ -263,6 +264,49 @@ def infer_device_classes(
     return None, None
 
 
+# ============================================================================
+# EntityCategory inference
+# ============================================================================
+# Home Assistant distinguishes three tiers:
+# - DIAGNOSTIC: fault / error / cumulative counters / identification, etc.
+# - CONFIG: writable settings (thresholds, schedules, reservations, ...)
+# - None: primary user-facing entities (e.g. temperature, power reading)
+#
+# Only the standardized common EPCs (0x80-0x9F) are classified here via the
+# explicit ``ENTITY_CATEGORY_BY_EPC`` map. Device-specific EPCs (0xA0-0xEF)
+# are intentionally left uncategorized because their meaning varies per
+# device class and keyword-based inference is too error-prone.
+
+# EPC -> EntityCategory for the standardized common EPCs (0x80-0x9F).
+ENTITY_CATEGORY_BY_EPC: dict[int, EntityCategory] = {
+    # DIAGNOSTIC: fault / identification
+    0x86: EntityCategory.DIAGNOSTIC,  # Manufacturer fault code
+    0x88: EntityCategory.DIAGNOSTIC,  # Fault status
+    0x89: EntityCategory.DIAGNOSTIC,  # Fault description
+    0x9A: EntityCategory.DIAGNOSTIC,  # Cumulative operating time
+    # CONFIG: installation / settings
+    0x81: EntityCategory.CONFIG,  # Installation location
+    0x87: EntityCategory.CONFIG,  # Current limit setting
+    0x8F: EntityCategory.CONFIG,  # Power saving operation setting
+    0x93: EntityCategory.CONFIG,  # Remote control setting
+    0x97: EntityCategory.CONFIG,  # Current time setting
+    0x98: EntityCategory.CONFIG,  # Current date setting
+    0x99: EntityCategory.CONFIG,  # Power limit setting
+}
+
+
+def infer_entity_category(
+    entity_def: EntityDefinition,
+) -> EntityCategory | None:
+    """Return the :class:`EntityCategory` for ``entity_def`` or ``None``.
+
+    Classification is driven solely by :data:`ENTITY_CATEGORY_BY_EPC`, which
+    covers the standardized common EPCs (0x80-0x9F). Any other EPC returns
+    ``None`` (primary user-facing entity).
+    """
+    return ENTITY_CATEGORY_BY_EPC.get(entity_def.epc)
+
+
 __all__ = [
     "CONF_ENABLE_EXPERIMENTAL",
     "CONF_INTERFACE",
@@ -271,6 +315,7 @@ __all__ = [
     "DEFAULT_POLL_INTERVAL",
     "DISCOVERY_INTERVAL",
     "DOMAIN",
+    "ENTITY_CATEGORY_BY_EPC",
     "ISSUE_RUNTIME_CLIENT_ERROR",
     "ISSUE_RUNTIME_INACTIVE",
     "MRA_UNIT_TO_HA_UNIT",
@@ -281,5 +326,6 @@ __all__ = [
     "UNIT_DEVICE_CLASS_RULES",
     "camel_to_snake",
     "infer_device_classes",
+    "infer_entity_category",
     "infer_ha_unit",
 ]

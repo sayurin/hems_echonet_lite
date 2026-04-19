@@ -12,10 +12,10 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
-from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
+from .const import infer_entity_category
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
@@ -24,10 +24,6 @@ from .entity import (
 from .types import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 0
-
-
-# EPCs that should be marked as diagnostic entities
-_DIAGNOSTIC_EPCS: frozenset[int] = frozenset({0x88})  # Fault status
 
 
 # Device class inference based on name keywords.
@@ -106,9 +102,7 @@ def _create_binary_sensor_description(
         class_code=class_code,
         epc=entity_def.epc,
         device_class=_infer_binary_device_class(entity_def),
-        entity_category=(
-            EntityCategory.DIAGNOSTIC if entity_def.epc in _DIAGNOSTIC_EPCS else None
-        ),
+        entity_category=infer_entity_category(entity_def),
         decoder=create_binary_decoder(on_value),
         manufacturer_code=entity_def.manufacturer_code,
         fallback_name=entity_def.name_en or None,
