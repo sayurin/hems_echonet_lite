@@ -13,18 +13,10 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import (
-    PERCENTAGE,
-    UnitOfElectricCurrent,
-    UnitOfElectricPotential,
-    UnitOfEnergy,
-    UnitOfPower,
-    UnitOfTemperature,
-)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import camel_to_snake
+from .const import camel_to_snake, infer_device_classes, infer_ha_unit
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
@@ -34,85 +26,12 @@ from .types import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 0
 
-# Mapping from MRA unit to (device_class, ha_unit)
-# device_class is inferred from the MRA unit
-_MRA_UNIT_TO_HA: dict[str, tuple[SensorDeviceClass | None, str | None]] = {
-    "W": (SensorDeviceClass.POWER, UnitOfPower.WATT),
-    "kW": (SensorDeviceClass.POWER, UnitOfPower.KILO_WATT),
-    "Wh": (SensorDeviceClass.ENERGY, UnitOfEnergy.WATT_HOUR),
-    "kWh": (SensorDeviceClass.ENERGY, UnitOfEnergy.KILO_WATT_HOUR),
-    "Celsius": (SensorDeviceClass.TEMPERATURE, UnitOfTemperature.CELSIUS),
-    "%": (None, PERCENTAGE),  # device_class determined by context
-    "%RH": (SensorDeviceClass.HUMIDITY, PERCENTAGE),
-    "A": (SensorDeviceClass.CURRENT, UnitOfElectricCurrent.AMPERE),
-    "mA": (SensorDeviceClass.CURRENT, UnitOfElectricCurrent.MILLIAMPERE),
-    "V": (SensorDeviceClass.VOLTAGE, UnitOfElectricPotential.VOLT),
-    "ppm": (SensorDeviceClass.CO2, "ppm"),
-    "lux": (SensorDeviceClass.ILLUMINANCE, "lx"),
-    "klux": (SensorDeviceClass.ILLUMINANCE, "lx"),  # Convert to lx
-    "dB": (SensorDeviceClass.SOUND_PRESSURE, "dB"),
-    "m/s": (SensorDeviceClass.WIND_SPEED, "m/s"),
-}
-
-# Context-specific device_class overrides for % unit
-_PERCENTAGE_DEVICE_CLASS_KEYWORDS: dict[str, SensorDeviceClass] = {
-    "humidity": SensorDeviceClass.HUMIDITY,
-    "battery": SensorDeviceClass.BATTERY,
-    "remaining": SensorDeviceClass.BATTERY,
-    "soc": SensorDeviceClass.BATTERY,
-}
-
 
 def _infer_device_class(
     entity_def: EntityDefinition,
 ) -> SensorDeviceClass | None:
-    """Infer device class from MRA unit and entity name.
-
-    Args:
-        entity_def: Entity definition with MRA data.
-
-    Returns:
-        SensorDeviceClass or None if cannot be inferred.
-    """
-    unit = entity_def.unit
-    if not unit:
-        return None
-
-    unit_info = _MRA_UNIT_TO_HA.get(unit)
-    if not unit_info:
-        return None
-
-    device_class, _ = unit_info
-
-    # Context-specific inference for % unit
-    if unit == "%" and device_class is None:
-        name_lower = entity_def.name_en.lower()
-        for keyword, matched_class in _PERCENTAGE_DEVICE_CLASS_KEYWORDS.items():
-            if keyword in name_lower:
-                return matched_class
-
-    return device_class
-
-
-def _infer_ha_unit(entity_def: EntityDefinition) -> str | None:
-    """Infer HA unit from MRA unit.
-
-    Args:
-        entity_def: Entity definition with MRA unit.
-
-    Returns:
-        HA unit string or None.
-    """
-    unit = entity_def.unit
-    if not unit:
-        return None
-
-    unit_info = _MRA_UNIT_TO_HA.get(unit)
-    if unit_info:
-        return unit_info[1]
-
-    # Return MRA unit as-is for units not in mapping
-    return unit
+    """Infer the sensor device class from MRA unit and entity name."""
+    return infer_device_classes(entity_def)[0]
 
 
 def _infer_state_class(entity_def: EntityDefinition) -> SensorStateClass:
@@ -187,7 +106,7 @@ def _create_sensor_description(
         class_code=class_code,
         epc=entity_def.epc,
         device_class=_infer_device_class(entity_def),
-        native_unit_of_measurement=_infer_ha_unit(entity_def),
+        native_unit_of_measurement=infer_ha_unit(entity_def),
         state_class=_infer_state_class(entity_def),
         decoder=create_numeric_decoder(
             mra_format=entity_def.format,

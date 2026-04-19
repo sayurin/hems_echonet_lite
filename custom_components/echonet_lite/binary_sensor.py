@@ -30,28 +30,45 @@ PARALLEL_UPDATES = 0
 _DIAGNOSTIC_EPCS: frozenset[int] = frozenset({0x88})  # Fault status
 
 
-# Device class inference based on EPC
-# 0x80 (Operation status) is common to all device classes -> power
-_BINARY_DEVICE_CLASS_BY_EPC: dict[int, BinarySensorDeviceClass] = {
-    0x80: BinarySensorDeviceClass.POWER,
-}
-
-# Device class inference based on name keywords
-_BINARY_DEVICE_CLASS_KEYWORDS: dict[str, BinarySensorDeviceClass] = {
-    "door": BinarySensorDeviceClass.DOOR,
-    "gas": BinarySensorDeviceClass.GAS,
-    "moisture": BinarySensorDeviceClass.MOISTURE,
-    "motion": BinarySensorDeviceClass.MOTION,
-    "occupancy": BinarySensorDeviceClass.OCCUPANCY,
-    "smoke": BinarySensorDeviceClass.SMOKE,
-    "window": BinarySensorDeviceClass.WINDOW,
-}
+# Device class inference based on name keywords.
+# Order matters: first match wins. PROBLEM-related phrases come first to avoid
+# being shadowed by more generic keywords.
+_BINARY_DEVICE_CLASS_KEYWORDS: tuple[tuple[str, BinarySensorDeviceClass], ...] = (
+    # PROBLEM variants (includes "Fault status" at EPC 0x88)
+    ("fault", BinarySensorDeviceClass.PROBLEM),
+    ("abnormal", BinarySensorDeviceClass.PROBLEM),
+    ("emergency", BinarySensorDeviceClass.PROBLEM),
+    ("exceptional", BinarySensorDeviceClass.PROBLEM),
+    ("maintenance", BinarySensorDeviceClass.PROBLEM),
+    ("filter change", BinarySensorDeviceClass.PROBLEM),
+    # RUNNING (includes "Operation status" at EPC 0x80)
+    ("operation status", BinarySensorDeviceClass.RUNNING),
+    # HEAT
+    ("heating", BinarySensorDeviceClass.HEAT),
+    ("heater", BinarySensorDeviceClass.HEAT),
+    # OPENING
+    ("cover", BinarySensorDeviceClass.OPENING),
+    ("removal", BinarySensorDeviceClass.OPENING),
+    # OCCUPANCY
+    ("occupancy", BinarySensorDeviceClass.OCCUPANCY),
+    ("occupant", BinarySensorDeviceClass.OCCUPANCY),
+    ("human", BinarySensorDeviceClass.OCCUPANCY),
+    # LIGHT
+    ("sunlight", BinarySensorDeviceClass.LIGHT),
+    # Common HA device_classes matched directly by name
+    ("door", BinarySensorDeviceClass.DOOR),
+    ("gas", BinarySensorDeviceClass.GAS),
+    ("moisture", BinarySensorDeviceClass.MOISTURE),
+    ("motion", BinarySensorDeviceClass.MOTION),
+    ("smoke", BinarySensorDeviceClass.SMOKE),
+    ("window", BinarySensorDeviceClass.WINDOW),
+)
 
 
 def _infer_binary_device_class(
     entity_def: EntityDefinition,
 ) -> BinarySensorDeviceClass | None:
-    """Infer device class for binary sensor.
+    """Infer device class for binary sensor from name keywords.
 
     Args:
         entity_def: Entity definition.
@@ -59,13 +76,8 @@ def _infer_binary_device_class(
     Returns:
         BinarySensorDeviceClass or None.
     """
-    # Check by EPC first
-    if entity_def.epc in _BINARY_DEVICE_CLASS_BY_EPC:
-        return _BINARY_DEVICE_CLASS_BY_EPC[entity_def.epc]
-
-    # Check by name keywords
     name_lower = entity_def.name_en.lower()
-    for keyword, device_class in _BINARY_DEVICE_CLASS_KEYWORDS.items():
+    for keyword, device_class in _BINARY_DEVICE_CLASS_KEYWORDS:
         if keyword in name_lower:
             return device_class
 
