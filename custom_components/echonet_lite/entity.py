@@ -163,8 +163,9 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
 
         # After a Set operation, schedule an earlier poll so the UI reflects the
         # updated device state sooner.
-        if runtime_data := self.coordinator.config_entry.runtime_data:
-            runtime_data.property_poller.schedule_immediate_poll(node.device_key)
+        self.coordinator.config_entry.runtime_data.property_poller.schedule_immediate_poll(
+            node.device_key
+        )
 
 
 @dataclass(frozen=True, kw_only=True)

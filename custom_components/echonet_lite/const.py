@@ -40,7 +40,6 @@ CONF_INTERFACE = "interface"
 CONF_ENABLE_EXPERIMENTAL = "enable_experimental"
 DEFAULT_INTERFACE = "0.0.0.0"
 DEFAULT_POLL_INTERVAL = 60
-UNIQUE_ID = "echonet_lite_singleton"
 ISSUE_RUNTIME_CLIENT_ERROR = "runtime_client_error"
 ISSUE_RUNTIME_INACTIVE = "runtime_inactive"
 RUNTIME_MONITOR_INTERVAL = timedelta(minutes=1)
@@ -321,7 +320,6 @@ __all__ = [
     "RUNTIME_MONITOR_INTERVAL",
     "RUNTIME_MONITOR_MAX_SILENCE",
     "STABLE_CLASS_CODES",
-    "UNIQUE_ID",
     "UNIT_DEVICE_CLASS_RULES",
     "camel_to_snake",
     "infer_device_classes",

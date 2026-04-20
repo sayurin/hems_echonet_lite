@@ -18,15 +18,8 @@ from homeassistant.helpers.selector import (
     SelectSelectorConfig,
     SelectSelectorMode,
 )
-from homeassistant.util.network import is_ipv4_address
 
-from .const import (
-    CONF_ENABLE_EXPERIMENTAL,
-    CONF_INTERFACE,
-    DEFAULT_INTERFACE,
-    DOMAIN,
-    UNIQUE_ID,
-)
+from .const import CONF_ENABLE_EXPERIMENTAL, CONF_INTERFACE, DEFAULT_INTERFACE, DOMAIN
 from .types import EchonetLiteConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
@@ -53,9 +46,6 @@ class EchonetLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: Mapping[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
         """Handle the initial step (UI setup)."""
-        if self._async_current_entries():
-            return self.async_abort(reason="single_instance_allowed")
-
         return await self._async_handle_interface_step("user", user_input)
 
     async def async_step_reconfigure(
@@ -120,35 +110,6 @@ class EchonetLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             entry, data={CONF_INTERFACE: interface}
         )
 
-    async def async_step_import(
-        self, import_info: Mapping[str, Any] | None = None
-    ) -> config_entries.ConfigFlowResult:
-        """Handle automatic setup during startup."""
-        if self._async_current_entries():
-            return self.async_abort(reason="single_instance_allowed")
-
-        # Validate interface from external source (may be invalid)
-        interface = DEFAULT_INTERFACE
-        if import_info and (candidate := import_info.get(CONF_INTERFACE)):
-            if _is_valid_interface(candidate):
-                interface = candidate
-            else:
-                _LOGGER.debug(
-                    "Ignoring invalid interface '%s' during import", candidate
-                )
-
-        if error := await self._async_test_multicast(interface):
-            return self.async_abort(reason=error)
-
-        await self.async_set_unique_id(UNIQUE_ID)
-        self._abort_if_unique_id_configured()
-
-        return self.async_create_entry(
-            title="HEMS",
-            data={CONF_INTERFACE: interface},
-            options=_build_default_options(),
-        )
-
     async def _async_test_multicast(self, interface: str) -> str | None:
         """Test multicast socket can be created. Returns error key or None."""
         try:
@@ -200,13 +161,6 @@ def _build_default_options() -> dict[str, Any]:
     return {
         CONF_ENABLE_EXPERIMENTAL: False,
     }
-
-
-def _is_valid_interface(value: Any) -> bool:
-    """Check if value is a valid interface (DEFAULT_INTERFACE or IPv4)."""
-    if not isinstance(value, str):
-        return False
-    return value == DEFAULT_INTERFACE or is_ipv4_address(value)
 
 
 async def _async_get_interface_options(hass: HomeAssistant) -> list[SelectOptionDict]:

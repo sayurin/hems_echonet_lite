@@ -280,7 +280,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     )
 
     entry.runtime_data = EchonetLiteRuntimeData(
-        interface=interface,
         definitions=definitions,
         coordinator=coordinator,
         client=client,

@@ -81,7 +81,7 @@ class EchonetLiteSwitch(
     def is_on(self) -> bool | None:
         """Return the decoded boolean value stored in the coordinator."""
         state = self._node.properties.get(self._epc)
-        return self.description.decoder(state) if state else None
+        return self.description.decoder(state) if state is not None else None
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Send the On command via the pyhems runtime client."""

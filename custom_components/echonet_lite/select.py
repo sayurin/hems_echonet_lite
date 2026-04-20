@@ -120,7 +120,6 @@ class EchonetLiteSelect(
         """Select the given option by sending the corresponding payload."""
         if (value := self.description.option_to_value.get(option)) is None:
             raise ServiceValidationError(
-                f"Unsupported option: {option}",
                 translation_domain=DOMAIN,
                 translation_key="unsupported_option",
                 translation_placeholders={"option": option},

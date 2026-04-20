@@ -135,7 +135,7 @@ class EchonetLiteBinarySensor(
     def is_on(self) -> bool | None:
         """Return the state of the binary sensor."""
         state = self._node.properties.get(self._epc)
-        return self.description.decoder(state) if state else None
+        return self.description.decoder(state) if state is not None else None
 
 
 __all__ = ["EchonetLiteBinarySensor", "EchonetLiteBinarySensorEntityDescription"]
