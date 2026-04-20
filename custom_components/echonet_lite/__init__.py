@@ -193,6 +193,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
                 return
             runtime_health.last_restart_at = time.monotonic()
             issue_monitor.clear_client_error()
+            # Treat a successful restart as activity so the inactivity issue
+            # (if any) is cleared immediately instead of waiting for the next
+            # incoming frame.
+            issue_monitor.record_activity(time.monotonic())
             # Initialize with empty state; nodes are discovered through runtime events
             coordinator.async_set_updated_data({})
 
