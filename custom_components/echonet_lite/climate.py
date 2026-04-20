@@ -170,11 +170,8 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_translation_key = "climate"
     _attr_precision = PRECISION_WHOLE
-    _attr_target_temperature_step = 1.0
     _attr_hvac_modes = _SUPPORTED_HVAC_MODES
     _attr_fan_modes = list(_HA_TO_ECHONET_FAN.keys())
-    _attr_min_temp = 0.0
-    _attr_max_temp = 50.0
 
     def __init__(
         self,
@@ -187,11 +184,12 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
         self._attr_unique_id = f"{node.device_key}-{_CLIMATE_DESCRIPTION.key}"
         features = ClimateEntityFeature(0)
         swing_modes: list[str] | None = None
-        if EPC_TARGET_TEMPERATURE in node.get_epcs:
+        if EPC_TARGET_TEMPERATURE in node.set_epcs:
             features |= ClimateEntityFeature.TARGET_TEMPERATURE
-        if EPC_FAN_SPEED in node.get_epcs:
+            self._apply_target_temperature_range(coordinator, node)
+        if EPC_FAN_SPEED in node.set_epcs:
             features |= ClimateEntityFeature.FAN_MODE
-        if EPC_SWING_AIR_FLOW in node.get_epcs:
+        if EPC_SWING_AIR_FLOW in node.set_epcs:
             features |= ClimateEntityFeature.SWING_MODE
             swing_modes = list(_HA_TO_ECHONET_SWING.keys())
         if EPC_OPERATION_STATUS in node.set_epcs:
@@ -199,6 +197,24 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
             features |= ClimateEntityFeature.TURN_OFF
         self._attr_supported_features = features
         self._attr_swing_modes = swing_modes
+
+    def _apply_target_temperature_range(
+        self,
+        coordinator: EchonetLiteCoordinator,
+        node: NodeState,
+    ) -> None:
+        """Set min/max/step for target temperature from definitions registry."""
+        definitions = coordinator.config_entry.runtime_data.definitions
+        for entity_def in definitions.entities.get(node.eoj.class_code, ()):
+            if entity_def.epc != EPC_TARGET_TEMPERATURE:
+                continue
+            scale = entity_def.multiple_of
+            if entity_def.minimum is not None:
+                self._attr_min_temp = entity_def.minimum * scale
+            if entity_def.maximum is not None:
+                self._attr_max_temp = entity_def.maximum * scale
+            self._attr_target_temperature_step = scale
+            return
 
     @property
     def hvac_mode(self) -> HVACMode | None:
@@ -321,22 +337,12 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
                 translation_key="target_temperature_required",
             )
         temperature = float(kwargs[ATTR_TEMPERATURE])
-        if EPC_TARGET_TEMPERATURE not in self._node.set_epcs:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="temperature_not_writable",
-            )
         await self._async_send_property(
             EPC_TARGET_TEMPERATURE, _encode_temperature(temperature)
         )
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
         """Set the fan mode."""
-        if EPC_FAN_SPEED not in self._node.set_epcs:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="fan_mode_not_writable",
-            )
         fan_value = _HA_TO_ECHONET_FAN.get(fan_mode)
         if fan_value is None:
             raise ServiceValidationError(
@@ -348,11 +354,6 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
 
     async def async_set_swing_mode(self, swing_mode: str) -> None:
         """Set the swing mode."""
-        if EPC_SWING_AIR_FLOW not in self._node.set_epcs:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="swing_mode_not_writable",
-            )
         swing_value = _HA_TO_ECHONET_SWING.get(swing_mode)
         if swing_value is None:
             raise ServiceValidationError(

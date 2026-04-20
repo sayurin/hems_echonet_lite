@@ -3274,26 +3274,17 @@
     "epc_not_writable": {
       "message": "EPC {epc_list} はデバイスによって書き込みできません。"
     },
-    "fan_mode_not_writable": {
-      "message": "このデバイスの風量モードプロパティは書き込みできません。"
-    },
     "operation_mode_not_writable": {
       "message": "このデバイスの運転モードプロパティは書き込みできません。"
     },
     "operation_status_not_writable": {
       "message": "このデバイスの動作状態プロパティは書き込みできません。"
     },
-    "swing_mode_not_writable": {
-      "message": "このデバイスの風向モードプロパティは書き込みできません。"
-    },
     "target_node_unknown": {
       "message": "対象ノードのアドレスが不明です。"
     },
     "target_temperature_required": {
       "message": "目標温度の値が必要です。"
-    },
-    "temperature_not_writable": {
-      "message": "このデバイスの温度設定プロパティは書き込みできません。"
     },
     "unsupported_fan_mode": {
       "message": "サポートされていない風量モード: {fan_mode}"

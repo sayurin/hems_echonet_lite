@@ -243,7 +243,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
                     )
                     issue_monitor.record_client_error(str(event.error))
                     await _async_restart_runtime()
-            except Exception:  # noqa: BLE001
+            except Exception:
                 _LOGGER.exception(
                     "Failed to process ECHONET Lite runtime event: %r", event
                 )
