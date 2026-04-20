@@ -85,4 +85,4 @@ rules:
   inject-websession:
     status: exempt
     comment: Uses UDP multicast via pyhems; no HTTP or aiohttp sessions.
-  strict-typing: todo
+  strict-typing: done
