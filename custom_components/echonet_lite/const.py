@@ -26,7 +26,6 @@ from homeassistant.const import (
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfEnergy,
-    UnitOfFrequency,
     UnitOfPower,
     UnitOfSoundPressure,
     UnitOfSpeed,
@@ -139,11 +138,11 @@ MRA_UNIT_TO_HA_UNIT: dict[str, str | None] = {
     "second": UnitOfTime.SECONDS,
     "days": UnitOfTime.DAYS,
     "ms": UnitOfTime.MILLISECONDS,
-    "mHz": UnitOfFrequency.MILLIHERTZ,
     "degree": DEGREE,
     "r/min": REVOLUTIONS_PER_MINUTE,
     "µg/m³": CONCENTRATION_MICROGRAMS_PER_CUBIC_METER,
     # No HA equivalent — MRA string is used as-is.
+    "mHz": None,  # Will added in HA 2026.5
     "Ah": None,
     "digit": None,
     "klux": None,
