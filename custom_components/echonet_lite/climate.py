@@ -29,11 +29,12 @@ from homeassistant.components.climate import (
 from homeassistant.const import PRECISION_WHOLE, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import DOMAIN
 from .coordinator import EchonetLiteCoordinator
-from .entity import EchonetLiteEntity
+from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
 from .types import EchonetLiteConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
@@ -133,35 +134,20 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite climate entities from a config entry."""
-    coordinator = entry.runtime_data.coordinator
 
     @callback
-    def _async_add_entities_for_devices(device_keys: set[str]) -> None:
-        """Create climate entities for the given device keys."""
-        new_entities: list[EchonetLiteClimate] = []
-        for device_key in device_keys:
-            node = coordinator.data.get(device_key)
-            if not node:
-                continue
+    def _entity_factory(
+        coordinator: EchonetLiteCoordinator, node: NodeState
+    ) -> list[Entity]:
+        if node.eoj.class_code not in CLIMATE_CLASS_CODES:
+            return []
+        return [EchonetLiteClimate(coordinator, node)]
 
-            if node.eoj.class_code not in CLIMATE_CLASS_CODES:
-                continue
-
-            new_entities.append(EchonetLiteClimate(coordinator, node))
-        if new_entities:
-            async_add_entities(new_entities)
-
-    @callback
-    def _async_process_coordinator_update() -> None:
-        """Handle coordinator update - process only new devices."""
-        if coordinator.new_device_keys:
-            _async_add_entities_for_devices(coordinator.new_device_keys)
-
-    entry.async_on_unload(
-        coordinator.async_add_listener(_async_process_coordinator_update)
+    setup_echonet_lite_device_platform(
+        entry,
+        async_add_entities,
+        entity_factory=_entity_factory,
     )
-    # Initial setup: process all existing devices
-    _async_add_entities_for_devices(set(coordinator.data.keys()))
 
 
 class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):

@@ -149,9 +149,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     @callback
     def _on_device_added(device_key: str) -> None:
         """Handle new device from DeviceManager."""
-        coordinator.new_device_keys.add(device_key)
-        coordinator.async_set_updated_data(dict(device_manager.data))
-        coordinator.new_device_keys.clear()
+        coordinator.data = dict(device_manager.data)
+        coordinator.async_notify_device_added(device_key)
+        coordinator.async_update_listeners()
 
     @callback
     def _on_device_updated(device_key: str) -> None:
@@ -200,66 +200,55 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
             # Initialize with empty state; nodes are discovered through runtime events
             coordinator.async_set_updated_data({})
 
+    event_queue: asyncio.Queue[RuntimeEvent] = asyncio.Queue()
+
     @callback
     def _handle_runtime_event(event: RuntimeEvent) -> None:
-        """Handle runtime events without blocking the receiver loop.
+        """Enqueue runtime events for the single consumer task.
 
-        This is a synchronous callback that schedules all processing as
-        background tasks. This ensures pyhems' _dispatch() method doesn't
-        await this callback, allowing the receiver loop to continue
-        immediately.
+        Kept synchronous and non-blocking so that pyhems' receiver loop
+        continues immediately.
         """
-        # Previously used to measure event processing duration; removed to
-        # reduce log noise and avoid unused variables.
+        event_queue.put_nowait(event)
 
-        if isinstance(event, HemsFrameEvent):
+    async def _consume_runtime_events() -> None:
+        """Serialize runtime event processing.
 
-            async def _process_frame() -> None:
-                await coordinator.async_process_frame_event(event)
-                issue_monitor.record_activity(event.received_at)
-
-            # Schedule frame processing as background task to avoid
-            # blocking receiver loop
-            entry.async_create_background_task(
-                hass, _process_frame(), name="echonet_lite_process_frame"
-            )
-            return
-
-        if isinstance(event, HemsInstanceListEvent):
-            _LOGGER.debug(
-                "Runtime event: HemsInstanceListEvent from %s with %d instances",
-                event.node_id,
-                len(event.instances),
-            )
-
-            async def _process_instance_list() -> None:
-                await coordinator.async_process_instance_list_event(event)
-                issue_monitor.record_activity(event.received_at)
-
-            # Schedule instance list processing as background task to avoid
-            # blocking receiver loop
-            entry.async_create_background_task(
-                hass,
-                _process_instance_list(),
-                name="echonet_lite_process_instance_list",
-            )
-            return
-
-        if isinstance(event, HemsErrorEvent):
-            runtime_health.last_client_error = str(event.error)
-            runtime_health.last_client_error_at = event.received_at
-            _LOGGER.warning(
-                "ECHONET Lite runtime client encountered an error: %s", event.error
-            )
-
-            async def _handle_error() -> None:
-                issue_monitor.record_client_error(str(event.error))
-                await _async_restart_runtime()
-
-            # Schedule error handling as background task
-            entry.async_create_background_task(
-                hass, _handle_error(), name="echonet_lite_handle_error"
-            )
+        Using a single consumer preserves the arrival order of
+        ``HemsInstanceListEvent`` (device registration) and
+        ``HemsFrameEvent`` (property updates) so that frames for a newly
+        announced device are never applied before the device itself is
+        registered in ``DeviceManager``.
+        """
+        while True:
+            event = await event_queue.get()
+            try:
+                if isinstance(event, HemsFrameEvent):
+                    await coordinator.async_process_frame_event(event)
+                    issue_monitor.record_activity(event.received_at)
+                elif isinstance(event, HemsInstanceListEvent):
+                    _LOGGER.debug(
+                        "Runtime event: HemsInstanceListEvent from %s with %d instances",
+                        event.node_id,
+                        len(event.instances),
+                    )
+                    await coordinator.async_process_instance_list_event(event)
+                    issue_monitor.record_activity(event.received_at)
+                elif isinstance(event, HemsErrorEvent):
+                    runtime_health.last_client_error = str(event.error)
+                    runtime_health.last_client_error_at = event.received_at
+                    _LOGGER.warning(
+                        "ECHONET Lite runtime client encountered an error: %s",
+                        event.error,
+                    )
+                    issue_monitor.record_client_error(str(event.error))
+                    await _async_restart_runtime()
+            except Exception:  # noqa: BLE001
+                _LOGGER.exception(
+                    "Failed to process ECHONET Lite runtime event: %r", event
+                )
+            finally:
+                event_queue.task_done()
 
     unsubscribe_runtime = client.subscribe(_handle_runtime_event)
 
@@ -282,6 +271,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     discovery_task = entry.async_create_background_task(
         hass, client.probe_nodes(), name="echonet_lite_discovery"
     )
+    event_consumer_task = entry.async_create_background_task(
+        hass, _consume_runtime_events(), name="echonet_lite_event_consumer"
+    )
 
     entry.runtime_data = EchonetLiteRuntimeData(
         definitions=definitions,
@@ -292,6 +284,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
         issue_monitor=issue_monitor,
         health=runtime_health,
         discovery_task=discovery_task,
+        event_consumer_task=event_consumer_task,
     )
 
     # Reload entry when options change
@@ -323,6 +316,9 @@ async def async_unload_entry(
         runtime.discovery_task.cancel()
         with suppress(asyncio.CancelledError):
             await runtime.discovery_task
+        runtime.event_consumer_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await runtime.event_consumer_task
         await runtime.client.stop()
 
     return True

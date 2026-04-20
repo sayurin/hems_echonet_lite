@@ -38,6 +38,7 @@ class EchonetLiteRuntimeData:
     issue_monitor: _RuntimeIssueMonitor
     health: RuntimeHealth
     discovery_task: asyncio.Task[Any]
+    event_consumer_task: asyncio.Task[Any]
 
 
 EchonetLiteConfigEntry = ConfigEntry[EchonetLiteRuntimeData]
