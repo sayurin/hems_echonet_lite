@@ -15,7 +15,7 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import infer_entity_category
+from .const import infer_entity_category, infer_entity_registry_enabled_default
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
@@ -103,6 +103,9 @@ def _create_binary_sensor_description(
         epc=entity_def.epc,
         device_class=_infer_binary_device_class(entity_def),
         entity_category=infer_entity_category(entity_def),
+        entity_registry_enabled_default=infer_entity_registry_enabled_default(
+            entity_def
+        ),
         decoder=create_binary_decoder(on_value),
         manufacturer_code=entity_def.manufacturer_code,
         fallback_name=entity_def.name_en or None,

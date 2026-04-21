@@ -20,7 +20,12 @@ from homeassistant.components.number import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import infer_device_classes, infer_entity_category, infer_ha_unit
+from .const import (
+    infer_device_classes,
+    infer_entity_category,
+    infer_entity_registry_enabled_default,
+    infer_ha_unit,
+)
 from .coordinator import EchonetLiteCoordinator
 from .entity import (
     EchonetLiteDescribedEntity,
@@ -68,6 +73,9 @@ def _create_number_description(
         epc=entity_def.epc,
         device_class=_infer_device_class(entity_def),
         entity_category=infer_entity_category(entity_def),
+        entity_registry_enabled_default=infer_entity_registry_enabled_default(
+            entity_def
+        ),
         native_unit_of_measurement=infer_ha_unit(entity_def),
         native_min_value=(
             entity_def.minimum * entity_def.multiple_of
