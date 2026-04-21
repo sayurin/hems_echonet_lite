@@ -149,9 +149,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     @callback
     def _on_device_added(device_key: str) -> None:
         """Handle new device from DeviceManager."""
-        coordinator.data = dict(device_manager.data)
+        # ``async_set_updated_data`` is the documented contract for publishing
+        # new data on ``DataUpdateCoordinator``; it also notifies listeners so
+        # existing entities re-render. Notify the device-added listeners
+        # afterwards so platforms can create entities for the new device.
+        coordinator.async_set_updated_data(dict(device_manager.data))
         coordinator.async_notify_device_added(device_key)
-        coordinator.async_update_listeners()
 
     @callback
     def _on_device_updated(device_key: str) -> None:
@@ -197,8 +200,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
             # (if any) is cleared immediately instead of waiting for the next
             # incoming frame.
             issue_monitor.record_activity(time.monotonic())
-            # Initialize with empty state; nodes are discovered through runtime events
-            coordinator.async_set_updated_data({})
+            # Re-publish the current DeviceManager state so entities for
+            # already-known devices stay available after the restart.
+            # DeviceManager retains its ``data`` across client stop/start,
+            # so clearing the coordinator here would make those entities
+            # disappear silently until each device is re-announced.
+            coordinator.async_set_updated_data(dict(device_manager.data))
 
     event_queue: asyncio.Queue[RuntimeEvent] = asyncio.Queue()
 

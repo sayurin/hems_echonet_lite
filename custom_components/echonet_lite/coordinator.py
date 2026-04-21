@@ -42,6 +42,10 @@ class EchonetLiteCoordinator(DataUpdateCoordinator[dict[str, NodeState]]):
             update_interval=None,
             config_entry=config_entry,
         )
+        # ``async_set_updated_data`` is the canonical way to publish data on
+        # ``DataUpdateCoordinator``. ``async_setup_entry`` seeds the empty
+        # snapshot right after startup; this default keeps ``.data`` iterable
+        # for callers (and tests) that inspect it before the first update.
         self.data: dict[str, NodeState] = {}
         self._last_runtime_activity_at: float | None = None
         self.device_manager = device_manager
