@@ -1,4 +1,4 @@
-"""Climate platform for the HEMS integration."""
+"""Climate platform for the HEMS Echonet Lite integration."""
 
 from __future__ import annotations
 

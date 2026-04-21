@@ -1,4 +1,4 @@
-"""Shared types and data models for the HEMS integration."""
+"""Shared types and data models for the HEMS Echonet Lite integration."""
 
 from __future__ import annotations
 

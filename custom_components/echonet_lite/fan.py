@@ -1,4 +1,4 @@
-"""Fan platform for the HEMS integration."""
+"""Fan platform for the HEMS Echonet Lite integration."""
 
 from __future__ import annotations
 

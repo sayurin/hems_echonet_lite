@@ -1,4 +1,4 @@
-"""Binary sensor platform for the HEMS integration."""
+"""Binary sensor platform for the HEMS Echonet Lite integration."""
 
 from __future__ import annotations
 

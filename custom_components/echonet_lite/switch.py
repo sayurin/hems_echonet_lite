@@ -1,4 +1,4 @@
-"""Switch platform for the HEMS integration."""
+"""Switch platform for the HEMS Echonet Lite integration."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Constants for the HEMS echonet lite integration."""
+"""Constants for the HEMS Echonet Lite integration."""
 
 from __future__ import annotations
 

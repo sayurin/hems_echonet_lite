@@ -1,4 +1,4 @@
-"""Select platform for the HEMS integration."""
+"""Select platform for the HEMS Echonet Lite integration."""
 
 from __future__ import annotations
 

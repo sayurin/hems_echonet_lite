@@ -1,4 +1,4 @@
-"""Config flow for the HEMS echonet lite integration."""
+"""Config flow for the HEMS Echonet Lite integration."""
 
 from __future__ import annotations
 

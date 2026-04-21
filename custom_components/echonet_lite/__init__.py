@@ -1,4 +1,4 @@
-"""The HEMS echonet lite integration."""
+"""The HEMS Echonet Lite integration."""
 
 from __future__ import annotations
 
@@ -66,7 +66,7 @@ PLATFORMS: Final = [
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the HEMS echonet lite integration."""
+    """Set up the HEMS Echonet Lite integration."""
     return True
 
 
@@ -88,7 +88,7 @@ async def async_migrate_entry(
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) -> bool:
-    """Set up HEMS echonet lite from a config entry."""
+    """Set up HEMS Echonet Lite from a config entry."""
 
     interface = entry.data.get(CONF_INTERFACE, DEFAULT_INTERFACE)
     enable_experimental = entry.options.get(CONF_ENABLE_EXPERIMENTAL, False)

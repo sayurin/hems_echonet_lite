@@ -1,4 +1,4 @@
-"""Data coordinator for the HEMS integration."""
+"""Data coordinator for the HEMS Echonet Lite integration."""
 
 from __future__ import annotations
 
