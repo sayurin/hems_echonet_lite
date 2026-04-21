@@ -65,6 +65,20 @@ _SUPPORTED_HVAC_MODES: list[HVACMode] = [
     HVACMode.FAN_ONLY,
 ]
 
+# Mapping between HA ``HVACMode`` and ECHONET Lite operation mode (EPC 0xB0).
+#
+# ECHONET Lite models operation status (0x80 = ON/OFF) and operation mode
+# (0xB0) as independent axes. Value 0xB0 = 0x40 ("other") is used by some
+# appliances as a persistent, vendor-defined mode (internal clean, coil
+# drying, air purification, etc.) that has no direct equivalent in Home
+# Assistant's ``HVACMode`` enum. We map it to ``HVACMode.FAN_ONLY`` +
+# ``HVACAction.IDLE`` so that:
+#   - ``hvac_mode`` stays a valid enum value (avoids a chronically
+#     "unknown" entity on devices that sit in 0x40 for long periods);
+#   - 0x45 ("fan only") remains distinguishable because it maps to
+#     ``HVACAction.FAN`` while 0x40 maps to ``HVACAction.IDLE``.
+# 0x40 is not written back by this integration; ``async_set_hvac_mode``
+# only writes values present in ``_HA_TO_ECHONET_MODE``.
 _HA_TO_ECHONET_MODE: dict[HVACMode, int] = {
     HVACMode.AUTO: 0x41,
     HVACMode.COOL: 0x42,
@@ -73,7 +87,7 @@ _HA_TO_ECHONET_MODE: dict[HVACMode, int] = {
     HVACMode.FAN_ONLY: 0x45,
 }
 _ECHONET_TO_HA_MODE: dict[int, HVACMode] = {
-    0x40: HVACMode.OFF,  # "other" — no HA equivalent, mapped to OFF
+    0x40: HVACMode.FAN_ONLY,  # "other" — vendor-defined; see module comment
     0x41: HVACMode.AUTO,
     0x42: HVACMode.COOL,
     0x43: HVACMode.HEAT,
@@ -82,7 +96,7 @@ _ECHONET_TO_HA_MODE: dict[int, HVACMode] = {
 }
 
 _ECHONET_TO_HA_ACTION: dict[int, HVACAction | None] = {
-    0x40: HVACAction.IDLE,
+    0x40: HVACAction.IDLE,  # "other" — distinguishes from 0x45 (FAN)
     0x41: None,  # auto — see _infer_auto_action()
     0x42: HVACAction.COOLING,
     0x43: HVACAction.HEATING,
