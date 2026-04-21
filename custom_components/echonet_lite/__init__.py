@@ -261,6 +261,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     # Initialize with empty state; nodes are discovered through runtime events
     coordinator.async_set_updated_data({})
 
+    # Seed the inactivity monitor with the startup timestamp so that a total
+    # absence of incoming frames (never a single activity observed) still
+    # trips the threshold. Without this baseline, the monitor silently skips
+    # every tick while ``last_runtime_activity_at is None``.
+    issue_monitor.record_activity(time.monotonic())
     issue_monitor.start()
 
     # Property poller requests EPCs defined in node.poll_epcs (computed at node creation)
