@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 import logging
+import time
 from typing import Literal
 
 from pyhems import EntityDefinition, NodeState, Property
@@ -16,7 +17,7 @@ from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DEDICATED_PLATFORM_EPCS, DOMAIN
+from .const import DEDICATED_PLATFORM_EPCS, DOMAIN, RUNTIME_MONITOR_MAX_SILENCE
 from .coordinator import EchonetLiteCoordinator
 from .types import EchonetLiteConfigEntry
 
@@ -95,6 +96,11 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
 
     _attr_has_entity_name = True
 
+    # Threshold after which a lack of runtime activity marks the entity
+    # as unavailable. Matches the inactivity repair issue threshold so
+    # UI availability and the repair issue rise/fall together.
+    _runtime_silence_threshold: float = RUNTIME_MONITOR_MAX_SILENCE.total_seconds()
+
     def __init__(
         self,
         coordinator: EchonetLiteCoordinator,
@@ -117,6 +123,24 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
             model=node.product_code,
             serial_number=node.serial_number,
         )
+
+    @property
+    def available(self) -> bool:
+        """Return True if the underlying runtime is still receiving activity.
+
+        Falls back to ``CoordinatorEntity.available`` first so disabled
+        coordinators still mark entities unavailable. Additionally, if the
+        runtime has been silent for longer than ``RUNTIME_MONITOR_MAX_SILENCE``,
+        the entity is reported as unavailable even while the coordinator
+        itself is considered healthy.
+        """
+        if not super().available:
+            return False
+        last_activity_at = self.coordinator.last_runtime_activity_at
+        if last_activity_at is None:
+            # No baseline yet: rely on the coordinator's own availability.
+            return True
+        return time.monotonic() - last_activity_at < self._runtime_silence_threshold
 
     async def _async_send_property(self, epc: int, value: bytes) -> None:
         """Send a SetC request for a single EPC/value pair.
