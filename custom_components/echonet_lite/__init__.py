@@ -261,11 +261,20 @@ class _RuntimeIssueMonitor:
         self._client_issue_active = False
 
     def start(self) -> None:
-        """Begin checking for runtime inactivity."""
-        if self._cancel_interval is None:
-            self._cancel_interval = async_track_time_interval(
-                self._hass, self._async_check_runtime, self._interval
-            )
+        """Begin checking for runtime inactivity.
+
+        Seeds ``last_runtime_activity_at`` with the current monotonic time so
+        that a total absence of incoming frames (never a single activity
+        observed) still trips the threshold. Without this baseline the
+        inactivity check silently skips every tick while
+        ``last_runtime_activity_at is None``.
+        """
+        if self._cancel_interval is not None:
+            return
+        self.record_activity(self._monotonic())
+        self._cancel_interval = async_track_time_interval(
+            self._hass, self._async_check_runtime, self._interval
+        )
 
     def stop(self) -> None:
         """Stop monitoring and clear any active issue."""
@@ -406,12 +415,9 @@ class _RuntimeController:
         # Initialize with empty state; nodes are discovered through runtime events
         self._coordinator.async_set_updated_data({})
 
-        # Seed the inactivity monitor with the startup timestamp so that a
-        # total absence of incoming frames (never a single activity
-        # observed) still trips the threshold. Without this baseline, the
-        # monitor silently skips every tick while
-        # ``last_runtime_activity_at is None``.
-        self._issue_monitor.record_activity(time.monotonic())
+        # ``_RuntimeIssueMonitor.start`` seeds the inactivity baseline with
+        # the current monotonic time so that a cold start with zero frames
+        # still trips the threshold.
         self._issue_monitor.start()
 
         self._discovery_task = self._entry.async_create_background_task(
@@ -484,7 +490,12 @@ class _RuntimeController:
                     )
                     self._issue_monitor.record_client_error(str(event.error))
                     await self._async_restart_runtime()
-            except Exception:
+            except OSError, LookupError, TypeError, ValueError:
+                # Narrow to the fault classes realistic for frame parsing
+                # and dispatch (I/O, missing keys, malformed payloads).
+                # Programmer errors (RuntimeError, AssertionError, ...) are
+                # intentionally allowed to propagate so the task fails
+                # loudly instead of silently swallowing bugs.
                 _LOGGER.exception(
                     "Failed to process ECHONET Lite runtime event: %r", event
                 )
