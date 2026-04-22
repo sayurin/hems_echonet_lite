@@ -8,7 +8,7 @@ from contextlib import suppress
 from datetime import datetime, timedelta
 import logging
 import time
-from typing import Final
+from typing import Any, Final
 
 from pyhems import (
     EPC_MANUFACTURER_CODE,
@@ -165,7 +165,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     device_manager.on_device_updated(_on_device_updated)
 
     runtime_health = RuntimeHealth()
-    restart_lock = asyncio.Lock()
 
     issue_monitor = _RuntimeIssueMonitor(
         hass,
@@ -174,129 +173,33 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
         interval=RUNTIME_MONITOR_INTERVAL,
     )
 
-    async def _async_restart_runtime() -> None:
-        if restart_lock.locked():
-            return
-        async with restart_lock:
-            runtime_health.restart_attempts += 1
-            try:
-                await client.stop()
-            except (
-                OSError,
-                RuntimeError,
-            ) as err:  # pragma: no cover - best effort cleanup
-                _LOGGER.debug("Failed to stop ECHONET Lite runtime client: %s", err)
-            try:
-                await client.start()
-            except OSError as err:
-                _LOGGER.error("Failed to restart ECHONET Lite runtime client: %s", err)
-                runtime_health.last_client_error = str(err)
-                runtime_health.last_client_error_at = time.monotonic()
-                issue_monitor.record_client_error(str(err))
-                return
-            runtime_health.last_restart_at = time.monotonic()
-            issue_monitor.clear_client_error()
-            # Treat a successful restart as activity so the inactivity issue
-            # (if any) is cleared immediately instead of waiting for the next
-            # incoming frame.
-            issue_monitor.record_activity(time.monotonic())
-            # Re-publish the current DeviceManager state so entities for
-            # already-known devices stay available after the restart.
-            # DeviceManager retains its ``data`` across client stop/start,
-            # so clearing the coordinator here would make those entities
-            # disappear silently until each device is re-announced.
-            coordinator.async_set_updated_data(dict(device_manager.data))
+    controller = _RuntimeController(
+        hass,
+        entry,
+        client=client,
+        device_manager=device_manager,
+        coordinator=coordinator,
+        issue_monitor=issue_monitor,
+        health=runtime_health,
+    )
 
-    event_queue: asyncio.Queue[RuntimeEvent] = asyncio.Queue()
+    await controller.async_start()
 
-    @callback
-    def _handle_runtime_event(event: RuntimeEvent) -> None:
-        """Enqueue runtime events for the single consumer task.
-
-        Kept synchronous and non-blocking so that pyhems' receiver loop
-        continues immediately.
-        """
-        event_queue.put_nowait(event)
-
-    async def _consume_runtime_events() -> None:
-        """Serialize runtime event processing.
-
-        Using a single consumer preserves the arrival order of
-        ``HemsInstanceListEvent`` (device registration) and
-        ``HemsFrameEvent`` (property updates) so that frames for a newly
-        announced device are never applied before the device itself is
-        registered in ``DeviceManager``.
-        """
-        while True:
-            event = await event_queue.get()
-            try:
-                if isinstance(event, HemsFrameEvent):
-                    await coordinator.async_process_frame_event(event)
-                    issue_monitor.record_activity(event.received_at)
-                elif isinstance(event, HemsInstanceListEvent):
-                    _LOGGER.debug(
-                        "Runtime event: HemsInstanceListEvent from %s with %d instances",
-                        event.node_id,
-                        len(event.instances),
-                    )
-                    await coordinator.async_process_instance_list_event(event)
-                    issue_monitor.record_activity(event.received_at)
-                elif isinstance(event, HemsErrorEvent):
-                    runtime_health.last_client_error = str(event.error)
-                    runtime_health.last_client_error_at = event.received_at
-                    _LOGGER.warning(
-                        "ECHONET Lite runtime client encountered an error: %s",
-                        event.error,
-                    )
-                    issue_monitor.record_client_error(str(event.error))
-                    await _async_restart_runtime()
-            except Exception:
-                _LOGGER.exception(
-                    "Failed to process ECHONET Lite runtime event: %r", event
-                )
-            finally:
-                event_queue.task_done()
-
-    unsubscribe_runtime = client.subscribe(_handle_runtime_event)
-
-    try:
-        await client.start()
-    except OSError as err:
-        unsubscribe_runtime()
-        raise ConfigEntryNotReady(f"Failed to start runtime client: {err}") from err
-
-    # Initialize with empty state; nodes are discovered through runtime events
-    coordinator.async_set_updated_data({})
-
-    # Seed the inactivity monitor with the startup timestamp so that a total
-    # absence of incoming frames (never a single activity observed) still
-    # trips the threshold. Without this baseline, the monitor silently skips
-    # every tick while ``last_runtime_activity_at is None``.
-    issue_monitor.record_activity(time.monotonic())
-    issue_monitor.start()
-
-    # Property poller requests EPCs defined in node.poll_epcs (computed at node creation)
     property_poller = PropertyPoller(
         device_manager, poll_interval=DEFAULT_POLL_INTERVAL
     )
     property_poller.start()
-    discovery_task = entry.async_create_background_task(
-        hass, client.probe_nodes(), name="echonet_lite_discovery"
-    )
-    event_consumer_task = entry.async_create_background_task(
-        hass, _consume_runtime_events(), name="echonet_lite_event_consumer"
-    )
 
     entry.runtime_data = EchonetLiteRuntimeData(
         definitions=definitions,
         coordinator=coordinator,
         client=client,
-        unsubscribe_runtime=unsubscribe_runtime,
+        unsubscribe_runtime=controller.unsubscribe_runtime,
         property_poller=property_poller,
         issue_monitor=issue_monitor,
         health=runtime_health,
-        discovery_task=discovery_task,
-        event_consumer_task=event_consumer_task,
+        discovery_task=controller.discovery_task,
+        event_consumer_task=controller.event_consumer_task,
     )
 
     # Reload entry when options change
@@ -438,3 +341,186 @@ class _RuntimeIssueMonitor:
         if self._client_issue_active:
             ir.async_delete_issue(self._hass, DOMAIN, ISSUE_RUNTIME_CLIENT_ERROR)
             self._client_issue_active = False
+
+
+class _RuntimeController:
+    """Own the pyhems runtime lifecycle for a config entry.
+
+    Encapsulates the restart lock, event queue, event consumer task and
+    discovery task so that ``async_setup_entry`` can stay focused on
+    dependency wiring.
+    """
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: EchonetLiteConfigEntry,
+        *,
+        client: HemsClient,
+        device_manager: DeviceManager,
+        coordinator: EchonetLiteCoordinator,
+        issue_monitor: _RuntimeIssueMonitor,
+        health: RuntimeHealth,
+    ) -> None:
+        self._hass = hass
+        self._entry = entry
+        self._client = client
+        self._device_manager = device_manager
+        self._coordinator = coordinator
+        self._issue_monitor = issue_monitor
+        self._health = health
+        self._restart_lock = asyncio.Lock()
+        self._event_queue: asyncio.Queue[RuntimeEvent] = asyncio.Queue()
+        self._unsubscribe_runtime: Callable[[], None] | None = None
+        self._discovery_task: asyncio.Task[Any] | None = None
+        self._event_consumer_task: asyncio.Task[None] | None = None
+
+    @property
+    def unsubscribe_runtime(self) -> Callable[[], None]:
+        """Return the runtime-event unsubscribe callback."""
+        assert self._unsubscribe_runtime is not None
+        return self._unsubscribe_runtime
+
+    @property
+    def discovery_task(self) -> asyncio.Task[Any]:
+        """Return the node discovery background task."""
+        assert self._discovery_task is not None
+        return self._discovery_task
+
+    @property
+    def event_consumer_task(self) -> asyncio.Task[None]:
+        """Return the runtime event consumer background task."""
+        assert self._event_consumer_task is not None
+        return self._event_consumer_task
+
+    async def async_start(self) -> None:
+        """Subscribe, start the client and spawn background tasks."""
+        self._unsubscribe_runtime = self._client.subscribe(self._handle_runtime_event)
+        try:
+            await self._client.start()
+        except OSError as err:
+            self._unsubscribe_runtime()
+            self._unsubscribe_runtime = None
+            raise ConfigEntryNotReady(f"Failed to start runtime client: {err}") from err
+
+        # Initialize with empty state; nodes are discovered through runtime events
+        self._coordinator.async_set_updated_data({})
+
+        # Seed the inactivity monitor with the startup timestamp so that a
+        # total absence of incoming frames (never a single activity
+        # observed) still trips the threshold. Without this baseline, the
+        # monitor silently skips every tick while
+        # ``last_runtime_activity_at is None``.
+        self._issue_monitor.record_activity(time.monotonic())
+        self._issue_monitor.start()
+
+        self._discovery_task = self._entry.async_create_background_task(
+            self._hass,
+            self._client.probe_nodes(),
+            name="echonet_lite_discovery",
+        )
+        self._event_consumer_task = self._entry.async_create_background_task(
+            self._hass,
+            self._consume_runtime_events(),
+            name="echonet_lite_event_consumer",
+        )
+
+    async def async_stop(self) -> None:
+        """Cancel background tasks and stop the client."""
+        if self._unsubscribe_runtime is not None:
+            self._unsubscribe_runtime()
+            self._unsubscribe_runtime = None
+        self._issue_monitor.stop()
+        if self._discovery_task is not None:
+            self._discovery_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await self._discovery_task
+            self._discovery_task = None
+        if self._event_consumer_task is not None:
+            self._event_consumer_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await self._event_consumer_task
+            self._event_consumer_task = None
+        await self._client.stop()
+
+    @callback
+    def _handle_runtime_event(self, event: RuntimeEvent) -> None:
+        """Enqueue runtime events for the single consumer task.
+
+        Kept synchronous and non-blocking so that pyhems' receiver loop
+        continues immediately.
+        """
+        self._event_queue.put_nowait(event)
+
+    async def _consume_runtime_events(self) -> None:
+        """Serialize runtime event processing.
+
+        Using a single consumer preserves the arrival order of
+        ``HemsInstanceListEvent`` (device registration) and
+        ``HemsFrameEvent`` (property updates) so that frames for a newly
+        announced device are never applied before the device itself is
+        registered in ``DeviceManager``.
+        """
+        while True:
+            event = await self._event_queue.get()
+            try:
+                if isinstance(event, HemsFrameEvent):
+                    await self._coordinator.async_process_frame_event(event)
+                    self._issue_monitor.record_activity(event.received_at)
+                elif isinstance(event, HemsInstanceListEvent):
+                    _LOGGER.debug(
+                        "Runtime event: HemsInstanceListEvent from %s with %d instances",
+                        event.node_id,
+                        len(event.instances),
+                    )
+                    await self._coordinator.async_process_instance_list_event(event)
+                    self._issue_monitor.record_activity(event.received_at)
+                elif isinstance(event, HemsErrorEvent):
+                    self._health.last_client_error = str(event.error)
+                    self._health.last_client_error_at = event.received_at
+                    _LOGGER.warning(
+                        "ECHONET Lite runtime client encountered an error: %s",
+                        event.error,
+                    )
+                    self._issue_monitor.record_client_error(str(event.error))
+                    await self._async_restart_runtime()
+            except Exception:
+                _LOGGER.exception(
+                    "Failed to process ECHONET Lite runtime event: %r", event
+                )
+            finally:
+                self._event_queue.task_done()
+
+    async def _async_restart_runtime(self) -> None:
+        """Restart the pyhems runtime client, debouncing concurrent callers."""
+        if self._restart_lock.locked():
+            return
+        async with self._restart_lock:
+            self._health.restart_attempts += 1
+            try:
+                await self._client.stop()
+            except (
+                OSError,
+                RuntimeError,
+            ) as err:  # pragma: no cover - best effort cleanup
+                _LOGGER.debug("Failed to stop ECHONET Lite runtime client: %s", err)
+            try:
+                await self._client.start()
+            except OSError as err:
+                _LOGGER.error("Failed to restart ECHONET Lite runtime client: %s", err)
+                self._health.last_client_error = str(err)
+                self._health.last_client_error_at = time.monotonic()
+                self._issue_monitor.record_client_error(str(err))
+                return
+            self._health.last_restart_at = time.monotonic()
+            self._issue_monitor.clear_client_error()
+            # Treat a successful restart as activity so the inactivity issue
+            # (if any) is cleared immediately instead of waiting for the
+            # next incoming frame.
+            self._issue_monitor.record_activity(time.monotonic())
+            # Re-publish the current DeviceManager state so entities for
+            # already-known devices stay available after the restart.
+            # DeviceManager retains its ``data`` across client stop/start,
+            # so clearing the coordinator here would make those entities
+            # disappear silently until each device is re-announced.
+            self._coordinator.async_set_updated_data(dict(self._device_manager.data))
