@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 import logging
 from typing import Any, TypeVar
 
 from pyhems import (
     CLASS_CODE_HOME_AIR_CONDITIONER,
+    DefinitionsRegistry,
     NodeState,
     Property,
     create_numeric_decoder,
+    create_numeric_encoder,
 )
 
 from homeassistant.components.climate import (
@@ -26,7 +29,12 @@ from homeassistant.components.climate import (
     HVACAction,
     HVACMode,
 )
-from homeassistant.const import PRECISION_WHOLE, UnitOfTemperature
+from homeassistant.const import (
+    PRECISION_HALVES,
+    PRECISION_TENTHS,
+    PRECISION_WHOLE,
+    UnitOfTemperature,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.entity import Entity
@@ -136,10 +144,88 @@ _HA_TO_ECHONET_SWING: dict[str, int] = {
 _ECHONET_TO_HA_SWING = {v: k for k, v in _HA_TO_ECHONET_SWING.items()}
 
 
-# Climate entity description for home air conditioner
-_CLIMATE_DESCRIPTION = ClimateEntityDescription(
-    key="climate",
-)
+def _decode_unsigned_temperature(edt: bytes) -> float | None:
+    """Fallback decoder used only when no EPC 0xB3 definition is available."""
+    if len(edt) != 1:
+        return None
+    value = edt[0]
+    return None if value == 0xFD else float(value)
+
+
+def _precision_from_scale(scale: float) -> float:
+    """Return the closest HA precision constant for a definition scale."""
+    if scale <= PRECISION_TENTHS:
+        return PRECISION_TENTHS
+    if scale <= PRECISION_HALVES:
+        return PRECISION_HALVES
+    return PRECISION_WHOLE
+
+
+@dataclass(frozen=True, kw_only=True)
+class EchonetLiteClimateEntityDescription(ClimateEntityDescription):
+    """Climate description scoped to an ECHONET Lite class code.
+
+    pyhems definitions are protocol-level metadata shared across all devices
+    of a given class code (e.g. every 0x0130 Home Air Conditioner exposes the
+    same 0xB3 target-temperature range and format). We therefore build one
+    description per class code at ``async_setup_entry`` time and share it
+    across every room/instance discovered on the network, rather than
+    regenerating codecs inside each entity's ``__init__``.
+    """
+
+    class_code: int
+    target_temp_encoder: Callable[[float | int], bytes] | None = None
+    target_temp_decoder: Callable[[bytes], float | int | None] = (
+        _decode_unsigned_temperature
+    )
+    target_temp_min: float | None = None
+    target_temp_max: float | None = None
+    target_temp_step: float | None = None
+    target_temp_precision: float = PRECISION_WHOLE
+
+
+def _create_climate_description(
+    class_code: int,
+    definitions: DefinitionsRegistry,
+) -> EchonetLiteClimateEntityDescription:
+    """Build a climate description from pyhems definitions.
+
+    Falls back to conservative defaults (unsigned-byte 0..50 decoder, no
+    encoder) when the definitions do not describe EPC 0xB3 for this class.
+    """
+    for entity_def in definitions.entities.get(class_code, ()):
+        if entity_def.epc != EPC_TARGET_TEMPERATURE or entity_def.format is None:
+            continue
+        scale = entity_def.multiple_of
+        target_temp_min = (
+            entity_def.minimum * scale if entity_def.minimum is not None else None
+        )
+        target_temp_max = (
+            entity_def.maximum * scale if entity_def.maximum is not None else None
+        )
+        return EchonetLiteClimateEntityDescription(
+            key="climate",
+            class_code=class_code,
+            target_temp_decoder=create_numeric_decoder(
+                mra_format=entity_def.format,
+                minimum=entity_def.minimum,
+                maximum=entity_def.maximum,
+                scale=scale,
+                byte_offset=entity_def.byte_offset,
+            ),
+            target_temp_encoder=create_numeric_encoder(
+                mra_format=entity_def.format,
+                scale=scale,
+            ),
+            target_temp_min=target_temp_min,
+            target_temp_max=target_temp_max,
+            target_temp_step=scale,
+            target_temp_precision=_precision_from_scale(scale),
+        )
+    return EchonetLiteClimateEntityDescription(
+        key="climate",
+        class_code=class_code,
+    )
 
 
 async def async_setup_entry(
@@ -148,14 +234,20 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite climate entities from a config entry."""
+    definitions = entry.runtime_data.definitions
+    descriptions: dict[int, EchonetLiteClimateEntityDescription] = {
+        class_code: _create_climate_description(class_code, definitions)
+        for class_code in CLIMATE_CLASS_CODES
+    }
 
     @callback
     def _entity_factory(
         coordinator: EchonetLiteCoordinator, node: NodeState
     ) -> list[Entity]:
-        if node.eoj.class_code not in CLIMATE_CLASS_CODES:
+        description = descriptions.get(node.eoj.class_code)
+        if description is None:
             return []
-        return [EchonetLiteClimate(coordinator, node)]
+        return [EchonetLiteClimate(coordinator, node, description)]
 
     setup_echonet_lite_device_platform(
         entry,
@@ -179,11 +271,11 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
     - Simplifies property getters (no complex logic, just return cached values)
     """
 
-    entity_description: ClimateEntityDescription
+    entity_description: EchonetLiteClimateEntityDescription
     _attr_has_entity_name = True
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_translation_key = "climate"
-    _attr_precision = PRECISION_WHOLE
+    _attr_precision: float = PRECISION_WHOLE
     _attr_hvac_modes = _SUPPORTED_HVAC_MODES
     _attr_fan_modes = list(_HA_TO_ECHONET_FAN.keys())
 
@@ -191,16 +283,23 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
         self,
         coordinator: EchonetLiteCoordinator,
         node: NodeState,
+        description: EchonetLiteClimateEntityDescription,
     ) -> None:
         """Initialize an ECHONET Lite climate entity."""
         super().__init__(coordinator, node)
-        self.entity_description = _CLIMATE_DESCRIPTION
-        self._attr_unique_id = f"{node.device_key}-{_CLIMATE_DESCRIPTION.key}"
+        self.entity_description = description
+        self._attr_unique_id = f"{node.device_key}-{description.key}"
+        if description.target_temp_min is not None:
+            self._attr_min_temp = description.target_temp_min
+        if description.target_temp_max is not None:
+            self._attr_max_temp = description.target_temp_max
+        if description.target_temp_step is not None:
+            self._attr_target_temperature_step = description.target_temp_step
+        self._attr_precision = description.target_temp_precision
         features = ClimateEntityFeature(0)
         swing_modes: list[str] | None = None
         if EPC_TARGET_TEMPERATURE in node.set_epcs:
             features |= ClimateEntityFeature.TARGET_TEMPERATURE
-            self._apply_target_temperature_range(coordinator, node)
         if EPC_FAN_SPEED in node.set_epcs:
             features |= ClimateEntityFeature.FAN_MODE
         if EPC_SWING_AIR_FLOW in node.set_epcs:
@@ -211,24 +310,6 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
             features |= ClimateEntityFeature.TURN_OFF
         self._attr_supported_features = features
         self._attr_swing_modes = swing_modes
-
-    def _apply_target_temperature_range(
-        self,
-        coordinator: EchonetLiteCoordinator,
-        node: NodeState,
-    ) -> None:
-        """Set min/max/step for target temperature from definitions registry."""
-        definitions = coordinator.config_entry.runtime_data.definitions
-        for entity_def in definitions.entities.get(node.eoj.class_code, ()):
-            if entity_def.epc != EPC_TARGET_TEMPERATURE:
-                continue
-            scale = entity_def.multiple_of
-            if entity_def.minimum is not None:
-                self._attr_min_temp = entity_def.minimum * scale
-            if entity_def.maximum is not None:
-                self._attr_max_temp = entity_def.maximum * scale
-            self._attr_target_temperature_step = scale
-            return
 
     @property
     def hvac_mode(self) -> HVACMode | None:
@@ -288,7 +369,10 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
     @property
     def target_temperature(self) -> float | None:
         """Return the currently configured setpoint."""
-        return self._get_value(EPC_TARGET_TEMPERATURE, _decode_unsigned_temperature)
+        value = self._get_value(
+            EPC_TARGET_TEMPERATURE, self.entity_description.target_temp_decoder
+        )
+        return float(value) if value is not None else None
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set the requested HVAC mode."""
@@ -350,10 +434,15 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
                 translation_domain=DOMAIN,
                 translation_key="target_temperature_required",
             )
+        encoder = self.entity_description.target_temp_encoder
+        if encoder is None:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="operation_mode_not_writable",
+            )
         temperature = float(kwargs[ATTR_TEMPERATURE])
-        await self._async_send_property(
-            EPC_TARGET_TEMPERATURE, _encode_temperature(temperature)
-        )
+        clamped = min(max(temperature, self._attr_min_temp), self._attr_max_temp)
+        await self._async_send_property(EPC_TARGET_TEMPERATURE, encoder(clamped))
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
         """Set the fan mode."""
@@ -394,13 +483,6 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
         return None
 
 
-def _decode_unsigned_temperature(edt: bytes) -> float | None:
-    if len(edt) != 1:
-        return None
-    value = edt[0]
-    return None if value == 0xFD else float(value)
-
-
 # Decoder for signed byte temperature (ECHONET Lite specification)
 # min/max -127 to 125 excludes special values: 0x7E (126: immeasurable),
 # 0x7F (127: overflow), 0x80 (-128: underflow)
@@ -411,11 +493,6 @@ _SIGNED_BYTE_TEMPERATURE_DECODER = create_numeric_decoder(
 # Decoder for unsigned byte humidity (ECHONET Lite specification)
 # Range 0-100%, 0xFD (253) and above are special/overflow values
 _HUMIDITY_DECODER = create_numeric_decoder(mra_format="uint8", minimum=0, maximum=100)
-
-
-def _encode_temperature(value: float) -> bytes:
-    clamped = max(0, min(50, int(round(value))))
-    return bytes([clamped])
 
 
 __all__ = ["EchonetLiteClimate"]
