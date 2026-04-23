@@ -1,4 +1,26 @@
-"""The HEMS Echonet Lite integration."""
+"""The HEMS Echonet Lite integration.
+
+``iot_class`` is ``local_polling`` because ECHONET Lite is fundamentally a
+request/response protocol over local UDP multicast. Status acquisition is
+done with GET (ESV 0x62) and the response GET_RES (0x72).
+
+The specification also defines unsolicited notifications INF (ESV 0x73) and
+INFC (0x74), but their use is constrained: APPENDIX "Detailed Requirements
+for ECHONET Device Objects" marks each property with an "Announcement at
+Status Change" flag, and only properties bearing that flag may be pushed.
+The flag is set on a minority of properties -- typically operating status
+and a handful of mode/state EPCs -- while measured values (temperatures,
+instantaneous power, cumulative energy meters, consumables, ...), numeric
+setpoints and most configuration items are *not* announceable and can only
+be obtained via GET. Whether a vendor implementation actually emits INF for
+its announceable properties is additionally left to the implementation.
+
+As a consequence this integration is polling-first: ``PropertyPoller`` runs
+a per-device GET loop at ``DEFAULT_POLL_INTERVAL`` (60 s), and INF frames --
+when they arrive -- are treated as a free push-based optimization on top.
+The poll set is automatically reduced to ``get_epcs - inf_epcs`` per device
+so properties the device does actively push are not re-polled.
+"""
 
 from __future__ import annotations
 
