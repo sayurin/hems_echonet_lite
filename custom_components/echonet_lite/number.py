@@ -34,7 +34,7 @@ from .entity import (
 )
 from .types import EchonetLiteConfigEntry
 
-PARALLEL_UPDATES = 1  # Serialize writes to prevent overwhelming device
+PARALLEL_UPDATES = 1
 
 
 def _infer_device_class(

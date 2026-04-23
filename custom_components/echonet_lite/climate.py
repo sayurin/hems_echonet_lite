@@ -49,7 +49,7 @@ _LOGGER = logging.getLogger(__name__)
 
 _T = TypeVar("_T")
 
-PARALLEL_UPDATES = 0
+PARALLEL_UPDATES = 1
 
 # Climate class codes (local to this platform)
 CLIMATE_CLASS_CODES: frozenset[int] = frozenset({CLASS_CODE_HOME_AIR_CONDITIONER})

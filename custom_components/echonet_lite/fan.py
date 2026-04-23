@@ -31,7 +31,7 @@ from .types import EchonetLiteConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
-PARALLEL_UPDATES = 0
+PARALLEL_UPDATES = 1
 
 # Fan class codes (local to this platform)
 FAN_CLASS_CODES: frozenset[int] = frozenset(
