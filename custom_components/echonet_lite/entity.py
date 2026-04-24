@@ -17,7 +17,7 @@ from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DEDICATED_PLATFORM_EPCS, DOMAIN, RUNTIME_MONITOR_MAX_SILENCE
+from .const import ATTR_EPC, DEDICATED_PLATFORM_EPCS, DOMAIN, RUNTIME_MONITOR_MAX_SILENCE
 from .coordinator import EchonetLiteCoordinator
 from .types import EchonetLiteConfigEntry
 
@@ -288,6 +288,11 @@ class EchonetLiteDescribedEntity[DescriptionT: EchonetLiteEntityDescription](
         elif description.fallback_name:
             self._attr_name = description.fallback_name
         self._epc = description.epc
+
+    @property
+    def extra_state_attributes(self) -> dict[str, str]:
+        """Return extra state attributes exposing the ECHONET Property Code."""
+        return {ATTR_EPC: f"0x{self._epc:02X}"}
 
 
 def setup_echonet_lite_platform[DescriptionT: EchonetLiteEntityDescription](
