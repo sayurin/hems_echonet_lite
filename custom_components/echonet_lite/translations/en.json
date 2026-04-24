@@ -3442,26 +3442,17 @@
         "epc_not_writable": {
             "message": "EPC {epc_list} is not writable by the device."
         },
-        "fan_mode_not_writable": {
-            "message": "The fan mode property is not writable on this device."
-        },
         "operation_mode_not_writable": {
             "message": "The operation mode property is not writable on this device."
         },
         "operation_status_not_writable": {
             "message": "The operation status property is not writable on this device."
         },
-        "swing_mode_not_writable": {
-            "message": "The swing mode property is not writable on this device."
-        },
         "target_node_unknown": {
             "message": "The target node address is unknown."
         },
         "target_temperature_required": {
             "message": "A target temperature value is required."
-        },
-        "temperature_not_writable": {
-            "message": "The temperature setpoint property is not writable on this device."
         },
         "unsupported_fan_mode": {
             "message": "Unsupported fan mode: {fan_mode}"

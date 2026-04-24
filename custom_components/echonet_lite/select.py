@@ -1,4 +1,4 @@
-"""Select platform for the HEMS integration."""
+"""Select platform for the HEMS Echonet Lite integration."""
 
 from __future__ import annotations
 
@@ -12,7 +12,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN, camel_to_snake, infer_entity_category
+from .const import (
+    DOMAIN,
+    camel_to_snake,
+    infer_entity_category,
+    infer_entity_registry_enabled_default,
+)
 from .coordinator import EchonetLiteCoordinator
 from .entity import (
     EchonetLiteDescribedEntity,
@@ -21,7 +26,7 @@ from .entity import (
 )
 from .types import EchonetLiteConfigEntry
 
-PARALLEL_UPDATES = 0
+PARALLEL_UPDATES = 1
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -65,6 +70,9 @@ def _create_select_description(
         class_code=class_code,
         epc=entity_def.epc,
         entity_category=infer_entity_category(entity_def),
+        entity_registry_enabled_default=infer_entity_registry_enabled_default(
+            entity_def
+        ),
         decoder=create_enum_decoder(),
         value_to_option=value_to_option,
         option_to_value=option_to_value,
@@ -120,7 +128,6 @@ class EchonetLiteSelect(
         """Select the given option by sending the corresponding payload."""
         if (value := self.description.option_to_value.get(option)) is None:
             raise ServiceValidationError(
-                f"Unsupported option: {option}",
                 translation_domain=DOMAIN,
                 translation_key="unsupported_option",
                 translation_placeholders={"option": option},

@@ -1,4 +1,4 @@
-"""Sensor platform for the HEMS integration."""
+"""Sensor platform for the HEMS Echonet Lite integration."""
 
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ from .const import (
     camel_to_snake,
     infer_device_classes,
     infer_entity_category,
+    infer_entity_registry_enabled_default,
     infer_ha_unit,
 )
 from .entity import (
@@ -94,6 +95,9 @@ def _create_sensor_description(
             epc=entity_def.epc,
             device_class=SensorDeviceClass.ENUM,
             entity_category=infer_entity_category(entity_def),
+            entity_registry_enabled_default=infer_entity_registry_enabled_default(
+                entity_def
+            ),
             options=options,
             decoder=_enum_sensor_decoder,
             manufacturer_code=entity_def.manufacturer_code,
@@ -113,6 +117,9 @@ def _create_sensor_description(
         epc=entity_def.epc,
         device_class=_infer_device_class(entity_def),
         entity_category=infer_entity_category(entity_def),
+        entity_registry_enabled_default=infer_entity_registry_enabled_default(
+            entity_def
+        ),
         native_unit_of_measurement=infer_ha_unit(entity_def),
         state_class=_infer_state_class(entity_def),
         decoder=create_numeric_decoder(

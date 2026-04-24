@@ -1,4 +1,4 @@
-"""Number platform for the HEMS integration."""
+"""Number platform for the HEMS Echonet Lite integration."""
 
 from __future__ import annotations
 
@@ -20,7 +20,12 @@ from homeassistant.components.number import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import infer_device_classes, infer_entity_category, infer_ha_unit
+from .const import (
+    infer_device_classes,
+    infer_entity_category,
+    infer_entity_registry_enabled_default,
+    infer_ha_unit,
+)
 from .coordinator import EchonetLiteCoordinator
 from .entity import (
     EchonetLiteDescribedEntity,
@@ -29,7 +34,7 @@ from .entity import (
 )
 from .types import EchonetLiteConfigEntry
 
-PARALLEL_UPDATES = 1  # Serialize writes to prevent overwhelming device
+PARALLEL_UPDATES = 1
 
 
 def _infer_device_class(
@@ -68,6 +73,9 @@ def _create_number_description(
         epc=entity_def.epc,
         device_class=_infer_device_class(entity_def),
         entity_category=infer_entity_category(entity_def),
+        entity_registry_enabled_default=infer_entity_registry_enabled_default(
+            entity_def
+        ),
         native_unit_of_measurement=infer_ha_unit(entity_def),
         native_min_value=(
             entity_def.minimum * entity_def.multiple_of

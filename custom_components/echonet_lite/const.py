@@ -1,4 +1,4 @@
-"""Constants for the HEMS echonet lite integration."""
+"""Constants for the HEMS Echonet Lite integration."""
 
 from __future__ import annotations
 
@@ -40,7 +40,6 @@ CONF_INTERFACE = "interface"
 CONF_ENABLE_EXPERIMENTAL = "enable_experimental"
 DEFAULT_INTERFACE = "0.0.0.0"
 DEFAULT_POLL_INTERVAL = 60
-UNIQUE_ID = "echonet_lite_singleton"
 ISSUE_RUNTIME_CLIENT_ERROR = "runtime_client_error"
 ISSUE_RUNTIME_INACTIVE = "runtime_inactive"
 RUNTIME_MONITOR_INTERVAL = timedelta(minutes=1)
@@ -306,6 +305,20 @@ def infer_entity_category(
     return ENTITY_CATEGORY_BY_EPC.get(entity_def.epc)
 
 
+def infer_entity_registry_enabled_default(
+    entity_def: EntityDefinition,
+) -> bool:
+    """Return the default enabled state for ``entity_def`` in the registry.
+
+    Diagnostic entities (fault codes, fault status, cumulative operating time,
+    ...) are disabled by default so they do not clutter the UI and do not
+    grow the recorder database. Users can opt in via the entity registry when
+    the value is needed. This mirrors the convention used by other Home
+    Assistant integrations for diagnostic entities.
+    """
+    return infer_entity_category(entity_def) is not EntityCategory.DIAGNOSTIC
+
+
 __all__ = [
     "CONF_ENABLE_EXPERIMENTAL",
     "CONF_INTERFACE",
@@ -321,10 +334,10 @@ __all__ = [
     "RUNTIME_MONITOR_INTERVAL",
     "RUNTIME_MONITOR_MAX_SILENCE",
     "STABLE_CLASS_CODES",
-    "UNIQUE_ID",
     "UNIT_DEVICE_CLASS_RULES",
     "camel_to_snake",
     "infer_device_classes",
     "infer_entity_category",
+    "infer_entity_registry_enabled_default",
     "infer_ha_unit",
 ]

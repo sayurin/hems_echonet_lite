@@ -1,4 +1,4 @@
-"""Switch platform for the HEMS integration."""
+"""Switch platform for the HEMS Echonet Lite integration."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from homeassistant.components.switch import SwitchEntity, SwitchEntityDescriptio
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import infer_entity_category
+from .const import infer_entity_category, infer_entity_registry_enabled_default
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
@@ -20,7 +20,7 @@ from .entity import (
 )
 from .types import EchonetLiteConfigEntry
 
-PARALLEL_UPDATES = 0
+PARALLEL_UPDATES = 1
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -48,6 +48,9 @@ def _create_switch_description(
         epc=entity_def.epc,
         device_class=None,
         entity_category=infer_entity_category(entity_def),
+        entity_registry_enabled_default=infer_entity_registry_enabled_default(
+            entity_def
+        ),
         decoder=create_binary_decoder(on_value),
         on_value=on_value,
         off_value=off_value,
@@ -81,7 +84,7 @@ class EchonetLiteSwitch(
     def is_on(self) -> bool | None:
         """Return the decoded boolean value stored in the coordinator."""
         state = self._node.properties.get(self._epc)
-        return self.description.decoder(state) if state else None
+        return self.description.decoder(state) if state is not None else None
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Send the On command via the pyhems runtime client."""

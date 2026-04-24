@@ -1,4 +1,4 @@
-"""Button platform for the HEMS integration."""
+"""Button platform for the HEMS Echonet Lite integration."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from homeassistant.components.button import ButtonEntity, ButtonEntityDescriptio
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import infer_entity_category
+from .const import infer_entity_category, infer_entity_registry_enabled_default
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
@@ -18,7 +18,7 @@ from .entity import (
 )
 from .types import EchonetLiteConfigEntry
 
-PARALLEL_UPDATES = 0
+PARALLEL_UPDATES = 1
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -64,6 +64,9 @@ def _create_button_description(
         epc=entity_def.epc,
         device_class=None,
         entity_category=infer_entity_category(entity_def),
+        entity_registry_enabled_default=infer_entity_registry_enabled_default(
+            entity_def
+        ),
         press_value=press_value,
         manufacturer_code=entity_def.manufacturer_code,
         fallback_name=entity_def.name_en or None,

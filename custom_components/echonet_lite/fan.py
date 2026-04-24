@@ -1,4 +1,4 @@
-"""Fan platform for the HEMS integration."""
+"""Fan platform for the HEMS Echonet Lite integration."""
 
 from __future__ import annotations
 
@@ -16,6 +16,7 @@ from pyhems import (
 from homeassistant.components.fan import FanEntity, FanEntityFeature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util.percentage import (
     percentage_to_ranged_value,
@@ -25,12 +26,12 @@ from homeassistant.util.scaling import int_states_in_range
 
 from .const import DOMAIN
 from .coordinator import EchonetLiteCoordinator
-from .entity import EchonetLiteEntity
+from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
 from .types import EchonetLiteConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
-PARALLEL_UPDATES = 0
+PARALLEL_UPDATES = 1
 
 # Fan class codes (local to this platform)
 FAN_CLASS_CODES: frozenset[int] = frozenset(
@@ -62,35 +63,20 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite fan entities from a config entry."""
-    coordinator = entry.runtime_data.coordinator
 
     @callback
-    def _async_add_entities_for_devices(device_keys: set[str]) -> None:
-        """Create fan entities for the given device keys."""
-        new_entities: list[EchonetLiteFan] = []
-        for device_key in device_keys:
-            node = coordinator.data.get(device_key)
-            if not node:
-                continue
+    def _entity_factory(
+        coordinator: EchonetLiteCoordinator, node: NodeState
+    ) -> list[Entity]:
+        if node.eoj.class_code not in FAN_CLASS_CODES:
+            return []
+        return [EchonetLiteFan(coordinator, node)]
 
-            if node.eoj.class_code not in FAN_CLASS_CODES:
-                continue
-
-            new_entities.append(EchonetLiteFan(coordinator, node))
-        if new_entities:
-            async_add_entities(new_entities)
-
-    @callback
-    def _async_process_coordinator_update() -> None:
-        """Handle coordinator update - process only new devices."""
-        if coordinator.new_device_keys:
-            _async_add_entities_for_devices(coordinator.new_device_keys)
-
-    entry.async_on_unload(
-        coordinator.async_add_listener(_async_process_coordinator_update)
+    setup_echonet_lite_device_platform(
+        entry,
+        async_add_entities,
+        entity_factory=_entity_factory,
     )
-    # Initial setup: process all existing devices
-    _async_add_entities_for_devices(set(coordinator.data.keys()))
 
 
 class EchonetLiteFan(EchonetLiteEntity, FanEntity):
@@ -174,7 +160,19 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         preset_mode: str | None = None,
         **kwargs: Any,
     ) -> None:
-        """Turn on the fan."""
+        """Turn on the fan.
+
+        Service ↔ EPC mapping:
+
+        * bare: ``OP_STATUS=ON`` only. ``EPC_AIR_FLOW_LEVEL`` is not
+          retransmitted; the device retains its previous level, which
+          notably preserves an ``auto`` preset across ON→OFF→ON.
+        * ``percentage=0``: ``OP_STATUS=OFF`` (HA convention).
+        * ``percentage=p>0``: ``OP_STATUS=ON`` + ``AIR_FLOW_LEVEL=f(p)``.
+        * ``preset_mode="auto"``: ``OP_STATUS=ON`` + ``AIR_FLOW_LEVEL=0x41``.
+        * ``preset_mode="manual"``: ``OP_STATUS=ON`` only. ``manual`` is
+          not a distinct ECHONET level, so no ``AIR_FLOW_LEVEL`` is sent.
+        """
         if EPC_OPERATION_STATUS not in self._node.set_epcs:
             raise HomeAssistantError(
                 translation_domain=DOMAIN,
@@ -188,19 +186,17 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
 
         properties: list[Property] = [Property(epc=EPC_OPERATION_STATUS, edt=b"\x30")]
 
-        # If percentage or preset_mode is specified, also set the air flow level
         if EPC_AIR_FLOW_LEVEL in self._node.set_epcs:
-            if preset_mode is None and percentage is None:
-                preset_mode = self.preset_mode
-                percentage = self.percentage
             if preset_mode == PRESET_MODE_AUTO:
                 properties.append(
                     Property(epc=EPC_AIR_FLOW_LEVEL, edt=bytes([_EDT_AUTO]))
                 )
             elif percentage is not None:
-                edt_value = self._percentage_to_edt(percentage)
                 properties.append(
-                    Property(epc=EPC_AIR_FLOW_LEVEL, edt=bytes([edt_value]))
+                    Property(
+                        epc=EPC_AIR_FLOW_LEVEL,
+                        edt=bytes([self._percentage_to_edt(percentage)]),
+                    )
                 )
 
         await self._async_send_properties(properties)
@@ -210,12 +206,67 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         await self._async_send_property(EPC_OPERATION_STATUS, b"\x31")
 
     async def async_set_percentage(self, percentage: int) -> None:
-        """Set the speed percentage of the fan."""
-        await self.async_turn_on(percentage=percentage)
+        """Set the speed percentage of the fan.
+
+        Sends only ``AIR_FLOW_LEVEL`` when the fan is already on so the
+        current preset/level is replaced atomically. When the fan is off
+        (and ``percentage>0``), ``OP_STATUS=ON`` is bundled in the same
+        frame so the service call lands on a running fan. ``percentage=0``
+        is treated as OFF per HA convention.
+        """
+        if percentage == 0:
+            await self._async_send_property(EPC_OPERATION_STATUS, b"\x31")
+            return
+        if EPC_AIR_FLOW_LEVEL not in self._node.set_epcs:
+            return
+        edt = bytes([self._percentage_to_edt(percentage)])
+        if self.is_on:
+            await self._async_send_property(EPC_AIR_FLOW_LEVEL, edt)
+            return
+        await self._async_send_properties(
+            [
+                Property(epc=EPC_OPERATION_STATUS, edt=b"\x30"),
+                Property(epc=EPC_AIR_FLOW_LEVEL, edt=edt),
+            ]
+        )
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
-        """Set the preset mode of the fan."""
-        await self.async_turn_on(preset_mode=preset_mode)
+        """Set the preset mode of the fan.
+
+        ``auto`` maps to ``AIR_FLOW_LEVEL=0x41``. When the fan is off, a
+        combined ``OP_STATUS=ON`` + ``AIR_FLOW_LEVEL`` frame is sent;
+        when already on, only the level change is transmitted.
+
+        ``manual`` has no direct ECHONET counterpart: any non-auto level
+        already represents manual operation. When the fan is off it is
+        simply turned on (the device retains its stored level); when
+        already on, the call is a no-op to avoid clobbering the current
+        level with an arbitrary value.
+        """
+        if preset_mode == PRESET_MODE_AUTO:
+            if EPC_AIR_FLOW_LEVEL not in self._node.set_epcs:
+                return
+            edt = bytes([_EDT_AUTO])
+            if self.is_on:
+                await self._async_send_property(EPC_AIR_FLOW_LEVEL, edt)
+                return
+            await self._async_send_properties(
+                [
+                    Property(epc=EPC_OPERATION_STATUS, edt=b"\x30"),
+                    Property(epc=EPC_AIR_FLOW_LEVEL, edt=edt),
+                ]
+            )
+            return
+
+        # preset_mode == PRESET_MODE_MANUAL
+        if self.is_on:
+            return
+        if EPC_OPERATION_STATUS not in self._node.set_epcs:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="operation_status_not_writable",
+            )
+        await self._async_send_property(EPC_OPERATION_STATUS, b"\x30")
 
 
 __all__ = ["EchonetLiteFan"]

@@ -1,4 +1,4 @@
-"""Binary sensor platform for the HEMS integration."""
+"""Binary sensor platform for the HEMS Echonet Lite integration."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import infer_entity_category
+from .const import infer_entity_category, infer_entity_registry_enabled_default
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
@@ -103,6 +103,9 @@ def _create_binary_sensor_description(
         epc=entity_def.epc,
         device_class=_infer_binary_device_class(entity_def),
         entity_category=infer_entity_category(entity_def),
+        entity_registry_enabled_default=infer_entity_registry_enabled_default(
+            entity_def
+        ),
         decoder=create_binary_decoder(on_value),
         manufacturer_code=entity_def.manufacturer_code,
         fallback_name=entity_def.name_en or None,
@@ -135,7 +138,7 @@ class EchonetLiteBinarySensor(
     def is_on(self) -> bool | None:
         """Return the state of the binary sensor."""
         state = self._node.properties.get(self._epc)
-        return self.description.decoder(state) if state else None
+        return self.description.decoder(state) if state is not None else None
 
 
 __all__ = ["EchonetLiteBinarySensor", "EchonetLiteBinarySensorEntityDescription"]
