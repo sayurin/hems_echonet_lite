@@ -29,6 +29,7 @@ These device classes are enabled by default:
 | 0x0135 | Air Cleaner | Fan + generic entities |
 | 0x0279 | Residential Solar Power Generation | Generic entities |
 | 0x027D | Storage Battery | Generic entities |
+| 0x05FD | Switch (supporting JEM-A/HA terminals) | Generic entities |
 | 0x05FF | Controller | Generic entities |
 
 ### Climate (0x0130) Features

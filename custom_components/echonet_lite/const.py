@@ -55,6 +55,7 @@ STABLE_CLASS_CODES: frozenset[int] = frozenset(
         0x0135,  # Air cleaner
         0x0279,  # Fuel cell (residential solar power generation)
         0x027D,  # In-house power generation (storage battery)
+        0x05FD,  # Switch (supporting JEM-A/HA terminals)
         0x05FF,  # Controller
     }
 )
