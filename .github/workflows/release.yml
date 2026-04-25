@@ -31,9 +31,8 @@ jobs:
 
       - name: Update manifest.json version
         run: |
-          jq '.version = "${{ inputs.version }}"' \
-            custom_components/echonet_lite/manifest.json > tmp.json
-          mv tmp.json custom_components/echonet_lite/manifest.json
+          sed -i 's/"version": "[^"]*"/"version": "${{ inputs.version }}"/' \
+            custom_components/echonet_lite/manifest.json
 
       - name: Commit and tag
         run: |
