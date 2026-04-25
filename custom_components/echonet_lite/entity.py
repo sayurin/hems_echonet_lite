@@ -17,7 +17,12 @@ from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import ATTR_EPC, DEDICATED_PLATFORM_EPCS, DOMAIN, RUNTIME_MONITOR_MAX_SILENCE
+from .const import (
+    ATTR_EPC,
+    DEDICATED_PLATFORM_EPCS,
+    DOMAIN,
+    RUNTIME_MONITOR_MAX_SILENCE,
+)
 from .coordinator import EchonetLiteCoordinator
 from .types import EchonetLiteConfigEntry
 
