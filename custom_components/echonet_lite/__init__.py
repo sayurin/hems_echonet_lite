@@ -159,6 +159,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     device_manager = DeviceManager(
         client=client,
         monitored_epcs=monitored_epcs,
+        definitions=definitions,
         class_code_filter=class_code_filter,
     )
     coordinator = EchonetLiteCoordinator(

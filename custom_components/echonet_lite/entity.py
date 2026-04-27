@@ -119,7 +119,9 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
         # Build device_info once; sources are immutable after node creation
         manufacturer: str | None = None
         if node.manufacturer_code is not None:
-            manufacturer = f"0x{node.manufacturer_code:06X}"
+            manufacturer = (
+                node.manufacturer_name_en or f"0x{node.manufacturer_code:06X}"
+            )
         name = node.product_code or f"ECHONET Lite node {node.device_key}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, node.device_key)},
