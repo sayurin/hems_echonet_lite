@@ -8,7 +8,6 @@ import logging
 from typing import Any, TypeVar
 
 from pyhems import (
-    CLASS_CODE_HOME_AIR_CONDITIONER,
     DefinitionsRegistry,
     NodeState,
     Property,
@@ -40,7 +39,18 @@ from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN
+from .const import (
+    CLASS_CODE_HOME_AIR_CONDITIONER,
+    DOMAIN,
+    EPC_FAN_SPEED,
+    EPC_OPERATION_MODE,
+    EPC_OPERATION_STATUS,
+    EPC_ROOM_HUMIDITY,
+    EPC_ROOM_TEMPERATURE,
+    EPC_SPECIAL_STATE,
+    EPC_SWING_AIR_FLOW,
+    EPC_TARGET_TEMPERATURE,
+)
 from .coordinator import EchonetLiteCoordinator
 from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
 from .types import EchonetLiteConfigEntry
@@ -51,18 +61,8 @@ _T = TypeVar("_T")
 
 PARALLEL_UPDATES = 1
 
-# Climate class codes (local to this platform)
+# Class codes handled by this platform
 CLIMATE_CLASS_CODES: frozenset[int] = frozenset({CLASS_CODE_HOME_AIR_CONDITIONER})
-
-# Climate-specific EPCs (local to this platform)
-EPC_OPERATION_STATUS = 0x80
-EPC_FAN_SPEED = 0xA0
-EPC_SWING_AIR_FLOW = 0xA3
-EPC_SPECIAL_STATE = 0xAA
-EPC_OPERATION_MODE = 0xB0
-EPC_TARGET_TEMPERATURE = 0xB3
-EPC_ROOM_HUMIDITY = 0xBA
-EPC_ROOM_TEMPERATURE = 0xBB
 
 _SUPPORTED_HVAC_MODES: list[HVACMode] = [
     HVACMode.OFF,
