@@ -5,13 +5,7 @@ from __future__ import annotations
 from datetime import timedelta
 import re
 
-from pyhems import (
-    CLASS_CODE_AIR_CLEANER,
-    CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN,
-    CLASS_CODE_HOME_AIR_CONDITIONER,
-    CLASS_CODE_VENTILATION_FAN,
-    EntityDefinition,
-)
+from pyhems import EntityDefinition
 
 from homeassistant.components.number import NumberDeviceClass as NumberDC
 from homeassistant.components.sensor import SensorDeviceClass as SensorDC
@@ -47,17 +41,69 @@ RUNTIME_MONITOR_INTERVAL = timedelta(minutes=1)
 RUNTIME_MONITOR_MAX_SILENCE = timedelta(minutes=5)
 DISCOVERY_INTERVAL = 60.0 * 60.0  # 1 hour
 
+# ============================================================================
+# ECHONET Lite class codes used by this integration
+# ============================================================================
+# Names and values come from the ECHONET Lite specification (Machine Readable
+# Appendix). pyhems exposes the same metadata at runtime via
+# ``DefinitionsRegistry``; these literals are kept here so that imports stay
+# pure (no I/O at import time) and so the integration owns its own naming.
+CLASS_CODE_HOME_AIR_CONDITIONER = 0x0130
+CLASS_CODE_VENTILATION_FAN = 0x0133
+CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN = 0x0134
+CLASS_CODE_AIR_CLEANER = 0x0135
+CLASS_CODE_HOUSEHOLD_SOLAR_POWER_GENERATION = 0x0279
+CLASS_CODE_STORAGE_BATTERY = 0x027D
+CLASS_CODE_SWITCH = 0x05FD  # Switch (supporting JEM-A/HA terminals)
+CLASS_CODE_CONTROLLER = 0x05FF
+
+# ============================================================================
+# ECHONET Lite property codes (EPCs) used by this integration
+# ============================================================================
+# Common (super class, 0x80-0x9F) EPCs.
+EPC_OPERATION_STATUS = 0x80
+EPC_INSTALLATION_LOCATION = 0x81
+EPC_MANUFACTURER_FAULT_CODE = 0x86
+EPC_CURRENT_LIMIT = 0x87
+EPC_FAULT_STATUS = 0x88
+EPC_FAULT_DESCRIPTION = 0x89
+EPC_MANUFACTURER_CODE = 0x8A
+EPC_PRODUCT_CODE = 0x8C
+EPC_SERIAL_NUMBER = 0x8D
+EPC_POWER_SAVING_OPERATION = 0x8F
+EPC_REMOTE_CONTROL_SETTING = 0x93
+EPC_CURRENT_TIME = 0x97
+EPC_CURRENT_DATE = 0x98
+EPC_POWER_LIMIT = 0x99
+EPC_CUMULATIVE_OPERATING_TIME = 0x9A
+EPC_INF_PROPERTY_MAP = 0x9D
+EPC_SET_PROPERTY_MAP = 0x9E
+EPC_GET_PROPERTY_MAP = 0x9F
+
+# Class-specific EPCs used by the climate / fan platforms.
+# 0xA0 has different semantic names per class (fan speed for HOME AC,
+# air flow level for ventilation fan / air cleaner). Both aliases are
+# defined to keep call sites self-documenting.
+EPC_AIR_FLOW_LEVEL = 0xA0
+EPC_FAN_SPEED = 0xA0
+EPC_SWING_AIR_FLOW = 0xA3
+EPC_SPECIAL_STATE = 0xAA
+EPC_OPERATION_MODE = 0xB0
+EPC_TARGET_TEMPERATURE = 0xB3
+EPC_ROOM_HUMIDITY = 0xBA
+EPC_ROOM_TEMPERATURE = 0xBB
+
 # Stable (non-experimental) device class codes
 # These device classes have been verified with real hardware.
 # Other device classes are considered experimental.
 STABLE_CLASS_CODES: frozenset[int] = frozenset(
     {
-        0x0130,  # Home air conditioner
-        0x0135,  # Air cleaner
-        0x0279,  # Fuel cell (residential solar power generation)
-        0x027D,  # In-house power generation (storage battery)
-        0x05FD,  # Switch (supporting JEM-A/HA terminals)
-        0x05FF,  # Controller
+        CLASS_CODE_HOME_AIR_CONDITIONER,
+        CLASS_CODE_AIR_CLEANER,
+        CLASS_CODE_HOUSEHOLD_SOLAR_POWER_GENERATION,
+        CLASS_CODE_STORAGE_BATTERY,
+        CLASS_CODE_SWITCH,
+        CLASS_CODE_CONTROLLER,
     }
 )
 
@@ -67,30 +113,30 @@ STABLE_CLASS_CODES: frozenset[int] = frozenset(
 DEDICATED_PLATFORM_EPCS: dict[int, frozenset[int]] = {
     CLASS_CODE_HOME_AIR_CONDITIONER: frozenset(
         {
-            0x80,  # Operation status (on/off)
-            0xA0,  # Fan speed
-            0xA3,  # Swing mode
-            0xAA,  # Special state (defrosting/preheating/heat removal)
-            0xB0,  # HVAC mode
-            0xB3,  # Target temperature
+            EPC_OPERATION_STATUS,
+            EPC_FAN_SPEED,
+            EPC_SWING_AIR_FLOW,
+            EPC_SPECIAL_STATE,
+            EPC_OPERATION_MODE,
+            EPC_TARGET_TEMPERATURE,
         }
     ),
     CLASS_CODE_VENTILATION_FAN: frozenset(
         {
-            0x80,  # Operation status (on/off)
-            0xA0,  # Air flow rate setting
+            EPC_OPERATION_STATUS,
+            EPC_AIR_FLOW_LEVEL,
         }
     ),
     CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN: frozenset(
         {
-            0x80,  # Operation status (on/off)
-            0xA0,  # Air flow rate setting
+            EPC_OPERATION_STATUS,
+            EPC_AIR_FLOW_LEVEL,
         }
     ),
     CLASS_CODE_AIR_CLEANER: frozenset(
         {
-            0x80,  # Operation status (on/off)
-            0xA0,  # Air flow rate setting
+            EPC_OPERATION_STATUS,
+            EPC_AIR_FLOW_LEVEL,
         }
     ),
 }
@@ -280,18 +326,18 @@ def infer_device_classes(
 # EPC -> EntityCategory for the standardized common EPCs (0x80-0x9F).
 ENTITY_CATEGORY_BY_EPC: dict[int, EntityCategory] = {
     # DIAGNOSTIC: fault / identification
-    0x86: EntityCategory.DIAGNOSTIC,  # Manufacturer fault code
-    0x88: EntityCategory.DIAGNOSTIC,  # Fault status
-    0x89: EntityCategory.DIAGNOSTIC,  # Fault description
-    0x9A: EntityCategory.DIAGNOSTIC,  # Cumulative operating time
+    EPC_MANUFACTURER_FAULT_CODE: EntityCategory.DIAGNOSTIC,
+    EPC_FAULT_STATUS: EntityCategory.DIAGNOSTIC,
+    EPC_FAULT_DESCRIPTION: EntityCategory.DIAGNOSTIC,
+    EPC_CUMULATIVE_OPERATING_TIME: EntityCategory.DIAGNOSTIC,
     # CONFIG: installation / settings
-    0x81: EntityCategory.CONFIG,  # Installation location
-    0x87: EntityCategory.CONFIG,  # Current limit setting
-    0x8F: EntityCategory.CONFIG,  # Power saving operation setting
-    0x93: EntityCategory.CONFIG,  # Remote control setting
-    0x97: EntityCategory.CONFIG,  # Current time setting
-    0x98: EntityCategory.CONFIG,  # Current date setting
-    0x99: EntityCategory.CONFIG,  # Power limit setting
+    EPC_INSTALLATION_LOCATION: EntityCategory.CONFIG,
+    EPC_CURRENT_LIMIT: EntityCategory.CONFIG,
+    EPC_POWER_SAVING_OPERATION: EntityCategory.CONFIG,
+    EPC_REMOTE_CONTROL_SETTING: EntityCategory.CONFIG,
+    EPC_CURRENT_TIME: EntityCategory.CONFIG,
+    EPC_CURRENT_DATE: EntityCategory.CONFIG,
+    EPC_POWER_LIMIT: EntityCategory.CONFIG,
 }
 
 
@@ -322,6 +368,14 @@ def infer_entity_registry_enabled_default(
 
 
 __all__ = [
+    "CLASS_CODE_AIR_CLEANER",
+    "CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN",
+    "CLASS_CODE_CONTROLLER",
+    "CLASS_CODE_HOME_AIR_CONDITIONER",
+    "CLASS_CODE_HOUSEHOLD_SOLAR_POWER_GENERATION",
+    "CLASS_CODE_STORAGE_BATTERY",
+    "CLASS_CODE_SWITCH",
+    "CLASS_CODE_VENTILATION_FAN",
     "CONF_ENABLE_EXPERIMENTAL",
     "CONF_INTERFACE",
     "DEDICATED_PLATFORM_EPCS",
@@ -330,6 +384,32 @@ __all__ = [
     "DISCOVERY_INTERVAL",
     "DOMAIN",
     "ENTITY_CATEGORY_BY_EPC",
+    "EPC_AIR_FLOW_LEVEL",
+    "EPC_CUMULATIVE_OPERATING_TIME",
+    "EPC_CURRENT_DATE",
+    "EPC_CURRENT_LIMIT",
+    "EPC_CURRENT_TIME",
+    "EPC_FAN_SPEED",
+    "EPC_FAULT_DESCRIPTION",
+    "EPC_FAULT_STATUS",
+    "EPC_GET_PROPERTY_MAP",
+    "EPC_INF_PROPERTY_MAP",
+    "EPC_INSTALLATION_LOCATION",
+    "EPC_MANUFACTURER_CODE",
+    "EPC_MANUFACTURER_FAULT_CODE",
+    "EPC_OPERATION_MODE",
+    "EPC_OPERATION_STATUS",
+    "EPC_POWER_LIMIT",
+    "EPC_POWER_SAVING_OPERATION",
+    "EPC_PRODUCT_CODE",
+    "EPC_REMOTE_CONTROL_SETTING",
+    "EPC_ROOM_HUMIDITY",
+    "EPC_ROOM_TEMPERATURE",
+    "EPC_SERIAL_NUMBER",
+    "EPC_SET_PROPERTY_MAP",
+    "EPC_SPECIAL_STATE",
+    "EPC_SWING_AIR_FLOW",
+    "EPC_TARGET_TEMPERATURE",
     "ISSUE_RUNTIME_CLIENT_ERROR",
     "ISSUE_RUNTIME_INACTIVE",
     "MRA_UNIT_TO_HA_UNIT",

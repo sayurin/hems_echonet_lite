@@ -33,9 +33,6 @@ import time
 from typing import Any, Final
 
 from pyhems import (
-    EPC_MANUFACTURER_CODE,
-    EPC_PRODUCT_CODE,
-    EPC_SERIAL_NUMBER,
     DefinitionsLoadError,
     DeviceManager,
     HemsClient,
@@ -62,6 +59,9 @@ from .const import (
     DEFAULT_POLL_INTERVAL,
     DISCOVERY_INTERVAL,
     DOMAIN,
+    EPC_MANUFACTURER_CODE,
+    EPC_PRODUCT_CODE,
+    EPC_SERIAL_NUMBER,
     ISSUE_RUNTIME_CLIENT_ERROR,
     ISSUE_RUNTIME_INACTIVE,
     RUNTIME_MONITOR_INTERVAL,

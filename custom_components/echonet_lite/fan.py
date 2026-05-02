@@ -5,13 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from pyhems import (
-    CLASS_CODE_AIR_CLEANER,
-    CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN,
-    CLASS_CODE_VENTILATION_FAN,
-    NodeState,
-    Property,
-)
+from pyhems import NodeState, Property
 
 from homeassistant.components.fan import FanEntity, FanEntityFeature
 from homeassistant.core import HomeAssistant, callback
@@ -24,7 +18,14 @@ from homeassistant.util.percentage import (
 )
 from homeassistant.util.scaling import int_states_in_range
 
-from .const import DOMAIN
+from .const import (
+    CLASS_CODE_AIR_CLEANER,
+    CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN,
+    CLASS_CODE_VENTILATION_FAN,
+    DOMAIN,
+    EPC_AIR_FLOW_LEVEL,
+    EPC_OPERATION_STATUS,
+)
 from .coordinator import EchonetLiteCoordinator
 from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
 from .types import EchonetLiteConfigEntry
@@ -33,7 +34,7 @@ _LOGGER = logging.getLogger(__name__)
 
 PARALLEL_UPDATES = 1
 
-# Fan class codes (local to this platform)
+# Class codes handled by this platform
 FAN_CLASS_CODES: frozenset[int] = frozenset(
     {
         CLASS_CODE_VENTILATION_FAN,
@@ -41,10 +42,6 @@ FAN_CLASS_CODES: frozenset[int] = frozenset(
         CLASS_CODE_AIR_CLEANER,
     }
 )
-
-# Fan-specific EPCs (local to this platform)
-EPC_OPERATION_STATUS = 0x80
-EPC_AIR_FLOW_LEVEL = 0xA0
 
 # Air flow rate setting values (0x31-0x38 in ECHONET Lite protocol)
 _SPEED_RANGE = (0x31, 0x38)
