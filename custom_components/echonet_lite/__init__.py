@@ -454,24 +454,6 @@ class _RuntimeController:
             name="echonet_lite_event_consumer",
         )
 
-    async def async_stop(self) -> None:
-        """Cancel background tasks and stop the client."""
-        if self._unsubscribe_runtime is not None:
-            self._unsubscribe_runtime()
-            self._unsubscribe_runtime = None
-        self._issue_monitor.stop()
-        if self._discovery_task is not None:
-            self._discovery_task.cancel()
-            with suppress(asyncio.CancelledError):
-                await self._discovery_task
-            self._discovery_task = None
-        if self._event_consumer_task is not None:
-            self._event_consumer_task.cancel()
-            with suppress(asyncio.CancelledError):
-                await self._event_consumer_task
-            self._event_consumer_task = None
-        await self._client.stop()
-
     @callback
     def _handle_runtime_event(self, event: RuntimeEvent) -> None:
         """Enqueue runtime events for the single consumer task.

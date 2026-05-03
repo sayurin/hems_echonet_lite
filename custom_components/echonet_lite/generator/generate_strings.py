@@ -543,7 +543,7 @@ def generate_strings(registry: DefinitionsRegistry) -> dict[str, Any]:
 # ============================================================================
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover - CLI entry point exercised by smoke test only
     """Main entry point."""
     print("Loading pyhems DefinitionsRegistry...")
     registry = load_definitions_registry()
@@ -573,5 +573,5 @@ def main() -> None:
     print(f"  Common strings: {common_count}")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

@@ -206,7 +206,9 @@ def infer_ha_unit(entity_def: EntityDefinition) -> str | None:
     unit = entity_def.unit
     if not unit:
         return None
-    return MRA_UNIT_TO_HA_UNIT.get(unit, unit) or unit
+    return (
+        MRA_UNIT_TO_HA_UNIT.get(unit, unit) or unit
+    )  # pragma: no cover - safety net for unmapped MRA units
 
 
 # Unit -> device class rules, shared between the sensor and number platforms.
@@ -307,7 +309,7 @@ def infer_device_classes(
             if keyword == "" or keyword in name_lower:
                 return sensor_dc, number_dc
         return None, None
-    return None, None
+    return None, None  # pragma: no cover - safety net for unmapped MRA units
 
 
 # ============================================================================

@@ -105,7 +105,9 @@ def _create_sensor_description(
         )
 
     # Numeric sensor
-    if entity_def.format is None:
+    if (
+        entity_def.format is None
+    ):  # pragma: no cover - validated upstream in pyhems._validate_entity
         raise ValueError(
             f"Numeric sensor EPC 0x{entity_def.epc:02X} for class 0x{class_code:04X} "
             "has no format defined"

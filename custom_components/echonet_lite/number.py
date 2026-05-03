@@ -61,7 +61,9 @@ def _create_number_description(
     entity_def: EntityDefinition,
 ) -> EchonetLiteNumberEntityDescription:
     """Create a number entity description from an EntityDefinition."""
-    if entity_def.format is None:
+    if (
+        entity_def.format is None
+    ):  # pragma: no cover - validated upstream in pyhems._validate_entity
         raise ValueError(
             f"Number entity EPC 0x{entity_def.epc:02X} for class 0x{class_code:04X} "
             "has no format defined"
