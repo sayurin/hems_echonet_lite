@@ -13,6 +13,7 @@
     "air_flow_rate_setting": "Air flow rate setting",
     "automatic": "Automatic",
     "automatic_water_heating_setting": "Automatic water heating setting",
+    "bath_operation_status_monitor": "Bath Operation Status Monitor",
     "bathroom_priority_setting": "Bathroom priority setting",
     "blankets": "Blankets",
     "both_reservation_functions_are_off": "Both reservation functions are OFF.",
@@ -93,7 +94,10 @@
     "non_automatic": "Non-automatic",
     "non_cooling": "Non-cooling",
     "none": "None",
+    "normal_operation": "Normal Operation",
+    "not_connected": "Not Connected",
     "not_detected": "Not detected",
+    "not_heating": "Not Heating",
     "not_removed": "Not removed",
     "not_supplying_hot_water": "Not supplying hot water",
     "number_of_effective_digits_for_cumulative_amount_of_active_electric_energy": "Number of effective digits for cumulative amount of active electric energy",
@@ -127,9 +131,7 @@
     "remote_operation_setting_status": "Remote operation setting status",
     "removed": "Removed",
     "reservation_off": "Reservation OFF",
-    "reservation_off_2": "Reservation off",
     "reservation_on": "Reservation ON",
-    "reservation_on_2": "Reservation on",
     "restart": "Restart",
     "set": "Set",
     "set_temperature_value": "Set temperature value",
@@ -145,7 +147,6 @@
     "stopped_halfway": "Stopped halfway",
     "supplying_hot_water": "Supplying hot water",
     "system_interconnected_type": "System interconnected type",
-    "system_interconnected_type_2": "System-interconnected type",
     "system_interconnected_type_reverse_power_flow_acceptable": "System-interconnected type (reverse power flow acceptable)",
     "system_interconnected_type_reverse_power_flow_not_acceptable": "System-interconnected type (reverse power flow not acceptable)",
     "tank_capacity": "Tank capacity",
@@ -162,6 +163,7 @@
     "valid": "Valid",
     "vehicle_connection_confirmation": "Vehicle connection confirmation",
     "ventilation_air_flow_rate_setting": "Ventilation air flow rate setting",
+    "ventilation_auto_setting": "Ventilation Auto setting",
     "volume_setting": "Volume setting",
     "water_is_heating": "Water is heating.",
     "water_is_not_heating": "Water is not heating.",
@@ -299,7 +301,7 @@
         "name": "[%key:component::echonet_lite::common::special_state%]",
         "state": {
           "off": "[%key:component::echonet_lite::common::special_state%]",
-          "on": "Normal operation"
+          "on": "[%key:component::echonet_lite::common::normal_operation%]"
         }
       },
       "class_0260_epc_c2": {
@@ -333,7 +335,7 @@
       "class_026b_epc_b2": {
         "name": "Water heater status",
         "state": {
-          "off": "Not heating",
+          "off": "[%key:component::echonet_lite::common::not_heating%]",
           "on": "[%key:component::echonet_lite::common::heating%]"
         }
       },
@@ -382,7 +384,7 @@
       "class_0272_epc_e2": {
         "name": "Bath water heater status",
         "state": {
-          "off": "Not Heating",
+          "off": "[%key:component::echonet_lite::common::not_heating%]",
           "on": "[%key:component::echonet_lite::common::heating%]"
         }
       },
@@ -885,7 +887,7 @@
         "name": "Light level setting for night lighting"
       },
       "class_0291_epc_b0": {
-        "name": "Light level Setting"
+        "name": "[%key:component::echonet_lite::common::light_level_setting%]"
       },
       "class_02a1_epc_e7": {
         "name": "Charging amount setting"
@@ -2161,7 +2163,7 @@
         "name": "[%key:component::echonet_lite::common::tank_capacity%]"
       },
       "class_026b_epc_ea": {
-        "name": "Bath Operation Status Monitor",
+        "name": "[%key:component::echonet_lite::common::bath_operation_status_monitor%]",
         "state": {
           "keeping_temperature": "Keeping temperature",
           "no_operation": "[%key:common::state::stopped%]",
@@ -2179,7 +2181,7 @@
         }
       },
       "class_0272_epc_ef": {
-        "name": "Bath operation status monitor",
+        "name": "[%key:component::echonet_lite::common::bath_operation_status_monitor%]",
         "state": {
           "keeping_temperature": "Keeping bath temperature",
           "no_operation": "[%key:common::state::stopped%]",
@@ -2252,7 +2254,7 @@
         "name": "Conversion coefficient"
       },
       "class_0279_epc_d0": {
-        "name": "[%key:component::echonet_lite::common::system_interconnected_type_2%]",
+        "name": "[%key:component::echonet_lite::common::system_interconnected_type%]",
         "state": {
           "independent": "[%key:component::echonet_lite::common::independent_type%]",
           "reverse_power_flow_acceptable": "[%key:component::echonet_lite::common::system_interconnected_type_reverse_power_flow_acceptable%]",
@@ -2351,8 +2353,8 @@
         "name": "[%key:component::echonet_lite::common::system_interconnected_type%]",
         "state": {
           "independent": "[%key:component::echonet_lite::common::independent_type%]",
-          "reverse_power_flow_acceptable": "System interconnected type (reverse power flow acceptable)",
-          "reverse_power_flow_not_acceptable": "System interconnected type (reverse power flow not acceptable)"
+          "reverse_power_flow_acceptable": "[%key:component::echonet_lite::common::system_interconnected_type_reverse_power_flow_acceptable%]",
+          "reverse_power_flow_not_acceptable": "[%key:component::echonet_lite::common::system_interconnected_type_reverse_power_flow_not_acceptable%]"
         }
       },
       "class_027c_epc_e1": {
@@ -2427,7 +2429,7 @@
         "name": "Measured cumulative charging electric energy"
       },
       "class_027d_epc_db": {
-        "name": "[%key:component::echonet_lite::common::system_interconnected_type_2%]",
+        "name": "[%key:component::echonet_lite::common::system_interconnected_type%]",
         "state": {
           "independent": "[%key:component::echonet_lite::common::independent_type%]",
           "reverse_power_flow_acceptable": "System interconnection (reverse power flow acceptable)",
@@ -2489,7 +2491,7 @@
           "chargeable_dischargeable": "Chargeable and Dischargeable",
           "connected": "[%key:common::state::connected%]",
           "dischargeable": "Dischargeable",
-          "not_connected": "Not Connected",
+          "not_connected": "[%key:component::echonet_lite::common::not_connected%]",
           "undefined": "[%key:component::echonet_lite::common::undefined%]",
           "unknown": "Unknown of Chargeability"
         }
@@ -2645,7 +2647,7 @@
           "n5": "n5",
           "n6": "n6",
           "n7": "n7",
-          "others": "others"
+          "others": "[%key:component::echonet_lite::common::others%]"
         }
       },
       "class_028e_epc_db": {
@@ -2701,7 +2703,7 @@
         "state": {
           "chargeable": "[%key:component::echonet_lite::common::chargeable%]",
           "not_chargeable": "Not chargeable",
-          "not_connected": "Not connected",
+          "not_connected": "[%key:component::echonet_lite::common::not_connected%]",
           "undefined": "[%key:component::echonet_lite::common::undefined%]",
           "unknown": "[%key:component::echonet_lite::common::unknown%]"
         }
@@ -2921,7 +2923,7 @@
       "class_0000_epc_8f": {
         "name": "Power-saving operation setting",
         "state": {
-          "off": "Normal Operation",
+          "off": "[%key:component::echonet_lite::common::normal_operation%]",
           "on": "Power saving Operation"
         }
       },
@@ -2947,7 +2949,7 @@
         }
       },
       "class_0133_epc_bf": {
-        "name": "Ventilation Auto setting",
+        "name": "[%key:component::echonet_lite::common::ventilation_auto_setting%]",
         "state": {
           "off": "[%key:component::echonet_lite::common::non_auto%]",
           "on": "[%key:common::state::auto%]"
@@ -2968,7 +2970,7 @@
         }
       },
       "class_0134_epc_bf": {
-        "name": "Ventilation auto setting",
+        "name": "[%key:component::echonet_lite::common::ventilation_auto_setting%]",
         "state": {
           "off": "[%key:component::echonet_lite::common::non_auto%]",
           "on": "[%key:common::state::auto%]"
@@ -3173,15 +3175,15 @@
       "class_0273_epc_90": {
         "name": "On timer reservation setting 1",
         "state": {
-          "off": "[%key:component::echonet_lite::common::reservation_off_2%]",
-          "on": "[%key:component::echonet_lite::common::reservation_on_2%]"
+          "off": "[%key:component::echonet_lite::common::reservation_off%]",
+          "on": "[%key:component::echonet_lite::common::reservation_on%]"
         }
       },
       "class_0273_epc_94": {
-        "name": "Off timer reservation setting",
+        "name": "[%key:component::echonet_lite::common::off_timer_reservation_setting%]",
         "state": {
-          "off": "[%key:component::echonet_lite::common::reservation_off_2%]",
-          "on": "[%key:component::echonet_lite::common::reservation_on_2%]"
+          "off": "[%key:component::echonet_lite::common::reservation_off%]",
+          "on": "[%key:component::echonet_lite::common::reservation_on%]"
         }
       },
       "class_0273_epc_cf": {
@@ -3355,8 +3357,8 @@
       "class_03bb_epc_90": {
         "name": "Rice cooking reservation setting",
         "state": {
-          "off": "[%key:component::echonet_lite::common::reservation_off_2%]",
-          "on": "[%key:component::echonet_lite::common::reservation_on_2%]"
+          "off": "[%key:component::echonet_lite::common::reservation_off%]",
+          "on": "[%key:component::echonet_lite::common::reservation_on%]"
         }
       },
       "class_03bb_epc_b2": {
@@ -3395,10 +3397,10 @@
         }
       },
       "class_03d3_epc_90": {
-        "name": "On timer reservation setting",
+        "name": "[%key:component::echonet_lite::common::on_timer_reservation_setting%]",
         "state": {
-          "off": "[%key:component::echonet_lite::common::reservation_off_2%]",
-          "on": "[%key:component::echonet_lite::common::reservation_on_2%]"
+          "off": "[%key:component::echonet_lite::common::reservation_off%]",
+          "on": "[%key:component::echonet_lite::common::reservation_on%]"
         }
       },
       "class_03d3_epc_ec": {
