@@ -1,0 +1,121 @@
+"""Diagnostics support for the HEMS Echonet Lite integration."""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
+
+from pyhems import NodeState
+
+from homeassistant.components.diagnostics import async_redact_data
+from homeassistant.const import CONF_UNIQUE_ID
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceEntry
+
+from .const import CONF_INTERFACE, DOMAIN
+from .types import EchonetLiteConfigEntry
+
+TO_REDACT = {
+    CONF_INTERFACE,
+    CONF_UNIQUE_ID,
+    "device_key",
+    "node_id",
+    "serial_number",
+}
+
+
+def _format_epcs(epcs: frozenset[int]) -> str:
+    """Return sorted EPCs as hexadecimal strings."""
+    return " ".join([f"{epc:02X}" for epc in sorted(epcs)])
+
+
+def _format_properties(properties: Mapping[int, bytes]) -> dict[str, str]:
+    """Return properties as EPC -> EDT hex mapping."""
+    return {f"0x{epc:02X}": edt.hex(" ") for epc, edt in sorted(properties.items())}
+
+
+def _node_to_dict(node: NodeState) -> dict[str, Any]:
+    """Serialize ``NodeState`` into a diagnostics-friendly dictionary."""
+    eoj = node.eoj
+
+    return {
+        "device_key": node.device_key,
+        "eoj": f"0x{eoj:06X}",
+        "class_code": f"0x{eoj.class_code:04X}",
+        "instance": eoj.instance_number,
+        "node_id": node.node_id,
+        "manufacturer_code": f"0x{node.manufacturer_code:06X}",
+        "manufacturer_name_en": node.manufacturer_name_en,
+        "manufacturer_name_ja": node.manufacturer_name_ja,
+        "product_code": node.product_code,
+        "serial_number": node.serial_number,
+        "get_epcs": _format_epcs(node.get_epcs),
+        "set_epcs": _format_epcs(node.set_epcs),
+        "inf_epcs": _format_epcs(node.inf_epcs),
+        "poll_epcs": _format_epcs(node.poll_epcs),
+        "properties": _format_properties(node.properties),
+    }
+
+
+def _get_device_key(device: DeviceEntry) -> str | None:
+    """Extract the ECHONET Lite ``device_key`` from a device entry."""
+    for domain, identifier in device.identifiers:
+        if domain == DOMAIN:
+            return identifier
+    return None
+
+
+async def async_get_config_entry_diagnostics(
+    hass: HomeAssistant,
+    entry: EchonetLiteConfigEntry,
+) -> dict[str, Any]:
+    """Return diagnostics for a config entry."""
+    del hass
+
+    runtime = entry.runtime_data
+    health = runtime.health
+    coordinator = runtime.coordinator
+
+    data = {
+        "config_entry": entry.as_dict(),
+        "runtime": {
+            "device_count": len(coordinator.data),
+            "last_runtime_activity_seen": coordinator.last_runtime_activity_at
+            is not None,
+            "last_frame_received": coordinator.device_manager.last_frame_received_at
+            is not None,
+            "health": {
+                "last_client_error": health.last_client_error,
+                "last_client_error_recorded": health.last_client_error_at is not None,
+                "last_restart_recorded": health.last_restart_at is not None,
+                "restart_attempts": health.restart_attempts,
+            },
+            "tasks": {
+                "discovery_task_done": runtime.discovery_task.done(),
+                "event_consumer_task_done": runtime.event_consumer_task.done(),
+            },
+        },
+        "devices": [
+            _node_to_dict(node) for _, node in sorted(coordinator.data.items())
+        ],
+    }
+    return async_redact_data(data, TO_REDACT)
+
+
+async def async_get_device_diagnostics(
+    hass: HomeAssistant,
+    entry: EchonetLiteConfigEntry,
+    device: DeviceEntry,
+) -> dict[str, Any]:
+    """Return diagnostics for a device."""
+    del hass
+
+    device_key = _get_device_key(device)
+    if device_key is None:
+        return {"error": "device_not_found", "reason": "missing_identifier"}
+
+    node = entry.runtime_data.coordinator.data.get(device_key)
+    if node is None:
+        return {"device_key": device_key, "available": False}
+
+    return async_redact_data(_node_to_dict(node), TO_REDACT)
