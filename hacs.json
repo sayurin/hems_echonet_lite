@@ -1,3 +1,5 @@
 {
-    "name": "HEMS echonet lite"
+  "name": "HEMS echonet lite",
+  "zip_release": true,
+  "filename": "echonet_lite.zip"
 }

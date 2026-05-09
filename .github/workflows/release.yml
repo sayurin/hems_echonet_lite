@@ -13,7 +13,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Validate version format
         run: |
@@ -43,8 +43,14 @@ jobs:
           git tag "v${{ inputs.version }}"
           git push origin HEAD --tags
 
+      - name: ZIP echonet_lite Dir
+        run: |
+          cd ${{ github.workspace }}/custom_components/echonet_lite
+          zip echonet_lite.zip -r ./
+
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: "v${{ inputs.version }}"
           generate_release_notes: true
+          files: ${{ github.workspace }}/custom_components/echonet_lite/echonet_lite.zip
