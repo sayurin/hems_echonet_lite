@@ -93,6 +93,20 @@ def _text_to_common_key(text: str) -> str:
     return re.sub(r"_+", "_", key).strip("_")
 
 
+def _canonicalize_common_text(text: str) -> str:
+    """Canonicalize text for dedup grouping.
+
+    Canonicalization rules intentionally only normalize:
+    - case differences
+    - separator differences between spaces and hyphens
+
+    This allows values like "Reservation OFF" and "Reservation off", or
+    "System interconnected type" and "System-interconnected type", to be
+    treated as the same value bucket before key assignment.
+    """
+    return re.sub(r"\s+", " ", text.lower().replace("-", " ")).strip()
+
+
 # ============================================================================
 # Deduplication
 # ============================================================================
@@ -147,8 +161,15 @@ def _build_common_section(
 ) -> dict[str, str]:
     """Build a common section from values that appear multiple times.
 
-    Assigns a snake_case key to each duplicated value, resolving key
-    collisions with numeric suffixes (_2, _3, ...).
+    Values are first grouped by canonical text to absorb case-only and
+    hyphen/space-only variants into a single bucket.
+
+    A single representative text is selected per canonical bucket using:
+    1. highest occurrence count
+    2. lexicographical order of text as deterministic tie-breaker
+
+    If distinct canonical buckets still map to the same common key, this is
+    treated as a real key-generation ambiguity and raises ValueError.
 
     Args:
         value_counts: Counter of non-reference string values.
@@ -156,42 +177,55 @@ def _build_common_section(
     Returns:
         Dictionary mapping common keys to text values, sorted by key.
     """
-    used_keys: dict[str, str] = {}  # key -> text
-    text_to_key: dict[str, str] = {}  # text -> key
-
-    # Process values sorted by text for deterministic output
-    for text, count in sorted(value_counts.items()):
-        if count < _DEDUP_THRESHOLD:
+    canonical_buckets: dict[str, list[tuple[str, int]]] = {}
+    for text, count in value_counts.items():
+        canonical = _canonicalize_common_text(text)
+        if not canonical:
             continue
-        base_key = _text_to_common_key(text)
-        if not base_key:
+        canonical_buckets.setdefault(canonical, []).append((text, count))
+
+    used_keys: dict[str, tuple[str, str]] = {}
+    text_to_key: dict[str, str] = {}
+
+    # Process canonical buckets sorted by canonical text for deterministic output
+    for canonical, items in sorted(canonical_buckets.items()):
+        total_count = sum(count for _, count in items)
+        if total_count < _DEDUP_THRESHOLD:
             continue
 
-        # Resolve key collisions
-        candidate = base_key
-        suffix = 2
-        while candidate in used_keys and used_keys[candidate] != text:
-            candidate = f"{base_key}_{suffix}"
-            suffix += 1
+        # Representative text: highest count, then lexical order for stability
+        representative_text = sorted(items, key=lambda item: (-item[1], item[0]))[0][0]
+        key = _text_to_common_key(canonical)
+        if not key:
+            continue
 
-        used_keys[candidate] = text
-        text_to_key[candidate] = text
+        if key in used_keys and used_keys[key][0] != canonical:
+            existing_canonical, existing_text = used_keys[key]
+            raise ValueError(
+                "Common key collision after canonical grouping: "
+                f"key='{key}', "
+                f"canonical_a='{existing_canonical}' (text='{existing_text}'), "
+                f"canonical_b='{canonical}' (text='{representative_text}')"
+            )
+
+        used_keys[key] = (canonical, representative_text)
+        text_to_key[key] = representative_text
 
     # Return sorted by key
     return dict(sorted(text_to_key.items()))
 
 
 def _build_text_to_ref(common_section: dict[str, str]) -> dict[str, str]:
-    """Build a reverse lookup from text to key reference string.
+    """Build a reverse lookup from canonical text to key reference string.
 
     Args:
         common_section: The common section (key -> text).
 
     Returns:
-        Dictionary mapping text to reference string.
+        Dictionary mapping canonical text to reference string.
     """
     return {
-        text: f"{_LOCAL_COMMON_REF_PREFIX}{key}%]"
+        _canonicalize_common_text(text): f"{_LOCAL_COMMON_REF_PREFIX}{key}%]"
         for key, text in common_section.items()
     }
 
@@ -200,12 +234,13 @@ def _replace_state_values(state: dict[str, str], text_to_ref: dict[str, str]) ->
     """Replace non-reference values with common references in a state dict."""
     replacements = 0
     for state_key, state_value in state.items():
+        canonical_value = _canonicalize_common_text(state_value) if state_value else ""
         if (
             state_value
             and not _is_key_reference(state_value)
-            and state_value in text_to_ref
+            and canonical_value in text_to_ref
         ):
-            state[state_key] = text_to_ref[state_value]
+            state[state_key] = text_to_ref[canonical_value]
             replacements += 1
     return replacements
 
@@ -231,8 +266,9 @@ def _replace_with_references(
         for entity_entry in platform_entities.values():
             # Replace entity name
             name = entity_entry.get("name", "")
-            if name and not _is_key_reference(name) and name in text_to_ref:
-                entity_entry["name"] = text_to_ref[name]
+            canonical_name = _canonicalize_common_text(name) if name else ""
+            if name and not _is_key_reference(name) and canonical_name in text_to_ref:
+                entity_entry["name"] = text_to_ref[canonical_name]
                 replacements += 1
             # Replace state values
             if state := entity_entry.get("state"):
@@ -543,7 +579,7 @@ def generate_strings(registry: DefinitionsRegistry) -> dict[str, Any]:
 # ============================================================================
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover - CLI entry point exercised by smoke test only
     """Main entry point."""
     print("Loading pyhems DefinitionsRegistry...")
     registry = load_definitions_registry()
@@ -573,5 +609,5 @@ def main() -> None:
     print(f"  Common strings: {common_count}")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

@@ -59,7 +59,12 @@ rules:
 
   # Gold
   devices: done
-  diagnostics: todo
+  diagnostics:
+    status: done
+    comment: >-
+      Added config-entry and device diagnostics in
+      homeassistant/components/echonet_lite/diagnostics.py with sensitive
+      fields redacted via async_redact_data.
   discovery-update-info:
     status: exempt
     comment: >-

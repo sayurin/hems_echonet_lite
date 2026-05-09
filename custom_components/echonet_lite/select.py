@@ -58,7 +58,9 @@ def _create_select_description(
         value_to_option[enum_val.edt] = option_key
         option_to_value[option_key] = enum_val.edt
 
-    if not option_to_value:
+    if (
+        not option_to_value
+    ):  # pragma: no cover - validated upstream in pyhems._validate_entity
         raise ValueError(
             f"Select entity EPC 0x{entity_def.epc:02X} for class 0x{class_code:04X} "
             "has no valid enum values - this should be caught during generation"
