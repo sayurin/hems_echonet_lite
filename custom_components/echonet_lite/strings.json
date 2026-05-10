@@ -3438,6 +3438,21 @@
           "on": "Displaying enabled"
         }
       }
+    },
+    "water_heater": {
+      "electric_water_heater": {
+        "name": "Electric water heater",
+        "state_attributes": {
+          "operation_mode": {
+            "state": {
+              "auto": "[%key:common::state::auto%]",
+              "manual": "[%key:common::state::manual%]",
+              "manual_off": "Manual (heating stopped)",
+              "off": "[%key:common::state::off%]"
+            }
+          }
+        }
+      }
     }
   },
   "exceptions": {
@@ -3461,6 +3476,9 @@
     },
     "unsupported_hvac_mode": {
       "message": "Unsupported HVAC mode: {hvac_mode}"
+    },
+    "unsupported_operation_mode": {
+      "message": "Unsupported operation mode: {operation_mode}"
     },
     "unsupported_option": {
       "message": "Unsupported option: {option}"

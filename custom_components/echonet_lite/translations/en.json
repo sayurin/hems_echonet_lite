@@ -173,7 +173,7 @@
         "abort": {
             "cannot_connect": "Home Assistant could not start the multicast listener. Verify that UDP multicast traffic (224.0.23.0:3610) is allowed on the host network.",
             "reconfigure_successful": "Network interface updated successfully",
-            "single_instance_allowed": "Already configured. Only a single configuration possible.",
+            "single_instance_allowed": "Already configured. Only a single configuration is possible.",
             "unknown": "Unexpected error while validating the configuration"
         },
         "error": {
@@ -3438,6 +3438,21 @@
                     "on": "Displaying enabled"
                 }
             }
+        },
+        "water_heater": {
+            "electric_water_heater": {
+                "name": "Electric water heater",
+                "state_attributes": {
+                    "operation_mode": {
+                        "state": {
+                            "auto": "Auto",
+                            "manual": "Manual",
+                            "manual_off": "Manual (heating stopped)",
+                            "off": "Off"
+                        }
+                    }
+                }
+            }
         }
     },
     "exceptions": {
@@ -3461,6 +3476,9 @@
         },
         "unsupported_hvac_mode": {
             "message": "Unsupported HVAC mode: {hvac_mode}"
+        },
+        "unsupported_operation_mode": {
+            "message": "Unsupported operation mode: {operation_mode}"
         },
         "unsupported_option": {
             "message": "Unsupported option: {option}"

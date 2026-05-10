@@ -75,6 +75,21 @@
           }
         }
       }
+    },
+    "water_heater": {
+      "electric_water_heater": {
+        "name": "電気温水器",
+        "state_attributes": {
+          "operation_mode": {
+            "state": {
+              "auto": "自動沸き上げ",
+              "manual": "手動沸き上げ",
+              "manual_off": "手動沸き上げ停止",
+              "off": "OFF"
+            }
+          }
+        }
+      }
     }
   },
   "exceptions": {
