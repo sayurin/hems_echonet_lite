@@ -14,7 +14,7 @@ ECHONET Lite protocol integration for Home Assistant, powered by [pyhems](https:
 - **Event-driven updates** — entity state changes are pushed immediately upon frame receipt
 - **Property polling** every 60 seconds for devices that do not send notifications
 - **Runtime health monitoring** — creates repair issues when no frames are received for 5 minutes
-- **8 entity platforms**: Climate, Fan, Binary Sensor, Button, Number, Select, Sensor, Switch
+- **9 entity platforms**: Climate, Fan, Water Heater, Binary Sensor, Button, Number, Select, Sensor, Switch
 - **Experimental mode** to enable unverified device classes
 
 ## Supported Devices
@@ -44,6 +44,16 @@ These device classes are enabled by default:
 - **Speed**: 8 levels mapped to percentage
 - **Preset modes**: Auto, Manual
 
+### Water Heater (0x026B) Features
+
+The electric heat-pump water heater class is exposed as a high-level `WaterHeaterEntity` that aggregates operation status (EPC 0x80), operation mode (EPC 0xB0) and target temperature (EPC 0xB3) into a single entity.
+
+- **Operations**: `auto` (automatic water heating), `manual` (manual water heating), `manual_off` (manual heating stopped / away), `off`
+- **Target temperature**: setpoint via EPC 0xB3 (range derived from the device's MRA definition, 1 °C step)
+- **Current temperature**: measured water temperature (EPC 0xC1) — also exposed as a standalone sensor, mirroring the climate platform's room-temperature convention
+
+> **Note**: 0x026B is currently part of the **experimental** device class set (see below) and must be enabled via the integration options. The dedicated water heater entity is created only after the device is discovered with experimental mode on.
+
 ### Generic Entity Platforms
 
 Properties are automatically mapped to entity platforms based on the ECHONET Lite property definition:
@@ -59,7 +69,7 @@ Properties are automatically mapped to entity platforms based on the ECHONET Lit
 
 Enable **"Enable experimental device classes"** in the integration options to access 50+ additional device classes, including:
 
-Water heaters, electric locks, lighting, refrigerators, washing machines, smart meters, EV chargers, bathroom dryers, and more.
+Electric water heaters (0x026B, with the dedicated Water Heater entity described above), electric locks, lighting, refrigerators, washing machines, smart meters, EV chargers, bathroom dryers, and more.
 
 > **Note**: Experimental device classes have not been verified with real hardware. Some entities may behave unexpectedly.
 
