@@ -49,6 +49,20 @@
           }
         }
       }
+    },
+    "water_heater": {
+      "electric_water_heater": {
+        "state_attributes": {
+          "operation_mode": {
+            "state": {
+              "auto": "mdi:water-boiler-auto",
+              "manual": "mdi:water-boiler",
+              "manual_off": "mdi:water-boiler-off",
+              "off": "mdi:water-boiler-off"
+            }
+          }
+        }
+      }
     }
   }
 }
