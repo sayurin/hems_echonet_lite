@@ -2902,6 +2902,18 @@
             "class_03d4_epc_be": {
                 "name": "Used to acquire measurements of outdoor air temperature."
             },
+            "class_05ff_custom_000005_epc_f2_1": {
+                "name": "Instantaneous Electric Power Sold"
+            },
+            "class_05ff_custom_000005_epc_f3_1": {
+                "name": "Instantaneous Electric Power Bought"
+            },
+            "class_05ff_custom_000005_epc_f4_1": {
+                "name": "Cumulative Electric Energy Sold"
+            },
+            "class_05ff_custom_000005_epc_f5_1": {
+                "name": "Cumulative Electric Energy Bought"
+            },
             "class_05ff_epc_c6": {
                 "name": "Connection status",
                 "state": {
