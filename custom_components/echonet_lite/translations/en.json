@@ -668,6 +668,14 @@
                 }
             }
         },
+        "cover": {
+            "electrically_operated_blind": {
+                "name": "Electrically operated blind"
+            },
+            "electrically_operated_shutter": {
+                "name": "Electrically operated shutter"
+            }
+        },
         "fan": {
             "air_cleaner": {
                 "state_attributes": {
@@ -688,6 +696,35 @@
                         }
                     }
                 }
+            }
+        },
+        "light": {
+            "extended_lighting_system": {
+                "name": "Extended lighting system"
+            },
+            "general_lighting": {
+                "name": "General lighting",
+                "state_attributes": {
+                    "effect": {
+                        "state": {
+                            "auto": "Auto",
+                            "color": "Color lighting",
+                            "night": "Night lighting",
+                            "normal": "Main lighting"
+                        }
+                    }
+                }
+            },
+            "lighting_system": {
+                "name": "Lighting system"
+            },
+            "mono_functional_lighting": {
+                "name": "Mono-functional lighting"
+            }
+        },
+        "lock": {
+            "electric_lock": {
+                "name": "Electric lock"
             }
         },
         "number": {

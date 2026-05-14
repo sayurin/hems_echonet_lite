@@ -54,6 +54,14 @@
         }
       }
     },
+    "cover": {
+      "electrically_operated_blind": {
+        "name": "電動ブラインド"
+      },
+      "electrically_operated_shutter": {
+        "name": "電動シャッター"
+      }
+    },
     "fan": {
       "air_cleaner": {
         "state_attributes": {
@@ -89,6 +97,35 @@
             }
           }
         }
+      }
+    },
+    "light": {
+      "extended_lighting_system": {
+        "name": "拡張照明システム"
+      },
+      "general_lighting": {
+        "name": "一般照明",
+        "state_attributes": {
+          "effect": {
+            "state": {
+              "auto": "自動",
+              "color": "カラー灯",
+              "night": "常夜灯",
+              "normal": "主照明"
+            }
+          }
+        }
+      },
+      "lighting_system": {
+        "name": "照明システム"
+      },
+      "mono_functional_lighting": {
+        "name": "単機能照明"
+      }
+    },
+    "lock": {
+      "electric_lock": {
+        "name": "電気錠"
       }
     }
   },
