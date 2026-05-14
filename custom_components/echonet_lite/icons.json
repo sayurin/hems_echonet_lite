@@ -50,6 +50,20 @@
         }
       }
     },
+    "light": {
+      "extended_lighting_system": {
+        "default": "mdi:lightbulb-multiple-off",
+        "state": {
+          "on": "mdi:lightbulb-multiple"
+        }
+      },
+      "lighting_system": {
+        "default": "mdi:lightbulb-multiple-off",
+        "state": {
+          "on": "mdi:lightbulb-multiple"
+        }
+      }
+    },
     "water_heater": {
       "electric_water_heater": {
         "state_attributes": {

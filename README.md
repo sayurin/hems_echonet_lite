@@ -14,49 +14,97 @@ ECHONET Lite protocol integration for Home Assistant, powered by [pyhems](https:
 - **Event-driven updates** — entity state changes are pushed immediately upon frame receipt
 - **Property polling** every 60 seconds for devices that do not send notifications
 - **Runtime health monitoring** — creates repair issues when no frames are received for 5 minutes
-- **9 entity platforms**: Climate, Fan, Water Heater, Binary Sensor, Button, Number, Select, Sensor, Switch
-- **Experimental mode** to enable unverified device classes
+- **12 entity platforms**: Climate, Fan, Water Heater, Lock, Cover, Light, Binary Sensor, Button, Number, Select, Sensor, Switch
+- **Experimental mode** to enable 50+ additional unverified device classes
 
 ## Supported Devices
 
+Device classes fall into two categories:
+
+- **Stable** — enabled by default, no extra configuration needed
+- **Experimental** — must be enabled via the integration options; not verified with real hardware
+
 ### Stable Device Classes
 
-These device classes are enabled by default:
-
-| Class Code | Device | Entity Platform |
-|------------|--------|-----------------|
+| Class Code | Device | HA Platform |
+|------------|--------|-------------|
 | 0x0130 | Home Air Conditioner | Climate + generic entities |
+| 0x0133 | Ventilation Fan | Fan + generic entities |
+| 0x0134 | Air Conditioner Ventilation Fan | Fan + generic entities |
 | 0x0135 | Air Cleaner | Fan + generic entities |
 | 0x0279 | Residential Solar Power Generation | Generic entities |
 | 0x027D | Storage Battery | Generic entities |
-| 0x05FD | Switch (supporting JEM-A/HA terminals) | Generic entities |
+| 0x05FD | Switch (JEM-A/HA terminals) | Generic entities |
 | 0x05FF | Controller | Generic entities |
 
-### Climate (0x0130) Features
+### Experimental Device Classes with Dedicated Platforms
+
+The following experimental classes are exposed as fully-featured HA platform entities:
+
+| Class Code | Device | HA Platform |
+|------------|--------|-------------|
+| 0x026B | Electric Heat-Pump Water Heater | Water Heater + generic entities |
+| 0x026F | Electric Lock | Lock + generic entities |
+| 0x0260 | Electrically Operated Blind | Cover + generic entities |
+| 0x0263 | Electrically Operated Shutter | Cover + generic entities |
+| 0x0290 | General Lighting | Light + generic entities |
+| 0x0291 | Mono-Functional Lighting | Light + generic entities |
+| 0x02A3 | Lighting System | Light + generic entities |
+| 0x02A4 | Extended Lighting System | Light + generic entities |
+
+All other experimental classes are supported via generic entities only.
+
+## Platform Details
+
+### Climate (0x0130)
 
 - **HVAC modes**: Off, Auto, Cool, Heat, Dry, Fan Only
 - **Fan modes**: Auto, Low (Level 1) – High (Level 8), 9 speeds
 - **Swing modes**: Off, Vertical, Horizontal, Both
 - **Temperature**: 0–50°C, 1°C step
 
-### Fan (0x0133, 0x0134, 0x0135) Features
+### Fan (0x0133, 0x0134, 0x0135)
 
 - **Speed**: 8 levels mapped to percentage
 - **Preset modes**: Auto, Manual
 
-### Water Heater (0x026B) Features
+### Water Heater (0x026B)
 
-The electric heat-pump water heater class is exposed as a high-level `WaterHeaterEntity` that aggregates operation status (EPC 0x80), operation mode (EPC 0xB0) and target temperature (EPC 0xB3) into a single entity.
+Aggregates operation status (EPC 0x80), operation mode (EPC 0xB0) and target temperature (EPC 0xB3) into a single entity.
 
 - **Operations**: `auto` (automatic water heating), `manual` (manual water heating), `manual_off` (manual heating stopped / away), `off`
-- **Target temperature**: setpoint via EPC 0xB3 (range derived from the device's MRA definition, 1 °C step)
-- **Current temperature**: measured water temperature (EPC 0xC1) — also exposed as a standalone sensor, mirroring the climate platform's room-temperature convention
+- **Target temperature**: setpoint via EPC 0xB3 (range derived from the device's MRA definition, 1°C step)
+- **Current temperature**: measured water temperature (EPC 0xC1) — also exposed as a standalone sensor
 
-> **Note**: 0x026B is currently part of the **experimental** device class set (see below) and must be enabled via the integration options. The dedicated water heater entity is created only after the device is discovered with experimental mode on.
+### Lock (0x026F)
+
+- **Locked state**: requires both main lock (EPC 0xE0) and sub-lock (EPC 0xE1, if advertised) to be locked
+- **Jammed state**: indicated when alarm status (EPC 0xE5) reports an abnormality
+- **Lock / Unlock**: writes to main lock (EPC 0xE0) only
+
+### Cover (0x0260 Blind, 0x0263 Shutter)
+
+- **Commands**: Open, Close, Stop (always available)
+- **Position control** (EPC 0xE1): available when the device supports set operations, 0–100%
+- **Tilt control** (EPC 0xE2): available when the device supports set operations, 0–100% mapped to 0–180°
+- **State** (EPC 0xEA): Open, Closed, Opening, Closing, Stopped; falls back to position percentage when not advertised
+
+### Light (0x0290, 0x0291, 0x02A3, 0x02A4)
+
+| Feature | 0x0290 General | 0x0291 Mono | 0x02A3 System | 0x02A4 Extended |
+|---------|:-:|:-:|:-:|:-:|
+| On / Off | ✓ | ✓ | ✓ | ✓ |
+| Brightness (EPC 0xB0, 0–100%) | ✓ | ✓ | ✓ | ✓ |
+| Color temperature (EPC 0xB1) | ✓ | — | — | — |
+| Lighting mode effect (EPC 0xB6) | ✓ | — | — | — |
+
+**Color temperature presets** (0x0290 only): Incandescent (2700 K), White (4000 K), Daylight White (5000 K), Daylight Color (6500 K). Arbitrary kelvin values are snapped to the nearest preset.
+
+**Lighting mode effects** (0x0290 only): `auto`, `normal` (main lighting), `night` (night lighting), `color` (color lighting).
 
 ### Generic Entity Platforms
 
-Properties are automatically mapped to entity platforms based on the ECHONET Lite property definition:
+All remaining properties are automatically mapped based on the ECHONET Lite property definition:
 
 | Condition | Writable | Read-only |
 |-----------|----------|-----------|
@@ -64,14 +112,6 @@ Properties are automatically mapped to entity platforms based on the ECHONET Lit
 | 3+ value enum | Select | Sensor (enum) |
 | 1-value enum | Button | — |
 | Numeric | Number | Sensor |
-
-### Experimental Device Classes
-
-Enable **"Enable experimental device classes"** in the integration options to access 50+ additional device classes, including:
-
-Electric water heaters (0x026B, with the dedicated Water Heater entity described above), electric locks, lighting, refrigerators, washing machines, smart meters, EV chargers, bathroom dryers, and more.
-
-> **Note**: Experimental device classes have not been verified with real hardware. Some entities may behave unexpectedly.
 
 ## Installation
 
@@ -106,6 +146,8 @@ After setup, configure in **Settings → Devices & Services → HEMS → Configu
 | Option | Description | Default |
 |--------|-------------|---------|
 | Enable experimental device classes | Include unverified device classes | Off |
+
+> Enabling experimental mode is required for Water Heater, Lock, Cover, Light, and all other non-stable device classes.
 
 ### Reconfiguration
 
