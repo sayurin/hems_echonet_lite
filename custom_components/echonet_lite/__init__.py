@@ -355,6 +355,7 @@ class _RuntimeIssueMonitor:
             ir.async_delete_issue(self._hass, DOMAIN, ISSUE_RUNTIME_INACTIVE)
             self._inactivity_issue_active = False
             _LOGGER.info("ECHONET Lite communication restored")
+            self._coordinator.async_update_listeners()
 
     @callback
     def record_client_error(self, message: str) -> None:
