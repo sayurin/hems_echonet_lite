@@ -116,6 +116,8 @@ async def async_get_device_diagnostics(
 
     node = entry.runtime_data.coordinator.data.get(device_key)
     if node is None:
-        return {"device_key": device_key, "available": False}
+        return async_redact_data(
+            {"device_key": device_key, "available": False}, TO_REDACT
+        )
 
     return async_redact_data(_node_to_dict(node), TO_REDACT)
