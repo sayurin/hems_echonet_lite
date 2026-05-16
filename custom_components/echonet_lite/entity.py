@@ -343,6 +343,11 @@ def setup_echonet_lite_platform[DescriptionT: EchonetLiteEntityDescription](
             if infer_platform(entity_def) == platform_type
             and entity_def.epc not in excluded
             and can_process_enum_values(entity_def)
+            # Skip writable bit/byte-packed sub-properties (set != notApplicable
+            # and byte_offset > 0). A single EPC payload often carries multiple
+            # sub-properties; only the leader (byte_offset == 0) owns the write
+            # path. Allowing followers to be set independently would clobber the
+            # sibling bits since pyhems writes the full EPC value at once.
             and not (entity_def.set != "notApplicable" and entity_def.byte_offset > 0)
         ]
 

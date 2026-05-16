@@ -272,7 +272,6 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
     """
 
     entity_description: EchonetLiteClimateEntityDescription
-    _attr_has_entity_name = True
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_translation_key = "climate"
     _attr_precision: float = PRECISION_WHOLE

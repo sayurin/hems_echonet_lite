@@ -18,16 +18,19 @@ rules:
     comment: No custom actions or services are exposed.
   docs-high-level-description:
     status: done
-    comment: Documented in docs/integration/echonet_lite.md.
+    comment: To be added in the home-assistant.io documentation PR.
   docs-installation-instructions:
     status: done
-    comment: Installation steps detailed in docs/integration/echonet_lite.md.
+    comment: To be added in the home-assistant.io documentation PR.
   docs-removal-instructions:
     status: done
-    comment: Removal steps detailed in docs/integration/echonet_lite.md.
+    comment: To be added in the home-assistant.io documentation PR.
   entity-event-setup:
     status: done
-    comment: Entities subscribe to coordinator listeners registered in sensor.py.
+    comment: |
+      Entities subscribe to coordinator updates via
+      EchonetLiteEntity._handle_coordinator_update and the device-added
+      callback registered by setup_echonet_lite_platform in entity.py.
   entity-unique-id: done
   has-entity-name: done
   runtime-data: done

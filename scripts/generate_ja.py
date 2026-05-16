@@ -6,7 +6,7 @@ name_ja fields. It follows the same entity processing logic as
 generate_strings.py but outputs resolved Japanese text without key references
 or common section deduplication.
 
-Run with: python -m custom_components.echonet_lite.generator.generate_ja
+Run with: python scripts/generate_ja.py
 
 Requires pyhems to be installed in the environment:
 - Development: uv pip install -e /workspaces/pyhems
@@ -14,7 +14,7 @@ Requires pyhems to be installed in the environment:
 
 Input files:
 - pyhems definitions.json (source of entity definitions with name_ja)
-- generator/strings_static_ja.json (static Japanese strings for config, options, issues)
+- scripts/strings_static_ja.json (static Japanese strings for config, options, issues)
 
 Output files:
 - custom_components/echonet_lite/translations/ja.json
@@ -25,20 +25,31 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import re
+import sys
 from typing import Any
 
 from pyhems import DefinitionsRegistry, EntityDefinition, load_definitions_registry
 
-from ..const import camel_to_snake
-from ..entity import can_process_enum_values, infer_platform
+# Make the custom_components package importable when running this script from
+# the repo root (the script is intentionally placed outside the integration
+# package so it is not shipped via HACS).
+_REPO_ROOT = Path(__file__).parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from custom_components.echonet_lite.const import camel_to_snake  # noqa: E402
+from custom_components.echonet_lite.entity import (  # noqa: E402
+    can_process_enum_values,
+    infer_platform,
+)
 
 # ============================================================================
 # Constants
 # ============================================================================
 
-ECHONET_LITE_DIR = Path(__file__).parent.parent
-GENERATOR_DIR = Path(__file__).parent
-STRINGS_STATIC_JA_FILE = GENERATOR_DIR / "strings_static_ja.json"
+ECHONET_LITE_DIR = _REPO_ROOT / "custom_components" / "echonet_lite"
+SCRIPTS_DIR = Path(__file__).parent
+STRINGS_STATIC_JA_FILE = SCRIPTS_DIR / "strings_static_ja.json"
 
 # Pattern to match [%key:path::to::value%] references
 _KEY_REF_PATTERN = re.compile(r"^\[%key:(.+)%\]$")

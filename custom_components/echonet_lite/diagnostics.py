@@ -70,8 +70,6 @@ async def async_get_config_entry_diagnostics(
     entry: EchonetLiteConfigEntry,
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
-    del hass
-
     runtime = entry.runtime_data
     health = runtime.health
     coordinator = runtime.coordinator
@@ -108,8 +106,6 @@ async def async_get_device_diagnostics(
     device: DeviceEntry,
 ) -> dict[str, Any]:
     """Return diagnostics for a device."""
-    del hass
-
     device_key = _get_device_key(device)
     if device_key is None:
         return {"error": "device_not_found", "reason": "missing_identifier"}

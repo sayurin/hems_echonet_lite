@@ -114,11 +114,12 @@ class EchonetLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Test multicast socket can be created. Returns error key or None."""
         try:
             protocol = await create_multicast_socket(interface, lambda *_: None)
-            protocol.close()
         except OSError:
             return "cannot_connect"
-        else:
+        try:
             return None
+        finally:
+            protocol.close()
 
 
 class EchonetLiteOptionsFlow(config_entries.OptionsFlow):
