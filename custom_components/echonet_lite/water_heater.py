@@ -187,7 +187,6 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
     """Representation of an ECHONET Lite electric water heater."""
 
     entity_description: EchonetLiteWaterHeaterEntityDescription
-    _attr_has_entity_name = True
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_precision: float = PRECISION_WHOLE
     _attr_translation_key = _TRANSLATION_KEY

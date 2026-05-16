@@ -106,8 +106,6 @@ def _tilt_ha_to_deg(pos: int) -> int:
 class EchonetLiteCover(EchonetLiteEntity, CoverEntity):
     """Representation of an ECHONET Lite electric blind/shutter cover."""
 
-    _attr_has_entity_name = True
-
     def __init__(
         self,
         coordinator: EchonetLiteCoordinator,

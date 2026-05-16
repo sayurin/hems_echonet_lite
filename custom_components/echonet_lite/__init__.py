@@ -408,37 +408,23 @@ class _RuntimeController:
         self._health = health
         self._restart_lock = asyncio.Lock()
         self._event_queue: asyncio.Queue[RuntimeEvent] = asyncio.Queue()
-        self._unsubscribe_runtime: Callable[[], None] | None = None
-        self._discovery_task: asyncio.Task[Any] | None = None
-        self._event_consumer_task: asyncio.Task[None] | None = None
-
-    @property
-    def unsubscribe_runtime(self) -> Callable[[], None]:
-        """Return the runtime-event unsubscribe callback."""
-        assert self._unsubscribe_runtime is not None
-        return self._unsubscribe_runtime
-
-    @property
-    def discovery_task(self) -> asyncio.Task[Any]:
-        """Return the node discovery background task."""
-        assert self._discovery_task is not None
-        return self._discovery_task
-
-    @property
-    def event_consumer_task(self) -> asyncio.Task[None]:
-        """Return the runtime event consumer background task."""
-        assert self._event_consumer_task is not None
-        return self._event_consumer_task
+        # Populated by ``async_start``; safe to access directly from
+        # ``async_setup_entry`` because callers only read these after
+        # ``async_start`` has completed without raising.
+        self.unsubscribe_runtime: Callable[[], None] = lambda: None
+        self.discovery_task: asyncio.Task[Any]
+        self.event_consumer_task: asyncio.Task[None]
 
     async def async_start(self) -> None:
         """Subscribe, start the client and spawn background tasks."""
-        self._unsubscribe_runtime = self._client.subscribe(self._handle_runtime_event)
+        unsubscribe = self._client.subscribe(self._handle_runtime_event)
         try:
             await self._client.start()
         except OSError as err:
-            self._unsubscribe_runtime()
-            self._unsubscribe_runtime = None
+            unsubscribe()
             raise ConfigEntryNotReady(f"Failed to start runtime client: {err}") from err
+
+        self.unsubscribe_runtime = unsubscribe
 
         # Initialize with empty state; nodes are discovered through runtime events
         self._coordinator.async_set_updated_data({})
@@ -448,12 +434,12 @@ class _RuntimeController:
         # still trips the threshold.
         self._issue_monitor.start()
 
-        self._discovery_task = self._entry.async_create_background_task(
+        self.discovery_task = self._entry.async_create_background_task(
             self._hass,
             self._client.probe_nodes(),
             name="echonet_lite_discovery",
         )
-        self._event_consumer_task = self._entry.async_create_background_task(
+        self.event_consumer_task = self._entry.async_create_background_task(
             self._hass,
             self._consume_runtime_events(),
             name="echonet_lite_event_consumer",

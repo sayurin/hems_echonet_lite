@@ -74,7 +74,6 @@ async def async_setup_entry(
 class EchonetLiteLock(EchonetLiteEntity, LockEntity):
     """Representation of an ECHONET Lite electric lock."""
 
-    _attr_has_entity_name = True
     _attr_translation_key = _TRANSLATION_KEY
 
     def __init__(
