@@ -49,7 +49,6 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv, issue_registry as ir
 from homeassistant.helpers.event import async_track_time_interval
-from homeassistant.helpers.typing import ConfigType
 
 from .const import (
     CONF_ENABLE_EXPERIMENTAL,
@@ -89,11 +88,6 @@ PLATFORMS: Final = [
     Platform.SWITCH,
     Platform.WATER_HEATER,
 ]
-
-
-async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the HEMS Echonet Lite integration."""
-    return True
 
 
 async def async_migrate_entry(

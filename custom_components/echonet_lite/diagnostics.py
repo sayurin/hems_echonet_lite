@@ -7,7 +7,7 @@ from typing import Any
 
 from pyhems import NodeState
 
-from homeassistant.components.diagnostics import async_redact_data
+from homeassistant.components.diagnostics import REDACTED, async_redact_data
 from homeassistant.const import CONF_UNIQUE_ID
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntry
@@ -23,6 +23,12 @@ TO_REDACT = {
     "serial_number",
 }
 
+# EPC values whose EDT contents identify the individual device
+# (Identification number / Production number). Their hex payload appears in
+# the ``properties`` block of the diagnostics output and must be redacted
+# alongside ``serial_number``.
+TO_REDACT_PROPERTY_EPCS = frozenset({0x83, 0x8D})
+
 
 def _format_epcs(epcs: frozenset[int]) -> str:
     """Return sorted EPCs as hexadecimal strings."""
@@ -31,7 +37,10 @@ def _format_epcs(epcs: frozenset[int]) -> str:
 
 def _format_properties(properties: Mapping[int, bytes]) -> dict[str, str]:
     """Return properties as EPC -> EDT hex mapping."""
-    return {f"0x{epc:02X}": edt.hex(" ") for epc, edt in sorted(properties.items())}
+    return {
+        f"0x{epc:02X}": REDACTED if epc in TO_REDACT_PROPERTY_EPCS else edt.hex(" ")
+        for epc, edt in sorted(properties.items())
+    }
 
 
 def _node_to_dict(node: NodeState) -> dict[str, Any]:
