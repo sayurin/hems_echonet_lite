@@ -79,7 +79,6 @@ def _create_select_description(
         value_to_option=value_to_option,
         option_to_value=option_to_value,
         manufacturer_code=entity_def.manufacturer_code,
-        fallback_name=entity_def.name_en or None,
     )
 
 

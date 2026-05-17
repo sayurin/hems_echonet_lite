@@ -171,11 +171,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     def _on_device_added(device_key: str) -> None:
         """Handle new device from DeviceManager."""
         # ``async_set_updated_data`` is the documented contract for publishing
-        # new data on ``DataUpdateCoordinator``; it also notifies listeners so
-        # existing entities re-render. Notify the device-added listeners
-        # afterwards so platforms can create entities for the new device.
+        # new data on ``DataUpdateCoordinator``; it notifies all listeners
+        # registered via ``async_add_listener``. Platforms register their own
+        # listener in :func:`setup_echonet_lite_device_platform` and detect
+        # newly added devices by diffing ``coordinator.data`` keys.
         coordinator.async_set_updated_data(dict(device_manager.data))
-        coordinator.async_notify_device_added(device_key)
 
     @callback
     def _on_device_updated(device_key: str) -> None:

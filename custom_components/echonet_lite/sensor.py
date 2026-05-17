@@ -101,7 +101,6 @@ def _create_sensor_description(
             options=options,
             decoder=_enum_sensor_decoder,
             manufacturer_code=entity_def.manufacturer_code,
-            fallback_name=entity_def.name_en or None,
         )
 
     # Numeric sensor
@@ -132,7 +131,6 @@ def _create_sensor_description(
             byte_offset=entity_def.byte_offset,
         ),
         manufacturer_code=entity_def.manufacturer_code,
-        fallback_name=entity_def.name_en or None,
     )
 
 

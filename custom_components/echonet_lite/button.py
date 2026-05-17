@@ -69,7 +69,6 @@ def _create_button_description(
         ),
         press_value=press_value,
         manufacturer_code=entity_def.manufacturer_code,
-        fallback_name=entity_def.name_en or None,
     )
 
 
