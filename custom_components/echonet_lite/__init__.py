@@ -486,6 +486,9 @@ class _RuntimeController:
                     )
                     self._issue_monitor.record_client_error(str(event.error))
                     await self._async_restart_runtime()
+            # Python 3.14+ multi-except syntax (PEP 758): a parenthesis-less
+            # tuple of exception classes. Equivalent to ``except (A, B, C):``
+            # on older versions.
             except OSError, LookupError, TypeError, ValueError:
                 # Narrow to the fault classes realistic for frame parsing
                 # and dispatch (I/O, missing keys, malformed payloads).
@@ -530,4 +533,7 @@ class _RuntimeController:
             # DeviceManager retains its ``data`` across client stop/start,
             # so clearing the coordinator here would make those entities
             # disappear silently until each device is re-announced.
+            # A shallow copy is sufficient: ``NodeState`` values are owned
+            # by ``DeviceManager`` and only mutated from the single event
+            # consumer task, so concurrent readers see a consistent snapshot.
             self._coordinator.async_set_updated_data(dict(self._device_manager.data))

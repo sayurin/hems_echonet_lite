@@ -278,7 +278,7 @@ class EchonetLiteDescribedEntity[DescriptionT: EchonetLiteEntityDescription](
             description: The entity description with EPC metadata.
 
         Raises:
-            AssertionError: If description.should_create(node) returns False.
+            ValueError: If description.should_create(node) returns False.
         """
         if not description.should_create(node):
             raise ValueError(

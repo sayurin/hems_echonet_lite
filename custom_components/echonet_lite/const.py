@@ -38,6 +38,10 @@ DEFAULT_POLL_INTERVAL = 60
 ISSUE_RUNTIME_CLIENT_ERROR = "runtime_client_error"
 ISSUE_RUNTIME_INACTIVE = "runtime_inactive"
 RUNTIME_MONITOR_INTERVAL = timedelta(minutes=1)
+# Five minutes corresponds to roughly five missed polling cycles
+# (``DEFAULT_POLL_INTERVAL`` = 60s). If either constant changes, revisit this
+# ratio so the inactivity issue still trips after several missed polls rather
+# than firing on a single transient gap.
 RUNTIME_MONITOR_MAX_SILENCE = timedelta(minutes=5)
 DISCOVERY_INTERVAL = 60.0 * 60.0  # 1 hour
 
