@@ -40,7 +40,9 @@ rules:
   test-before-setup:
     status: done
     comment: tests/components/echonet_lite/test_init.py covers setup/unload.
-  unique-config-entry: done
+  unique-config-entry:
+    status: done
+    comment: Enforced by single_config_entry true in manifest.json.
 
   # Silver
   action-exceptions: done

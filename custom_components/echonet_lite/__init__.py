@@ -49,7 +49,6 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv, issue_registry as ir
 from homeassistant.helpers.event import async_track_time_interval
-from homeassistant.helpers.typing import ConfigType
 
 from .const import (
     CONF_ENABLE_EXPERIMENTAL,
@@ -89,11 +88,6 @@ PLATFORMS: Final = [
     Platform.SWITCH,
     Platform.WATER_HEATER,
 ]
-
-
-async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the HEMS Echonet Lite integration."""
-    return True
 
 
 async def async_migrate_entry(
@@ -177,11 +171,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     def _on_device_added(device_key: str) -> None:
         """Handle new device from DeviceManager."""
         # ``async_set_updated_data`` is the documented contract for publishing
-        # new data on ``DataUpdateCoordinator``; it also notifies listeners so
-        # existing entities re-render. Notify the device-added listeners
-        # afterwards so platforms can create entities for the new device.
+        # new data on ``DataUpdateCoordinator``; it notifies all listeners
+        # registered via ``async_add_listener``. Platforms register their own
+        # listener in :func:`setup_echonet_lite_device_platform` and detect
+        # newly added devices by diffing ``coordinator.data`` keys.
         coordinator.async_set_updated_data(dict(device_manager.data))
-        coordinator.async_notify_device_added(device_key)
 
     @callback
     def _on_device_updated(device_key: str) -> None:
@@ -486,6 +480,9 @@ class _RuntimeController:
                     )
                     self._issue_monitor.record_client_error(str(event.error))
                     await self._async_restart_runtime()
+            # Python 3.14+ multi-except syntax (PEP 758): a parenthesis-less
+            # tuple of exception classes. Equivalent to ``except (A, B, C):``
+            # on older versions.
             except OSError, LookupError, TypeError, ValueError:
                 # Narrow to the fault classes realistic for frame parsing
                 # and dispatch (I/O, missing keys, malformed payloads).
@@ -530,4 +527,7 @@ class _RuntimeController:
             # DeviceManager retains its ``data`` across client stop/start,
             # so clearing the coordinator here would make those entities
             # disappear silently until each device is re-announced.
+            # A shallow copy is sufficient: ``NodeState`` values are owned
+            # by ``DeviceManager`` and only mutated from the single event
+            # consumer task, so concurrent readers see a consistent snapshot.
             self._coordinator.async_set_updated_data(dict(self._device_manager.data))

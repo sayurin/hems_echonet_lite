@@ -178,7 +178,6 @@
     },
     "error": {
       "cannot_connect": "[%key:component::echonet_lite::config::abort::cannot_connect%]",
-      "invalid_interface": "Enter a valid IPv4 address (for example 192.168.1.10 or 0.0.0.0).",
       "unknown": "[%key:component::echonet_lite::config::abort::unknown%]"
     },
     "step": {

@@ -104,7 +104,6 @@ def _create_number_description(
         mra_format=entity_def.format,
         scale=entity_def.multiple_of,
         manufacturer_code=entity_def.manufacturer_code,
-        fallback_name=entity_def.name_en or None,
     )
 
 

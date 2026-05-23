@@ -55,7 +55,6 @@ def _create_switch_description(
         on_value=on_value,
         off_value=off_value,
         manufacturer_code=entity_def.manufacturer_code,
-        fallback_name=entity_def.name_en or None,
     )
 
 

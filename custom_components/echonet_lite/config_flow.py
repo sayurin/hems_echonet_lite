@@ -66,15 +66,16 @@ class EchonetLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
         interface_options = await _async_get_interface_options(self.hass)
-        valid_interfaces = {opt["value"] for opt in interface_options}
         errors: dict[str, str] = {}
 
         if user_input is not None:
+            # ``SelectSelector(mode=DROPDOWN)`` already restricts ``interface``
+            # to one of ``interface_options``, so no further validation of the
+            # value itself is needed; we only verify the multicast socket can
+            # be opened on the selected interface.
             interface = user_input.get(CONF_INTERFACE, DEFAULT_INTERFACE)
 
-            if interface not in valid_interfaces:
-                errors[CONF_INTERFACE] = "invalid_interface"
-            elif error := await self._async_test_multicast(interface):
+            if error := await self._async_test_multicast(interface):
                 errors["base"] = error
             else:
                 return self._async_finish_interface_step(entry, interface)

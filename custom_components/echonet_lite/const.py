@@ -38,6 +38,10 @@ DEFAULT_POLL_INTERVAL = 60
 ISSUE_RUNTIME_CLIENT_ERROR = "runtime_client_error"
 ISSUE_RUNTIME_INACTIVE = "runtime_inactive"
 RUNTIME_MONITOR_INTERVAL = timedelta(minutes=1)
+# Five minutes corresponds to roughly five missed polling cycles
+# (``DEFAULT_POLL_INTERVAL`` = 60s). If either constant changes, revisit this
+# ratio so the inactivity issue still trips after several missed polls rather
+# than firing on a single transient gap.
 RUNTIME_MONITOR_MAX_SILENCE = timedelta(minutes=5)
 DISCOVERY_INTERVAL = 60.0 * 60.0  # 1 hour
 
@@ -448,79 +452,3 @@ def infer_entity_registry_enabled_default(
     Assistant integrations for diagnostic entities.
     """
     return infer_entity_category(entity_def) is not EntityCategory.DIAGNOSTIC
-
-
-__all__ = [
-    "CLASS_CODE_AIR_CLEANER",
-    "CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN",
-    "CLASS_CODE_CONTROLLER",
-    "CLASS_CODE_ELECTRICALLY_OPERATED_BLIND",
-    "CLASS_CODE_ELECTRICALLY_OPERATED_SHUTTER",
-    "CLASS_CODE_ELECTRIC_LOCK",
-    "CLASS_CODE_ELECTRIC_WATER_HEATER",
-    "CLASS_CODE_EXTENDED_LIGHTING_SYSTEM",
-    "CLASS_CODE_GENERAL_LIGHTING",
-    "CLASS_CODE_HOME_AIR_CONDITIONER",
-    "CLASS_CODE_HOUSEHOLD_SOLAR_POWER_GENERATION",
-    "CLASS_CODE_LIGHTING_SYSTEM",
-    "CLASS_CODE_MONO_FUNCTIONAL_LIGHTING",
-    "CLASS_CODE_STORAGE_BATTERY",
-    "CLASS_CODE_SWITCH",
-    "CLASS_CODE_VENTILATION_FAN",
-    "CONF_ENABLE_EXPERIMENTAL",
-    "CONF_INTERFACE",
-    "DEDICATED_PLATFORM_EPCS",
-    "DEFAULT_INTERFACE",
-    "DEFAULT_POLL_INTERVAL",
-    "DISCOVERY_INTERVAL",
-    "DOMAIN",
-    "ENTITY_CATEGORY_BY_EPC",
-    "EPC_AIR_FLOW_LEVEL",
-    "EPC_COVER_ANGLE",
-    "EPC_COVER_OPEN_CLOSE",
-    "EPC_COVER_OPEN_CLOSED_STATUS",
-    "EPC_COVER_POSITION",
-    "EPC_CUMULATIVE_OPERATING_TIME",
-    "EPC_CURRENT_DATE",
-    "EPC_CURRENT_LIMIT",
-    "EPC_CURRENT_TIME",
-    "EPC_FAN_SPEED",
-    "EPC_FAULT_DESCRIPTION",
-    "EPC_FAULT_STATUS",
-    "EPC_GET_PROPERTY_MAP",
-    "EPC_INF_PROPERTY_MAP",
-    "EPC_INSTALLATION_LOCATION",
-    "EPC_LIGHTING_MODE",
-    "EPC_LIGHT_COLOR",
-    "EPC_LIGHT_LEVEL",
-    "EPC_LOCK_ALARM_STATUS",
-    "EPC_LOCK_SETTING_1",
-    "EPC_LOCK_SETTING_2",
-    "EPC_MANUFACTURER_CODE",
-    "EPC_MANUFACTURER_FAULT_CODE",
-    "EPC_OPERATION_MODE",
-    "EPC_OPERATION_STATUS",
-    "EPC_POWER_LIMIT",
-    "EPC_POWER_SAVING_OPERATION",
-    "EPC_PRODUCT_CODE",
-    "EPC_REMOTE_CONTROL_SETTING",
-    "EPC_ROOM_HUMIDITY",
-    "EPC_ROOM_TEMPERATURE",
-    "EPC_SERIAL_NUMBER",
-    "EPC_SET_PROPERTY_MAP",
-    "EPC_SPECIAL_STATE",
-    "EPC_SWING_AIR_FLOW",
-    "EPC_TARGET_TEMPERATURE",
-    "ISSUE_RUNTIME_CLIENT_ERROR",
-    "ISSUE_RUNTIME_INACTIVE",
-    "MRA_UNIT_TO_HA_UNIT",
-    "RUNTIME_MONITOR_INTERVAL",
-    "RUNTIME_MONITOR_MAX_SILENCE",
-    "STABLE_CLASS_CODES",
-    "UNIT_DEVICE_CLASS_RULES",
-    "camel_to_snake",
-    "infer_device_classes",
-    "infer_entity_category",
-    "infer_entity_registry_enabled_default",
-    "infer_ha_unit",
-]

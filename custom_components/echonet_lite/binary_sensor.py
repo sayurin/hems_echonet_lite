@@ -108,7 +108,6 @@ def _create_binary_sensor_description(
         ),
         decoder=create_binary_decoder(on_value),
         manufacturer_code=entity_def.manufacturer_code,
-        fallback_name=entity_def.name_en or None,
     )
 
 

@@ -222,8 +222,6 @@ class EchonetLiteEntityDescription(EntityDescription):
     """ECHONET Property Code."""
     manufacturer_code: int | None = None
     """Required manufacturer code for vendor-specific entities (None = all)."""
-    fallback_name: str | None = None
-    """Fallback name for user-defined entities without translation."""
 
     def should_create(self, node: NodeState) -> bool:
         """Check if entity should be created for this node.
@@ -278,7 +276,7 @@ class EchonetLiteDescribedEntity[DescriptionT: EchonetLiteEntityDescription](
             description: The entity description with EPC metadata.
 
         Raises:
-            AssertionError: If description.should_create(node) returns False.
+            ValueError: If description.should_create(node) returns False.
         """
         if not description.should_create(node):
             raise ValueError(
@@ -289,11 +287,13 @@ class EchonetLiteDescribedEntity[DescriptionT: EchonetLiteEntityDescription](
         self.description = description
         self.entity_description = description  # HA standard attribute
         self._attr_unique_id = f"{node.device_key}-{description.key}"
-        # Use translation_key if available, otherwise use fallback_name
-        if description.translation_key:
-            self._attr_translation_key = description.translation_key
-        elif description.fallback_name:
-            self._attr_name = description.fallback_name
+        # ``translation_key`` is guaranteed to be set by all platform
+        # description factories (always ``entity_def.id``), and the
+        # ``scripts/generate_strings.py`` generator produces a matching entry
+        # in ``strings.json`` for every entity definition the platforms
+        # consume. See ``tests/components/echonet_lite/test_generate_strings
+        # ::TestDefinitionsStringsConsistency`` for the regression guard.
+        self._attr_translation_key = description.translation_key
         self._epc = description.epc
 
     @property
@@ -396,18 +396,30 @@ def setup_echonet_lite_device_platform(
         entity_factory: Callable building entities for a given node.
     """
     coordinator = entry.runtime_data.coordinator
+    known_device_keys: set[str] = set()
 
     @callback
-    def _async_add_entities_for_device(device_key: str) -> None:
-        node = coordinator.data.get(device_key)
-        if not node:
-            return
-        if entities := entity_factory(coordinator, node):
-            async_add_entities(entities)
+    def _async_check_new_devices() -> None:
+        """Create entities for any device that became known since last call.
 
-    entry.async_on_unload(
-        coordinator.async_add_device_added_listener(_async_add_entities_for_device)
-    )
-    # Initial setup: create entities for all existing devices
-    for device_key in coordinator.data:
-        _async_add_entities_for_device(device_key)
+        Uses the standard ``DataUpdateCoordinator.async_add_listener`` hook:
+        every ``async_set_updated_data`` call in ``_on_device_added`` triggers
+        this listener; we then diff ``coordinator.data`` against the keys we
+        have already processed to find new devices.
+        """
+        new_keys = coordinator.data.keys() - known_device_keys
+        if not new_keys:
+            return
+        known_device_keys.update(new_keys)
+        new_entities: list[Entity] = []
+        for device_key in new_keys:
+            node = coordinator.data.get(device_key)
+            if node is None:
+                continue
+            new_entities.extend(entity_factory(coordinator, node))
+        if new_entities:
+            async_add_entities(new_entities)
+
+    entry.async_on_unload(coordinator.async_add_listener(_async_check_new_devices))
+    # Initial setup: create entities for all already-known devices.
+    _async_check_new_devices()
