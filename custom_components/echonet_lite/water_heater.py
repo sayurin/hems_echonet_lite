@@ -221,7 +221,11 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
         self._mode_to_edt: dict[str, int] = {
             name: raw for raw, name in _OPERATION_MODE_MAP.items()
         }
-        operation_list: list[str] = [STATE_OFF]
+        # STATE_OFF is only meaningful when 0x80 is writable; some
+        # always-on water heaters do not allow turning off via 0x80.
+        operation_list: list[str] = (
+            [STATE_OFF] if EPC_OPERATION_STATUS in node.set_epcs else []
+        )
         if EPC_OPERATION_MODE in node.set_epcs:
             features |= WaterHeaterEntityFeature.OPERATION_MODE
             # Preserve the EDT-byte order so the UI lists modes in the
@@ -319,10 +323,10 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
                 translation_key="operation_mode_not_writable",
             )
         if EPC_OPERATION_STATUS not in self._node.set_epcs:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="operation_status_not_writable",
-            )
+            # Always-on devices do not allow writing 0x80; send only the
+            # operation mode and let 0x80 stay at its current value.
+            await self._async_send_property(EPC_OPERATION_MODE, bytes([edt_byte]))
+            return
         # Send mode + ON together so flipping the operation mode from
         # the "Off" state in the UI also turns the device on.
         await self._async_send_properties(
