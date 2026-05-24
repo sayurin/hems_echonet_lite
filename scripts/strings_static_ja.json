@@ -127,6 +127,42 @@
       "electric_lock": {
         "name": "電気錠"
       }
+    },
+    "select": {
+      "installation_location_code": {
+        "name": "設置場所",
+        "state": {
+          "unset": "未設定",
+          "living_room": "リビング",
+          "dining_room": "ダイニング",
+          "kitchen": "キッチン",
+          "bathroom": "浴室",
+          "lavatory": "トイレ",
+          "washroom": "洗面所",
+          "corridor": "廊下",
+          "room": "部屋",
+          "stairway": "階段",
+          "entrance": "玄関",
+          "storeroom": "納戸",
+          "garden": "庭",
+          "garage": "車庫",
+          "balcony": "ベランダ",
+          "others": "その他"
+        }
+      },
+      "installation_location_number": {
+        "name": "設置場所番号",
+        "state": {
+          "0": "未設定",
+          "1": "1",
+          "2": "2",
+          "3": "3",
+          "4": "4",
+          "5": "5",
+          "6": "6",
+          "7": "7"
+        }
+      }
     }
   },
   "exceptions": {
@@ -153,6 +189,9 @@
     },
     "unsupported_option": {
       "message": "サポートされていないオプション: {option}"
+    },
+    "installation_location_number_unset": {
+      "message": "設置場所番号を設定できません: 設置場所コードがまだ設定されていません。先に設置場所を選択してください。"
     },
     "unsupported_swing_mode": {
       "message": "サポートされていない風向モード: {swing_mode}"

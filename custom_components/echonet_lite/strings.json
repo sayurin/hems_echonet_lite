@@ -158,6 +158,7 @@
     "undefined": "Undefined",
     "unknown": "Unknown",
     "unlock": "Unlock",
+    "unset": "Unset",
     "used_capacity_of_vehicle_mounted_battery_1": "Used capacity of vehicle mounted battery 1",
     "v2g": "V2G",
     "valid": "Valid",
@@ -1991,6 +1992,40 @@
           "washing_rinsing": "Washing + all rinsing processes",
           "washing_rinsing_without_final": "Washing + rinsing (excluding the final rinsing)"
         }
+      },
+      "installation_location_code": {
+        "name": "Installation location",
+        "state": {
+          "balcony": "Balcony",
+          "bathroom": "Bathroom",
+          "corridor": "Corridor",
+          "dining_room": "Dining room",
+          "entrance": "Entrance",
+          "garage": "Garage",
+          "garden": "Garden",
+          "kitchen": "Kitchen",
+          "lavatory": "Lavatory",
+          "living_room": "Living room",
+          "others": "[%key:component::echonet_lite::common::others%]",
+          "room": "Room",
+          "stairway": "Stairway",
+          "storeroom": "Storeroom",
+          "unset": "[%key:component::echonet_lite::common::unset%]",
+          "washroom": "Washroom"
+        }
+      },
+      "installation_location_number": {
+        "name": "Installation location number",
+        "state": {
+          "0": "[%key:component::echonet_lite::common::unset%]",
+          "1": "1",
+          "2": "2",
+          "3": "3",
+          "4": "4",
+          "5": "5",
+          "6": "6",
+          "7": "7"
+        }
       }
     },
     "sensor": {
@@ -3506,6 +3541,9 @@
   "exceptions": {
     "epc_not_writable": {
       "message": "EPC {epc_list} is not writable by the device."
+    },
+    "installation_location_number_unset": {
+      "message": "Cannot set location number: no installation location code is currently set. Select a location first."
     },
     "operation_mode_not_writable": {
       "message": "The operation mode property is not writable on this device."

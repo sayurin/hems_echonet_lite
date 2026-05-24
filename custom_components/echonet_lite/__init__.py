@@ -58,6 +58,7 @@ from .const import (
     DEFAULT_POLL_INTERVAL,
     DISCOVERY_INTERVAL,
     DOMAIN,
+    EPC_INSTALLATION_LOCATION,
     EPC_MANUFACTURER_CODE,
     EPC_PRODUCT_CODE,
     EPC_SERIAL_NUMBER,
@@ -131,6 +132,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     # Add dedicated platform EPCs (used for both exclusion and polling)
     for class_code, epcs in DEDICATED_PLATFORM_EPCS.items():
         monitored_epcs[class_code] = monitored_epcs.get(class_code, frozenset()) | epcs
+
+    # EPC 0x81 (Installation Location) is a mandatory super-class property.
+    # Ensure it is monitored for every known device class so the entity is
+    # always populated regardless of whether the definitions include it.
+    for class_code in list(monitored_epcs):
+        monitored_epcs[class_code] = monitored_epcs[class_code] | {
+            EPC_INSTALLATION_LOCATION
+        }
 
     _LOGGER.debug(
         "Monitored EPCs (polling/notification) per device class: %s",
