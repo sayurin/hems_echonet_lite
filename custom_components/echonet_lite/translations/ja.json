@@ -1822,6 +1822,40 @@
           "washing_rinsing": "洗い＋全すすぎ",
           "washing_rinsing_without_final": "洗い+すすぎ (除く最終すすぎ)"
         }
+      },
+      "installation_location_code": {
+        "name": "設置場所",
+        "state": {
+          "balcony": "ベランダ",
+          "bathroom": "浴室",
+          "corridor": "廊下",
+          "dining_room": "ダイニング",
+          "entrance": "玄関",
+          "garage": "車庫",
+          "garden": "庭",
+          "kitchen": "キッチン",
+          "lavatory": "トイレ",
+          "living_room": "リビング",
+          "others": "その他",
+          "room": "部屋",
+          "stairway": "階段",
+          "storeroom": "納戸",
+          "unset": "未設定",
+          "washroom": "洗面所"
+        }
+      },
+      "installation_location_number": {
+        "name": "設置場所番号",
+        "state": {
+          "0": "未設定",
+          "1": "1",
+          "2": "2",
+          "3": "3",
+          "4": "4",
+          "5": "5",
+          "6": "6",
+          "7": "7"
+        }
       }
     },
     "sensor": {
@@ -3337,6 +3371,9 @@
   "exceptions": {
     "epc_not_writable": {
       "message": "EPC {epc_list} はデバイスによって書き込みできません。"
+    },
+    "installation_location_number_unset": {
+      "message": "設置場所番号を設定できません: 設置場所コードがまだ設定されていません。先に設置場所を選択してください。"
     },
     "operation_mode_not_writable": {
       "message": "このデバイスの運転モードプロパティは書き込みできません。"
