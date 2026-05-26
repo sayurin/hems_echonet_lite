@@ -32,6 +32,8 @@ Device classes fall into two categories:
 | 0x0133 | Ventilation Fan | Fan + generic entities |
 | 0x0134 | Air Conditioner Ventilation Fan | Fan + generic entities |
 | 0x0135 | Air Cleaner | Fan + generic entities |
+| 0x026B | Electoric Water Heater | Water Heater + generic entities |
+| 0x026F | Electric Lock | Lock + generic entities |
 | 0x0279 | Residential Solar Power Generation | Generic entities |
 | 0x027D | Storage Battery | Generic entities |
 | 0x05FD | Switch (JEM-A/HA terminals) | Generic entities |
@@ -43,8 +45,6 @@ The following experimental classes are exposed as fully-featured HA platform ent
 
 | Class Code | Device | HA Platform |
 |------------|--------|-------------|
-| 0x026B | Electric Heat-Pump Water Heater | Water Heater + generic entities |
-| 0x026F | Electric Lock | Lock + generic entities |
 | 0x0260 | Electrically Operated Blind | Cover + generic entities |
 | 0x0263 | Electrically Operated Shutter | Cover + generic entities |
 | 0x0290 | General Lighting | Light + generic entities |
