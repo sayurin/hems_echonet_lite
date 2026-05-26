@@ -178,7 +178,7 @@ The integration automatically creates repair issues when:
 
 ## Requirements
 
-- Home Assistant 2024.1 or later
+- Home Assistant 2026.3 or later
 
 ## Acknowledgments
 
