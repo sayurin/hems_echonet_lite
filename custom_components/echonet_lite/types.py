@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 from pyhems import DefinitionsRegistry, HemsClient, PropertyPoller
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.device_registry import DeviceInfo
 
 if TYPE_CHECKING:
     from . import _RuntimeIssueMonitor
@@ -39,6 +40,10 @@ class EchonetLiteRuntimeData:
     health: RuntimeHealth
     discovery_task: asyncio.Task[Any]
     event_consumer_task: asyncio.Task[Any]
+    # Per-node ``DeviceInfo`` cache keyed by ``node.device_key``. Built once
+    # on first entity instantiation for a node and shared by every entity
+    # platform bound to that node.
+    device_info_cache: dict[str, DeviceInfo]
 
 
 EchonetLiteConfigEntry = ConfigEntry[EchonetLiteRuntimeData]

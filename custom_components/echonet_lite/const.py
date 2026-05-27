@@ -239,36 +239,17 @@ def camel_to_snake(name: str) -> str:
 
 
 # ============================================================================
-# Installation location (EPC 0x81) value mappings
+# Installation location (EPC 0x81) — integration-side option keys
 # ============================================================================
-# The 1-byte format: bit7=free-flag (0), bits6-3=LLLL location code,
-# bits2-0=NNN location number. Special values: 0x00=unset, 0xFF=undefined,
-# 0x01-0x07=17-byte format indicator (LLLL=0, NNN!=0, prohibited in write).
+# The 1-byte format and the standard LLLL labels live in
+# :mod:`pyhems.installation_location` and are reused by the select platform,
+# the device-info helper, and the strings generator. The constants below are
+# integration-only additions that surface alongside the spec values.
 
-# LLLL=0 option key (byte value 0x00)
+# Option key written to EPC 0x81 as 0x00 (LLLL=0, NNN=0).
 INSTALLATION_LOCATION_UNSET = "unset"
 
-# LLLL code (bits 6-3) -> option key
-INSTALLATION_LOCATION_CODES: dict[int, str] = {
-    0x0: INSTALLATION_LOCATION_UNSET,
-    0x1: "living_room",
-    0x2: "dining_room",
-    0x3: "kitchen",
-    0x4: "bathroom",
-    0x5: "lavatory",
-    0x6: "washroom",
-    0x7: "corridor",
-    0x8: "room",
-    0x9: "stairway",
-    0xA: "entrance",
-    0xB: "storeroom",
-    0xC: "garden",
-    0xD: "garage",
-    0xE: "balcony",
-    0xF: "others",
-}
-
-# NNN (bits 2-0) option keys; "0" is displayed as "Unset"
+# NNN (bits 2-0) option keys; "0" is displayed as "Unset".
 INSTALLATION_LOCATION_NUMBER_OPTIONS: tuple[str, ...] = tuple(str(n) for n in range(8))
 
 

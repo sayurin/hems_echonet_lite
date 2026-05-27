@@ -28,7 +28,12 @@ import re
 import sys
 from typing import Any
 
-from pyhems import DefinitionsRegistry, EntityDefinition, load_definitions_registry
+from pyhems import (
+    INSTALLATION_LOCATIONS,
+    DefinitionsRegistry,
+    EntityDefinition,
+    load_definitions_registry,
+)
 
 # Make the custom_components package importable when running this script from
 # the repo root (the script is intentionally placed outside the integration
@@ -37,7 +42,10 @@ _REPO_ROOT = Path(__file__).parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from custom_components.echonet_lite.const import camel_to_snake  # noqa: E402
+from custom_components.echonet_lite.const import (  # noqa: E402
+    INSTALLATION_LOCATION_UNSET,
+    camel_to_snake,
+)
 from custom_components.echonet_lite.entity import (  # noqa: E402
     can_process_enum_values,
     infer_platform,
@@ -255,6 +263,18 @@ def generate_ja(registry: DefinitionsRegistry) -> dict[str, Any]:
         gen_platform = entity_strings.setdefault(platform, {})
         for entity_key, entity_value in platform_entities.items():
             gen_platform[entity_key] = entity_value
+
+    # Inject installation_location_code state translations from the pyhems
+    # source-of-truth so option keys and Japanese labels stay in lock-step
+    # with the ECHONET Lite specification.
+    location_state: dict[str, str] = {INSTALLATION_LOCATION_UNSET: "未設定"}
+    for _code, (key, _label_en, label_ja) in sorted(INSTALLATION_LOCATIONS.items()):
+        location_state[key] = label_ja
+    select_entities = entity_strings.setdefault("select", {})
+    location_entry = select_entities.setdefault(
+        "installation_location_code", {"name": "設置場所"}
+    )
+    location_entry["state"] = dict(sorted(location_state.items()))
 
     # Build result from static non-entity sections
     result: dict[str, Any] = {k: v for k, v in static_data.items() if k != "entity"}
