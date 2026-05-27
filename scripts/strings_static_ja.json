@@ -130,25 +130,7 @@
     },
     "select": {
       "installation_location_code": {
-        "name": "設置場所",
-        "state": {
-          "unset": "未設定",
-          "living_room": "リビング",
-          "dining_room": "ダイニング",
-          "kitchen": "キッチン",
-          "bathroom": "浴室",
-          "lavatory": "トイレ",
-          "washroom": "洗面所",
-          "corridor": "廊下",
-          "room": "部屋",
-          "stairway": "階段",
-          "entrance": "玄関",
-          "storeroom": "納戸",
-          "garden": "庭",
-          "garage": "車庫",
-          "balcony": "ベランダ",
-          "others": "その他"
-        }
+        "name": "設置場所"
       },
       "installation_location_number": {
         "name": "設置場所番号",

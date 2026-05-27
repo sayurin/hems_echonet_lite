@@ -64,6 +64,42 @@
         }
       }
     },
+    "select": {
+      "installation_location_code": {
+        "default": "mdi:map-marker",
+        "state": {
+          "balcony": "mdi:balcony",
+          "bathroom": "mdi:bathtub",
+          "dining_room": "mdi:silverware-fork-knife",
+          "front_door": "mdi:door-closed-lock",
+          "garage": "mdi:garage",
+          "garden": "mdi:flower",
+          "kitchen": "mdi:countertop",
+          "lavatory": "mdi:toilet",
+          "living_room": "mdi:sofa",
+          "others": "mdi:map-marker",
+          "passageway": "mdi:walk",
+          "room": "mdi:desk",
+          "stairway": "mdi:stairs",
+          "storeroom": "mdi:wardrobe-outline",
+          "unset": "mdi:map-marker-off",
+          "washroom": "mdi:washing-machine"
+        }
+      },
+      "installation_location_number": {
+        "default": "mdi:numeric-0-box",
+        "state": {
+          "0": "mdi:numeric-0-box",
+          "1": "mdi:numeric-1-box",
+          "2": "mdi:numeric-2-box",
+          "3": "mdi:numeric-3-box",
+          "4": "mdi:numeric-4-box",
+          "5": "mdi:numeric-5-box",
+          "6": "mdi:numeric-6-box",
+          "7": "mdi:numeric-7-box"
+        }
+      }
+    },
     "water_heater": {
       "electric_water_heater": {
         "state_attributes": {

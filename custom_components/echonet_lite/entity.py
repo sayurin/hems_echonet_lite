@@ -24,7 +24,7 @@ from .const import (
     RUNTIME_MONITOR_MAX_SILENCE,
 )
 from .coordinator import EchonetLiteCoordinator
-from .types import EchonetLiteConfigEntry
+from .types import EchonetLiteConfigEntry, EchonetLiteRuntimeData
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -96,6 +96,40 @@ def infer_platform(entity: EntityDefinition) -> PlatformType | None:
     return None
 
 
+def _get_or_build_device_info(
+    runtime_data: EchonetLiteRuntimeData, node: NodeState
+) -> DeviceInfo:
+    """Return the cached ``DeviceInfo`` for ``node``, building it on first use."""
+    cache = runtime_data.device_info_cache
+    if (cached := cache.get(node.device_key)) is not None:
+        return cached
+
+    # Use the class name (e.g. "Home air conditioner") rather than the
+    # product code so that multi-class nodes (PV + battery + controller …)
+    # get distinguishable names in the device list.
+    #
+    # The installation location is kept out of the name: ``DeviceInfo.name``
+    # is a snapshot at setup time and would not track later EPC 0x81 changes.
+    # The live value is available through the installation_location_code /
+    # installation_location_number config select entities (Z-Wave JS pattern).
+    suggested_area: str | None = None
+    if (location := node.installation_location) is not None:
+        # Only applied at first device registration; never overwrites
+        # a user's chosen area.
+        suggested_area = location.name
+
+    device_info = DeviceInfo(
+        identifiers={(DOMAIN, node.device_key)},
+        name=node.class_name,
+        manufacturer=node.manufacturer_name,
+        model=node.product_code,
+        serial_number=node.serial_number,
+        suggested_area=suggested_area,
+    )
+    cache[node.device_key] = device_info
+    return device_info
+
+
 class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
     """Base entity bound to an ECHONET Lite node."""
 
@@ -115,20 +149,8 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
 
         super().__init__(coordinator)
         self._node = node
-
-        # Build device_info once; sources are immutable after node creation
-        manufacturer: str | None = None
-        if node.manufacturer_code is not None:
-            manufacturer = (
-                node.manufacturer_name_en or f"0x{node.manufacturer_code:06X}"
-            )
-        name = node.product_code or f"ECHONET Lite node {node.device_key}"
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, node.device_key)},
-            name=name,
-            manufacturer=manufacturer,
-            model=node.product_code,
-            serial_number=node.serial_number,
+        self._attr_device_info = _get_or_build_device_info(
+            coordinator.config_entry.runtime_data, node
         )
 
     @property

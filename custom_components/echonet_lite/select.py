@@ -5,7 +5,13 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from pyhems import EntityDefinition, NodeState, create_enum_decoder
+from pyhems import (
+    INSTALLATION_LOCATIONS,
+    EntityDefinition,
+    NodeState,
+    create_enum_decoder,
+    decode_installation_location,
+)
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
 from homeassistant.const import EntityCategory
@@ -17,8 +23,8 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from .const import (
     DOMAIN,
     EPC_INSTALLATION_LOCATION,
-    INSTALLATION_LOCATION_CODES,
     INSTALLATION_LOCATION_NUMBER_OPTIONS,
+    INSTALLATION_LOCATION_UNSET,
     camel_to_snake,
     infer_entity_category,
     infer_entity_registry_enabled_default,
@@ -152,33 +158,34 @@ class EchonetLiteSelect(
 # Installation Location (EPC 0x81) — hardcoded, not definition-driven
 # ============================================================================
 # EPC 0x81 is a 1-byte mandatory super-class property shared by all ECHONET
-# Lite devices.  Its bit layout is:
-#   bit7   : free flag (always 0 in the 1-byte format)
-#   bits6-3: LLLL location code (0=unset, 1-15=named rooms)
-#   bits2-0: NNN  location number (0-7)
+# Lite devices. The spec-defined LLLL codes and English labels live in
+# :mod:`pyhems.installation_location`; the integration adds the
+# ``unset`` option (byte 0x00) to expose "clear location" in the UI.
 # Two select entities expose the location code and number independently;
 # writes merge the changed field with the current value of the other field.
 
+# Mapping from LLLL code (0..15) to the integration's translation key.
+# 0 → ``unset`` is integration-specific; 1..15 come from the ECHONET Lite spec.
+_LOCATION_CODE_TO_KEY: dict[int, str] = {0: INSTALLATION_LOCATION_UNSET} | {
+    code: key for code, (key, _name, _name_ja) in INSTALLATION_LOCATIONS.items()
+}
+_LOCATION_KEY_TO_CODE: dict[str, int] = {
+    key: code for code, key in _LOCATION_CODE_TO_KEY.items()
+}
 
-def _decode_installation_location(
-    node: NodeState,
-) -> tuple[int, int] | None:
-    """Decode the current 0x81 byte into (llll, nnn), or None if invalid."""
-    raw = node.properties.get(EPC_INSTALLATION_LOCATION)
-    if raw is None or len(raw) != 1:
+
+def _decode_location_fields(node: NodeState) -> tuple[int, int] | None:
+    """Return ``(llll, nnn)`` for the node's current 0x81 byte, or ``None``.
+
+    ``None`` matches the cases :func:`decode_installation_location` rejects
+    (unset, indefinite, position-info, free-format, unknown code). The unset
+    case is still surfaced as the ``unset`` option via the explicit 0x00
+    byte check in :meth:`InstallationLocationCodeSelect.current_option`.
+    """
+    loc = decode_installation_location(node.properties.get(EPC_INSTALLATION_LOCATION))
+    if loc is None:
         return None
-    b = raw[0]
-    # bit7=1 → free flag set (not the 1-byte format)
-    # 0xFF → undefined per spec
-    if b & 0x80 or b == 0xFF:
-        return None
-    llll = (b >> 3) & 0x0F
-    nnn = b & 0x07
-    # LLLL=0 with NNN≠0 produces bytes 0x01-0x07 which are the 17-byte format
-    # indicator values — treat them as invalid/unknown.
-    if llll == 0 and nnn != 0:
-        return None
-    return llll, nnn
+    return loc.code, loc.instance
 
 
 def _build_installation_location_entities(
@@ -203,8 +210,7 @@ class InstallationLocationCodeSelect(EchonetLiteEntity, SelectEntity):
     _attr_entity_category = EntityCategory.CONFIG
     _attr_has_entity_name = True
     _attr_translation_key = "installation_location_code"
-    _attr_options = list(INSTALLATION_LOCATION_CODES.values())
-    _attr_icon = "mdi:map-marker"
+    _attr_options = list(_LOCATION_CODE_TO_KEY.values())
 
     def __init__(
         self,
@@ -218,23 +224,24 @@ class InstallationLocationCodeSelect(EchonetLiteEntity, SelectEntity):
     @property
     def current_option(self) -> str | None:
         """Return the currently selected location code option."""
-        fields = _decode_installation_location(self._node)
+        raw = self._node.properties.get(EPC_INSTALLATION_LOCATION)
+        if raw == b"\x00":
+            return INSTALLATION_LOCATION_UNSET
+        fields = _decode_location_fields(self._node)
         if fields is None:
             return None
         llll, _ = fields
-        return INSTALLATION_LOCATION_CODES.get(llll)
+        return _LOCATION_CODE_TO_KEY.get(llll)
 
     async def async_select_option(self, option: str) -> None:
         """Send updated location code while preserving the current NNN."""
-        new_llll = next(
-            k for k, v in INSTALLATION_LOCATION_CODES.items() if v == option
-        )
+        new_llll = _LOCATION_KEY_TO_CODE[option]
         if new_llll == 0:
             # "unset" selected — write 0x00; forcing NNN=0 avoids generating
             # the prohibited 0x01-0x07 range (17-byte format indicators).
             new_byte = 0x00
         else:
-            fields = _decode_installation_location(self._node)
+            fields = _decode_location_fields(self._node)
             nnn = fields[1] if fields is not None else 0
             new_byte = (new_llll << 3) | nnn
         await self._async_send_property(EPC_INSTALLATION_LOCATION, bytes([new_byte]))
@@ -258,14 +265,6 @@ class InstallationLocationNumberSelect(EchonetLiteEntity, SelectEntity):
         self._attr_unique_id = f"{node.device_key}_81_number"
 
     @property
-    def icon(self) -> str:
-        """Return a numeric box icon matching the current location number."""
-        fields = _decode_installation_location(self._node)
-        if fields is None or fields[0] == 0:
-            return "mdi:numeric-0-box"
-        return f"mdi:numeric-{fields[1]}-box"
-
-    @property
     def available(self) -> bool:
         """Return True only when a location code (LLLL≠0) is set.
 
@@ -274,13 +273,13 @@ class InstallationLocationNumberSelect(EchonetLiteEntity, SelectEntity):
         """
         if not super().available:
             return False
-        fields = _decode_installation_location(self._node)
+        fields = _decode_location_fields(self._node)
         return fields is not None and fields[0] != 0
 
     @property
     def current_option(self) -> str | None:
         """Return the current location number as a string."""
-        fields = _decode_installation_location(self._node)
+        fields = _decode_location_fields(self._node)
         if fields is None or fields[0] == 0:
             return None
         _, nnn = fields
@@ -288,7 +287,7 @@ class InstallationLocationNumberSelect(EchonetLiteEntity, SelectEntity):
 
     async def async_select_option(self, option: str) -> None:
         """Send updated location number while preserving the current LLLL."""
-        fields = _decode_installation_location(self._node)
+        fields = _decode_location_fields(self._node)
         if fields is None or fields[0] == 0:
             raise ServiceValidationError(
                 translation_domain=DOMAIN,

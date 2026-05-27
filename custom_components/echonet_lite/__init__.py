@@ -230,6 +230,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
         health=runtime_health,
         discovery_task=controller.discovery_task,
         event_consumer_task=controller.event_consumer_task,
+        device_info_cache={},
     )
 
     # Reload entry when options change
