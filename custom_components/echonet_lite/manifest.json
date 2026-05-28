@@ -12,5 +12,5 @@
   "quality_scale": "bronze",
   "requirements": ["pyhems==0.5.6"],
   "single_config_entry": true,
-  "version": "0.5.5"
+  "version": "0.5.6"
 }
