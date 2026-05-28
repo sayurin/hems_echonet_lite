@@ -47,7 +47,11 @@ from pyhems import (
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
-from homeassistant.helpers import config_validation as cv, issue_registry as ir
+from homeassistant.helpers import (
+    config_validation as cv,
+    device_registry as dr,
+    issue_registry as ir,
+)
 from homeassistant.helpers.event import async_track_time_interval
 
 from .const import (
@@ -245,6 +249,22 @@ async def _async_update_listener(
 ) -> None:
     """Handle options update by reloading the entry."""
     await hass.config_entries.async_reload(entry.entry_id)
+
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant,
+    config_entry: EchonetLiteConfigEntry,
+    device_entry: dr.DeviceEntry,
+) -> bool:
+    """Remove a config entry from a device.
+
+    Removal is permitted only when the device is no longer actively
+    discovered on the local network (i.e. not present in coordinator data).
+    """
+    coordinator = config_entry.runtime_data.coordinator
+    return not device_entry.identifiers.intersection(
+        (DOMAIN, device_key) for device_key in coordinator.data
+    )
 
 
 async def async_unload_entry(
