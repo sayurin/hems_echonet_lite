@@ -83,6 +83,7 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
     and air conditioner ventilation fans (0x0134).
     """
 
+    _attr_name = None
     _attr_preset_modes = [PRESET_MODE_AUTO, PRESET_MODE_MANUAL]
     _attr_speed_count = int_states_in_range(_SPEED_RANGE)
 

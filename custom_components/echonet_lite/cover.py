@@ -65,11 +65,6 @@ _CLASS_CODE_TO_DEVICE_CLASS: Final[dict[int, CoverDeviceClass]] = {
     CLASS_CODE_ELECTRICALLY_OPERATED_SHUTTER: CoverDeviceClass.SHUTTER,
 }
 
-_CLASS_CODE_TO_TRANSLATION_KEY: Final[dict[int, str]] = {
-    CLASS_CODE_ELECTRICALLY_OPERATED_BLIND: "electrically_operated_blind",
-    CLASS_CODE_ELECTRICALLY_OPERATED_SHUTTER: "electrically_operated_shutter",
-}
-
 
 async def async_setup_entry(
     _hass: HomeAssistant,
@@ -106,6 +101,8 @@ def _tilt_ha_to_deg(pos: int) -> int:
 class EchonetLiteCover(EchonetLiteEntity, CoverEntity):
     """Representation of an ECHONET Lite electric blind/shutter cover."""
 
+    _attr_name = None
+
     def __init__(
         self,
         coordinator: EchonetLiteCoordinator,
@@ -115,7 +112,6 @@ class EchonetLiteCover(EchonetLiteEntity, CoverEntity):
         super().__init__(coordinator, node)
         class_code = node.eoj.class_code
         self._attr_unique_id = f"{node.device_key}-cover"
-        self._attr_translation_key = _CLASS_CODE_TO_TRANSLATION_KEY[class_code]
         self._attr_device_class = _CLASS_CODE_TO_DEVICE_CLASS[class_code]
 
         # Build supported_features dynamically from the device's advertised

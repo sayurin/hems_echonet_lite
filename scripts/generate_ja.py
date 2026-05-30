@@ -277,7 +277,18 @@ def generate_ja(registry: DefinitionsRegistry) -> dict[str, Any]:
     location_entry["state"] = dict(sorted(location_state.items()))
 
     # Build result from static non-entity sections
-    result: dict[str, Any] = {k: v for k, v in static_data.items() if k != "entity"}
+    result: dict[str, Any] = {
+        k: v for k, v in static_data.items() if k not in ("entity", "device")
+    }
+
+    # Build device section from registry (class_XXXX entries) merged with
+    # static entries (e.g. unknown_class fallback).
+    device_section: dict[str, dict[str, str]] = {
+        f"class_{class_code:04x}": {"name": _escape_html_brackets(device_def.name_ja)}
+        for class_code, device_def in sorted(registry.devices.items())
+    }
+    device_section |= static_data.get("device", {})
+    result["device"] = dict(sorted(device_section.items()))
 
     # Set entity section from fully processed entity_strings
     result["entity"] = {}
