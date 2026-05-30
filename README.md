@@ -1,50 +1,63 @@
-# HEMS ECHONET Lite Integration for Home Assistant
+# HEMS Echonet Lite Integration for Home Assistant
 
-[![HACS Default](https://img.shields.io/badge/HACS-Default-orange)](https://hacs.xyz/)
-[![Quality Scale: Bronze](https://img.shields.io/badge/Quality%20Scale-Bronze-orange)](https://www.home-assistant.io/docs/quality_scale/)
-[![License: MIT](https://img.shields.io/github/license/sayurin/hems_echonet_lite)](LICENSE)
-[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?logo=github)](https://github.com/sponsors/sayurin)
+[![HACS](https://img.shields.io/badge/hacs-default-blue)](https://hacs.xyz/)
+[![Quality Scale](https://img.shields.io/github/manifest-json/quality_scale/sayurin/hems_echonet_lite?filename=custom_components/echonet_lite/manifest.json&label=quality+scale&color=mediumpurple)](https://www.home-assistant.io/docs/quality_scale/)
+[![License](https://img.shields.io/github/license/sayurin/hems_echonet_lite)](https://github.com/sayurin/hems_echonet_lite/blob/master/LICENSE)
+[![Version](https://img.shields.io/github/v/release/sayurin/hems_echonet_lite)](https://github.com/sayurin/hems_echonet_lite/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/sayurin/hems_echonet_lite/latest/total)](https://github.com/sayurin/hems_echonet_lite/releases/latest)
+[![Starts](https://img.shields.io/github/stars/sayurin/hems_echonet_lite?style=flat&color=gold)](https://github.com/sayurin/hems_echonet_lite)
+[![Sponsor](https://img.shields.io/github/sponsors/sayurin?color=darksalmon)](https://github.com/sponsors/sayurin)
 
-ECHONET Lite protocol integration for Home Assistant, powered by [pyhems](https://github.com/sayurin/pyhems). Communicates with ECHONET Lite compatible devices on the local network via UDP multicast.
+[日本語](README.ja.md)
 
-## Features
+ECHONET Lite protocol integration for Home Assistant, powered by [pyhems](https://github.com/sayurin/pyhems). Communicates with ECHONET Lite compatible devices on the local network via UDP multicast — no cloud, no account, no API key required.
 
-- **Automatic device discovery** via ECHONET Lite multicast (224.0.23.0:3610)
-- **Periodic re-discovery** every hour for newly joined devices
-- **Event-driven updates** — entity state changes are pushed immediately upon frame receipt
-- **Property polling** every 60 seconds for devices that do not send notifications
-- **Runtime health monitoring** — creates repair issues when no frames are received for 5 minutes
-- **12 entity platforms**: Climate, Fan, Water Heater, Lock, Cover, Light, Binary Sensor, Button, Number, Select, Sensor, Switch
-- **Experimental mode** to enable 50+ additional unverified device classes
+## Use Cases
+
+- Control your air conditioner remotely or via automations, and monitor its state.
+- Monitor residential solar power generation and storage battery charge levels.
+- Automate water heater schedules to heat water during off-peak electricity hours.
+- Lock or unlock your electric door lock based on time or presence.
+- Control blinds and shutters based on sunlight or schedules.
+- Control lighting based on ambient conditions or schedules.
 
 ## Supported Devices
 
 Device classes fall into two categories:
 
-- **Stable** — enabled by default, no extra configuration needed
-- **Experimental** — must be enabled via the integration options; not verified with real hardware
+- **Stable** — verified with real hardware; enabled by default, no extra configuration needed.
+- **Experimental** — not verified with real hardware; must be enabled via integration options.
 
 ### Stable Device Classes
 
 | Class Code | Device | HA Platform |
 |------------|--------|-------------|
 | 0x0130 | Home Air Conditioner | Climate + generic entities |
-| 0x0133 | Ventilation Fan | Fan + generic entities |
-| 0x0134 | Air Conditioner Ventilation Fan | Fan + generic entities |
 | 0x0135 | Air Cleaner | Fan + generic entities |
-| 0x026B | Electoric Water Heater | Water Heater + generic entities |
+| 0x026B | Electric Water Heater | Water Heater + generic entities |
 | 0x026F | Electric Lock | Lock + generic entities |
 | 0x0279 | Residential Solar Power Generation | Generic entities |
 | 0x027D | Storage Battery | Generic entities |
 | 0x05FD | Switch (JEM-A/HA terminals) | Generic entities |
 | 0x05FF | Controller | Generic entities |
 
-### Experimental Device Classes with Dedicated Platforms
+Verified hardware:
+- **Home Air Conditioner**: Mitsubishi Electric Kirigamine Z series
+- **Air Cleaner**: Sharp KI-SX70-W
+- **Residential Solar Power Generation / Storage Battery**: Sharp SUNVISTA
+- **Switch**: Panasonic HF-JA1
+- **Controller**: Sharp JH-RVB1, JH-RWL8
 
-The following experimental classes are exposed as fully-featured HA platform entities:
+### Experimental Device Classes
+
+The following classes require **Enable experimental device classes** to be turned on in the integration options.
+
+**With dedicated HA platform entities:**
 
 | Class Code | Device | HA Platform |
 |------------|--------|-------------|
+| 0x0133 | Ventilation Fan | Fan + generic entities |
+| 0x0134 | Air Conditioner Ventilation Fan | Fan + generic entities |
 | 0x0260 | Electrically Operated Blind | Cover + generic entities |
 | 0x0263 | Electrically Operated Shutter | Cover + generic entities |
 | 0x0290 | General Lighting | Light + generic entities |
@@ -52,9 +65,9 @@ The following experimental classes are exposed as fully-featured HA platform ent
 | 0x02A3 | Lighting System | Light + generic entities |
 | 0x02A4 | Extended Lighting System | Light + generic entities |
 
-All other experimental classes are supported via generic entities only.
+**Via generic entities only** (50+ additional classes including sensors, meters, EV chargers, cookware, and more — see the full list in the integration options UI).
 
-## Platform Details
+## Supported Functionality
 
 ### Climate (0x0130)
 
@@ -70,7 +83,7 @@ All other experimental classes are supported via generic entities only.
 
 ### Water Heater (0x026B)
 
-Aggregates operation status (EPC 0x80), operation mode (EPC 0xB0) and target temperature (EPC 0xB3) into a single entity.
+Aggregates operation status (EPC 0x80), operation mode (EPC 0xB0), and target temperature (EPC 0xB3) into a single entity.
 
 - **Operations**: `auto` (automatic water heating), `manual` (manual water heating), `manual_off` (manual heating stopped / away), `off`
 - **Target temperature**: setpoint via EPC 0xB3 (range derived from the device's MRA definition, 1°C step)
@@ -113,73 +126,216 @@ All remaining properties are automatically mapped based on the ECHONET Lite prop
 | 1-value enum | Button | — |
 | Numeric | Number | Sensor |
 
+## Data Updates
+
+The integration uses both polling and event-driven updates:
+
+- **Event-driven**: Devices that support property change notifications (INF frames) push state changes immediately upon receipt.
+- **Property polling**: Every 60 seconds for devices that do not send notifications.
+- **Device re-discovery**: Every hour via multicast, so newly joined devices are detected automatically.
+- **Health monitoring**: If no ECHONET Lite frames are received for 5 minutes, a repair issue is created.
+
 ## Installation
 
 ### HACS (Recommended)
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=sayurin&repository=hems_echonet_lite&category=integration)
 
-1. Click the button above, or search for **"HEMS echonet lite"** in HACS
-2. Install the integration
-3. Restart Home Assistant
+1. Select the button above, or search for **"HEMS Echonet Lite"** in HACS.
+2. Install the integration.
+3. Restart Home Assistant.
 
 ### Manual
 
-1. Copy `custom_components/echonet_lite` to your Home Assistant `custom_components` directory
-2. Restart Home Assistant
+1. Copy `custom_components/echonet_lite` to your Home Assistant `custom_components` directory.
+2. Restart Home Assistant.
+
+## Prerequisites
+
+- Home Assistant 2026.3 or later
+- ECHONET Lite compatible devices on the same local network as Home Assistant
+- UDP multicast traffic allowed on your network (address 224.0.23.0, port 3610)
+- If running Home Assistant in a container or VM, ensure multicast traffic is properly forwarded (for example, `network_mode: host` in Docker)
 
 ## Configuration
 
-1. Go to **Settings → Devices & Services → Add Integration**
-2. Search for **"HEMS echonet lite"**
+1. Go to **Settings → Devices & Services → Add Integration**.
+2. Search for **"HEMS Echonet Lite"**.
 3. Select your network interface:
    - **Auto** (`0.0.0.0`): Listen on all interfaces (recommended)
    - **Specific IP**: Bind to a particular network interface
-4. The integration starts listening on the ECHONET Lite multicast group (224.0.23.0:3610)
+4. The integration starts listening on the ECHONET Lite multicast group (224.0.23.0:3610) and discovers devices automatically.
 
-> Only one instance is allowed per Home Assistant installation (`single_config_entry`).
+> Only one instance is allowed per Home Assistant installation.
 
 ### Options
 
-After setup, configure in **Settings → Devices & Services → HEMS → Configure**:
+After setup, configure in **Settings → Devices & Services → HEMS Echonet Lite → Configure**:
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| Enable experimental device classes | Include unverified device classes | Off |
-
-> Enabling experimental mode is required for Water Heater, Lock, Cover, Light, and all other non-stable device classes.
+| Enable experimental device classes | Include device classes that have not been verified with real hardware. These may not work correctly. | Off |
 
 ### Reconfiguration
 
-The network interface can be changed at any time via **Settings → Devices & Services → HEMS → Reconfigure**.
+The network interface can be changed at any time via **Settings → Devices & Services → HEMS Echonet Lite → Reconfigure**.
 
-## Network Requirements
+## Examples
 
-- UDP multicast support on your network
-- Port 3610 accessible
-- ECHONET Lite devices on the same network segment (or with multicast routing)
-- Multicast group 224.0.23.0 allowed through firewalls
+### Control air conditioning based on a schedule
+
+Turn off the air conditioner automatically when everyone leaves home, and turn it back on shortly before someone returns.
+
+```yaml
+automation:
+  - alias: "Turn off AC when everyone leaves"
+    triggers:
+      - trigger: state
+        entity_id: group.everyone
+        to: not_home
+    actions:
+      - action: climate.turn_off
+        target:
+          entity_id: climate.living_room_air_conditioner
+
+  - alias: "Pre-cool before arriving home"
+    triggers:
+      - trigger: state
+        entity_id: group.everyone
+        to: home
+    actions:
+      - action: climate.set_temperature
+        target:
+          entity_id: climate.living_room_air_conditioner
+        data:
+          hvac_mode: cool
+          temperature: 26
+```
+
+### Heat water during off-peak electricity hours
+
+Schedule the electric water heater to heat water at night when electricity rates are lower.
+
+```yaml
+automation:
+  - alias: "Start water heating at off-peak hours"
+    triggers:
+      - trigger: time
+        at: "23:00:00"
+    actions:
+      - action: water_heater.set_operation_mode
+        target:
+          entity_id: water_heater.electric_water_heater
+        data:
+          operation_mode: auto
+
+  - alias: "Stop water heating in the morning"
+    triggers:
+      - trigger: time
+        at: "06:00:00"
+    actions:
+      - action: water_heater.set_operation_mode
+        target:
+          entity_id: water_heater.electric_water_heater
+        data:
+          operation_mode: manual_off
+```
+
+### Auto-lock the door at bedtime
+
+Lock the electric door lock every night and send a notification if it was already unlocked.
+
+```yaml
+automation:
+  - alias: "Auto-lock door at bedtime"
+    triggers:
+      - trigger: time
+        at: "23:30:00"
+    conditions:
+      - condition: state
+        entity_id: lock.front_door
+        state: unlocked
+    actions:
+      - action: lock.lock
+        target:
+          entity_id: lock.front_door
+      - action: notify.mobile_app
+        data:
+          message: "Front door was unlocked and has been locked automatically."
+```
+
+### Close blinds at sunset
+
+Automatically close electrically operated blinds when the sun sets.
+
+```yaml
+automation:
+  - alias: "Close blinds at sunset"
+    triggers:
+      - trigger: sun
+        event: sunset
+        offset: "-00:30:00"
+    actions:
+      - action: cover.close_cover
+        target:
+          entity_id: cover.living_room_blind
+```
+
+## Known Limitations
+
+- Only IPv4 networks are supported.
+- UDP multicast must be supported and enabled on your network.
+- Some device properties may not be available if the device does not advertise them in its property map.
+- Experimental device classes have not been tested with real hardware and may not function correctly.
+- Only one integration instance per Home Assistant installation is supported.
 
 ## Troubleshooting
 
-### No Devices Discovered
+### No devices discovered
 
-1. Verify ECHONET Lite devices are powered on and connected to the network
-2. Check that UDP multicast is enabled on your router/switch
-3. Try selecting a specific network interface instead of Auto
-4. Confirm port 3610 is not blocked by a firewall
+After setting up the integration, no devices appear at all.
 
-### Repair Issues
+1. Verify your ECHONET Lite devices are powered on and connected to the network.
+2. Check that UDP multicast traffic (224.0.23.0:3610) is allowed on your network.
+3. If using Docker, ensure the container uses `network_mode: host` or has proper multicast routing configured.
+4. Try selecting a specific network interface instead of **Auto** in the integration settings.
+5. Check the Home Assistant logs for any error messages related to `echonet_lite` or `pyhems`.
 
-The integration automatically creates repair issues when:
+### Some devices not discovered
 
-- **Runtime inactive**: No ECHONET Lite frames received for 5 minutes — check device power and network connectivity
-- **Runtime client error**: A network error occurred — use the repair flow to restart the service
+Some ECHONET Lite devices appear, but others do not.
 
-## Requirements
+1. If the missing device is an experimental device class, enable **Enable experimental device classes** in the integration options.
+2. Some devices may take longer to respond. Wait a few minutes and check again, as re-discovery runs every hour.
+3. Try reloading the integration from **Settings → Devices & Services → HEMS Echonet Lite → ⋮ → Reload**.
+4. Verify the device supports ECHONET Lite. Some appliances have ECHONET Lite disabled by default and require enabling via the manufacturer's app or settings.
 
-- Home Assistant 2026.3 or later
+### Devices show as unavailable
+
+Devices were discovered but later show as unavailable.
+
+1. Check the device's network connection and power state.
+2. Verify the device has not entered a power-saving mode that disables network communication.
+3. Check **Settings → System → Repairs** for any issues reported by the integration and follow the suggested resolution steps.
+
+### Repair issues
+
+The integration automatically creates repair issues in the following situations:
+
+- **Runtime inactive**: No ECHONET Lite frames received for 5 minutes — check device power and network connectivity.
+- **Runtime client error**: A network error occurred — use the repair flow to restart the service.
+
+## Removing the Integration
+
+To remove the integration, go to **Settings → Devices & Services**, select **HEMS Echonet Lite**, and select **Delete**.
+
+### Removing a single device
+
+Individual devices can be removed from **Settings → Devices & Services → HEMS Echonet Lite → (device) → Delete**, but only when the device is no longer reachable on the local network (not currently active in the integration).
+
+If a device is still being discovered (powered on and responding), removal will be rejected. Power off the device or remove it from your network first, then try again.
 
 ## Acknowledgments
 
 - [ECHONET Consortium](https://echonet.jp/) for the ECHONET Lite specification
+- [pyhems](https://github.com/sayurin/pyhems) library for ECHONET Lite protocol handling
