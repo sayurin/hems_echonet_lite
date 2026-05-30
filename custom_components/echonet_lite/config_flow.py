@@ -66,6 +66,15 @@ class EchonetLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
         interface_options = await _async_get_interface_options(self.hass)
+        # Ensure the currently configured interface is always present in the
+        # dropdown so reconfigure cannot lose or invalidate the existing value.
+        if not any(opt["value"] == current_interface for opt in interface_options):
+            interface_options.append(
+                SelectOptionDict(
+                    value=current_interface,
+                    label=f"Configured ({current_interface})",
+                )
+            )
         errors: dict[str, str] = {}
 
         if user_input is not None:
