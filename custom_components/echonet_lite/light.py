@@ -142,6 +142,8 @@ async def async_setup_entry(
 class EchonetLiteLight(EchonetLiteEntity, LightEntity):
     """Representation of an ECHONET Lite lighting device."""
 
+    _attr_name = None
+
     def __init__(
         self,
         coordinator: EchonetLiteCoordinator,

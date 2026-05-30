@@ -34,6 +34,176 @@
       }
     }
   },
+  "device": {
+    "class_0002": {
+      "name": "防犯センサ"
+    },
+    "class_0003": {
+      "name": "非常ボタン"
+    },
+    "class_0007": {
+      "name": "人体検知センサ"
+    },
+    "class_0011": {
+      "name": "温度センサ"
+    },
+    "class_0012": {
+      "name": "湿度センサ"
+    },
+    "class_0016": {
+      "name": "風呂沸き上がりセンサ"
+    },
+    "class_001b": {
+      "name": "CO2センサ"
+    },
+    "class_001d": {
+      "name": "VOCセンサ"
+    },
+    "class_0022": {
+      "name": "電力量センサ"
+    },
+    "class_0023": {
+      "name": "電流センサ"
+    },
+    "class_00d0": {
+      "name": "照度センサ"
+    },
+    "class_0130": {
+      "name": "家庭用エアコン"
+    },
+    "class_0133": {
+      "name": "換気扇"
+    },
+    "class_0134": {
+      "name": "空調換気扇"
+    },
+    "class_0135": {
+      "name": "空気清浄器"
+    },
+    "class_0156": {
+      "name": "業務用パッケージエアコン室内機 (設備用を除く)"
+    },
+    "class_0157": {
+      "name": "業務用パッケージエアコン室外機 (設備用を除く)"
+    },
+    "class_0260": {
+      "name": "電動ブラインド・日よけ"
+    },
+    "class_0263": {
+      "name": "電動雨戸・シャッター"
+    },
+    "class_026b": {
+      "name": "電気温水器"
+    },
+    "class_026f": {
+      "name": "電気錠"
+    },
+    "class_0272": {
+      "name": "瞬間式給湯器"
+    },
+    "class_0273": {
+      "name": "浴室暖房乾燥機"
+    },
+    "class_0279": {
+      "name": "住宅用太陽光発電"
+    },
+    "class_027a": {
+      "name": "冷温水熱源機"
+    },
+    "class_027b": {
+      "name": "床暖房"
+    },
+    "class_027c": {
+      "name": "燃料電池"
+    },
+    "class_027d": {
+      "name": "蓄電池"
+    },
+    "class_027e": {
+      "name": "電気自動車充放電器"
+    },
+    "class_0280": {
+      "name": "電力量メータ"
+    },
+    "class_0281": {
+      "name": "水流量メータ"
+    },
+    "class_0282": {
+      "name": "ガスメータ"
+    },
+    "class_0287": {
+      "name": "分電盤メータリング"
+    },
+    "class_0288": {
+      "name": "低圧スマート電力量メータ"
+    },
+    "class_028a": {
+      "name": "高圧スマート電力量メータ"
+    },
+    "class_028d": {
+      "name": "スマート電力量サブメータ"
+    },
+    "class_028e": {
+      "name": "分散型電源電力量メータ"
+    },
+    "class_028f": {
+      "name": "双方向対応高圧スマート電力量メータ"
+    },
+    "class_0290": {
+      "name": "一般照明"
+    },
+    "class_0291": {
+      "name": "単機能照明"
+    },
+    "class_02a1": {
+      "name": "電気自動車充電器"
+    },
+    "class_02a3": {
+      "name": "照明システム"
+    },
+    "class_02a4": {
+      "name": "拡張照明システム"
+    },
+    "class_02a5": {
+      "name": "マルチ入力PCS"
+    },
+    "class_02a6": {
+      "name": "ハイブリッド給湯機"
+    },
+    "class_02a7": {
+      "name": "周波数制御"
+    },
+    "class_03b7": {
+      "name": "冷凍冷蔵庫"
+    },
+    "class_03b9": {
+      "name": "クッキングヒータ"
+    },
+    "class_03bb": {
+      "name": "炊飯器"
+    },
+    "class_03ce": {
+      "name": "業務用ショーケース"
+    },
+    "class_03d3": {
+      "name": "洗濯乾燥機"
+    },
+    "class_03d4": {
+      "name": "業務用ショーケース向け室外機"
+    },
+    "class_05fd": {
+      "name": "スイッチ (JEM-A/HA端子対応)"
+    },
+    "class_05ff": {
+      "name": "コントローラ"
+    },
+    "class_0602": {
+      "name": "テレビ"
+    },
+    "unknown_class": {
+      "name": "ECHONET Liteデバイス {class_code}"
+    }
+  },
   "entity": {
     "binary_sensor": {
       "class_0000_epc_88": {
@@ -498,14 +668,6 @@
         }
       }
     },
-    "cover": {
-      "electrically_operated_blind": {
-        "name": "電動ブラインド"
-      },
-      "electrically_operated_shutter": {
-        "name": "電動シャッター"
-      }
-    },
     "fan": {
       "air_cleaner": {
         "state_attributes": {
@@ -529,11 +691,7 @@
       }
     },
     "light": {
-      "extended_lighting_system": {
-        "name": "拡張照明システム"
-      },
       "general_lighting": {
-        "name": "一般照明",
         "state_attributes": {
           "effect": {
             "state": {
@@ -544,17 +702,6 @@
             }
           }
         }
-      },
-      "lighting_system": {
-        "name": "照明システム"
-      },
-      "mono_functional_lighting": {
-        "name": "単機能照明"
-      }
-    },
-    "lock": {
-      "electric_lock": {
-        "name": "電気錠"
       }
     },
     "number": {
@@ -3354,7 +3501,6 @@
     },
     "water_heater": {
       "electric_water_heater": {
-        "name": "電気温水器",
         "state_attributes": {
           "operation_mode": {
             "state": {

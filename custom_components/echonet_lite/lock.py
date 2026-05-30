@@ -46,8 +46,6 @@ _LOCK_UNLOCKED = 0x42
 # any other value means the device reports some abnormal condition.
 _ALARM_NORMAL = 0x40
 
-_TRANSLATION_KEY = "electric_lock"
-
 
 async def async_setup_entry(
     _hass: HomeAssistant,
@@ -74,7 +72,7 @@ async def async_setup_entry(
 class EchonetLiteLock(EchonetLiteEntity, LockEntity):
     """Representation of an ECHONET Lite electric lock."""
 
-    _attr_translation_key = _TRANSLATION_KEY
+    _attr_name = None
 
     def __init__(
         self,

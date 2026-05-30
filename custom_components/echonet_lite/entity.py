@@ -118,13 +118,28 @@ def _get_or_build_device_info(
         # a user's chosen area.
         suggested_area = location.name
 
+    # Prefer a translation_key so the device name is localized via
+    # ``strings.json`` (``device.class_XXXX.name``) rather than hard-coding
+    # the English MRA name. Unknown class codes (only possible with the
+    # experimental flag) fall back to the shared ``unknown_class`` key with
+    # the hex class code rendered through ``translation_placeholders``.
+    if node.class_name_en is not None:
+        translation_key = f"class_{node.eoj.class_code:04x}"
+        translation_placeholders: dict[str, str] | None = None
+    else:
+        translation_key = "unknown_class"
+        translation_placeholders = {
+            "class_code": f"0x{node.eoj.class_code:04X}",
+        }
+
     device_info = DeviceInfo(
         identifiers={(DOMAIN, node.device_key)},
-        name=node.class_name,
         manufacturer=node.manufacturer_name,
         model=node.product_code,
         serial_number=node.serial_number,
         suggested_area=suggested_area,
+        translation_key=translation_key,
+        translation_placeholders=translation_placeholders,
     )
     cache[node.device_key] = device_info
     return device_info
