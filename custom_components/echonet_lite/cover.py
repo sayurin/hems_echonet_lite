@@ -17,8 +17,6 @@ two scales are bridged via ``round(deg * 100 / 180)`` and
 ``round(pos * 180 / 100)``.
 """
 
-from __future__ import annotations
-
 from typing import Any, Final
 
 from pyhems import NodeState
@@ -43,22 +41,15 @@ from .const import (
     EPC_COVER_POSITION,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .entity import (
+    EchonetLiteEntity,
+    EnumProp,
+    NumericProp,
+    setup_echonet_lite_device_platform,
+)
 from .types import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 1
-
-# EPC 0xE0 raw command values.
-_CMD_OPEN = 0x41
-_CMD_CLOSE = 0x42
-_CMD_STOP = 0x43
-
-# EPC 0xEA (Open/closed status) raw values.
-_STATUS_FULLY_OPEN = 0x41
-_STATUS_FULLY_CLOSED = 0x42
-_STATUS_OPENING = 0x43
-_STATUS_CLOSING = 0x44
-_STATUS_STOPPED = 0x45
 
 _CLASS_CODE_TO_DEVICE_CLASS: Final[dict[int, CoverDeviceClass]] = {
     CLASS_CODE_ELECTRICALLY_OPERATED_BLIND: CoverDeviceClass.BLIND,
@@ -129,12 +120,20 @@ class EchonetLiteCover(EchonetLiteEntity, CoverEntity):
                 | CoverEntityFeature.SET_TILT_POSITION
             )
         self._attr_supported_features = features
-
-    def _raw(self, epc: int) -> int | None:
-        """Return the single-byte raw value for ``epc`` if known."""
-        if edt := self._node.properties.get(epc):
-            return edt[0]
-        return None
+        definitions = coordinator.config_entry.runtime_data.definitions
+        class_code = node.eoj.class_code
+        self._open_close_prop = EnumProp.from_registry(
+            definitions, class_code, EPC_COVER_OPEN_CLOSE
+        )
+        self._cover_position_prop = NumericProp.from_registry(
+            definitions, class_code, EPC_COVER_POSITION
+        )
+        self._cover_angle_prop = NumericProp.from_registry(
+            definitions, class_code, EPC_COVER_ANGLE
+        )
+        self._cover_status_prop = EnumProp.from_registry(
+            definitions, class_code, EPC_COVER_OPEN_CLOSED_STATUS
+        )
 
     @property
     def current_cover_position(self) -> int | None:
@@ -143,15 +142,15 @@ class EchonetLiteCover(EchonetLiteEntity, CoverEntity):
         ECHONET Lite reports the value as a percentage in EPC 0xE1, which
         matches Home Assistant's convention directly.
         """
-        return self._raw(EPC_COVER_POSITION)
+        return self._cover_position_prop.get(self._node)  # type: ignore[return-value]
 
     @property
     def current_cover_tilt_position(self) -> int | None:
         """Return the current tilt position (0-100) from EPC 0xE2 (0-180 deg)."""
-        deg = self._raw(EPC_COVER_ANGLE)
+        deg = self._cover_angle_prop.get(self._node)
         if deg is None:
             return None
-        return _tilt_deg_to_ha(deg)
+        return _tilt_deg_to_ha(int(deg))
 
     @property
     def is_closed(self) -> bool | None:
@@ -161,9 +160,9 @@ class EchonetLiteCover(EchonetLiteEntity, CoverEntity):
         doesn't report it, fall back to the position percentage so
         positionable covers still report ``closed`` accurately.
         """
-        status = self._raw(EPC_COVER_OPEN_CLOSED_STATUS)
+        status = self._cover_status_prop.get(self._node)
         if status is not None:
-            return status == _STATUS_FULLY_CLOSED
+            return status == "fully_closed"
         # Fallback: use position percentage when 0xEA isn't supported.
         position = self.current_cover_position
         if position is None:
@@ -173,49 +172,48 @@ class EchonetLiteCover(EchonetLiteEntity, CoverEntity):
     @property
     def is_opening(self) -> bool | None:
         """Return True if the cover is currently moving towards open."""
-        status = self._raw(EPC_COVER_OPEN_CLOSED_STATUS)
+        status = self._cover_status_prop.get(self._node)
         if status is None:
             return None
-        return status == _STATUS_OPENING
+        return status == "opening"
 
     @property
     def is_closing(self) -> bool | None:
         """Return True if the cover is currently moving towards closed."""
-        status = self._raw(EPC_COVER_OPEN_CLOSED_STATUS)
+        status = self._cover_status_prop.get(self._node)
         if status is None:
             return None
-        return status == _STATUS_CLOSING
+        return status == "closing"
 
     async def async_open_cover(self, **kwargs: Any) -> None:
         """Send the open command (EPC 0xE0 = 0x41)."""
-        await self._async_send_property(EPC_COVER_OPEN_CLOSE, bytes([_CMD_OPEN]))
+        await self._async_send_prop(self._open_close_prop, "open")
 
     async def async_close_cover(self, **kwargs: Any) -> None:
         """Send the close command (EPC 0xE0 = 0x42)."""
-        await self._async_send_property(EPC_COVER_OPEN_CLOSE, bytes([_CMD_CLOSE]))
+        await self._async_send_prop(self._open_close_prop, "close")
 
     async def async_stop_cover(self, **kwargs: Any) -> None:
         """Send the stop command (EPC 0xE0 = 0x43)."""
-        await self._async_send_property(EPC_COVER_OPEN_CLOSE, bytes([_CMD_STOP]))
+        await self._async_send_prop(self._open_close_prop, "stop")
 
     async def async_set_cover_position(self, **kwargs: Any) -> None:
         """Set the degree-of-opening as a 0-100 percentage (EPC 0xE1)."""
-        position = int(kwargs[ATTR_POSITION])
-        position = max(0, min(100, position))
-        await self._async_send_property(EPC_COVER_POSITION, bytes([position]))
+        position = max(0, min(100, int(kwargs[ATTR_POSITION])))
+        await self._async_send_prop(self._cover_position_prop, float(position))
 
     async def async_open_cover_tilt(self, **kwargs: Any) -> None:
         """Open the slats fully (HA tilt 100 -> 180 deg)."""
-        await self._async_send_property(EPC_COVER_ANGLE, bytes([180]))
+        await self._async_send_prop(self._cover_angle_prop, 180.0)
 
     async def async_close_cover_tilt(self, **kwargs: Any) -> None:
         """Close the slats fully (HA tilt 0 -> 0 deg)."""
-        await self._async_send_property(EPC_COVER_ANGLE, bytes([0]))
+        await self._async_send_prop(self._cover_angle_prop, 0.0)
 
     async def async_set_cover_tilt_position(self, **kwargs: Any) -> None:
         """Set the slat angle (EPC 0xE2 0-180 deg) from HA tilt 0-100."""
         deg = _tilt_ha_to_deg(int(kwargs[ATTR_TILT_POSITION]))
-        await self._async_send_property(EPC_COVER_ANGLE, bytes([deg]))
+        await self._async_send_prop(self._cover_angle_prop, float(deg))
 
 
 __all__ = ["EchonetLiteCover"]

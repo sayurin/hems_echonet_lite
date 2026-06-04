@@ -1,7 +1,5 @@
 """Constants for the HEMS Echonet Lite integration."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 import re
 

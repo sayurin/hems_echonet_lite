@@ -8,7 +8,6 @@
     },
     "error": {
       "cannot_connect": "マルチキャストリスナーを開始できませんでした。ホストネットワークでUDPマルチキャスト通信（224.0.23.0:3610）が許可されていることを確認してください。",
-      "invalid_interface": "有効なIPv4アドレスを入力してください（例: 192.168.1.10 または 0.0.0.0）。",
       "unknown": "設定の検証中に予期しないエラーが発生しました"
     },
     "step": {
@@ -3505,8 +3504,8 @@
           "operation_mode": {
             "state": {
               "auto": "自動沸き上げ",
-              "manual": "手動沸き上げ",
-              "manual_off": "手動沸き上げ停止",
+              "manual_heating": "手動沸き上げ",
+              "manual_no_heating": "手動沸き上げ停止",
               "off": "OFF"
             }
           }
@@ -3515,17 +3514,17 @@
     }
   },
   "exceptions": {
+    "definitions_load_error": {
+      "message": "デバイス定義ファイルを読み込めませんでした。"
+    },
     "epc_not_writable": {
       "message": "EPC {epc_list} はデバイスによって書き込みできません。"
     },
     "installation_location_number_unset": {
       "message": "設置場所番号を設定できません: 設置場所コードがまだ設定されていません。先に設置場所を選択してください。"
     },
-    "operation_mode_not_writable": {
-      "message": "このデバイスの運転モードプロパティは書き込みできません。"
-    },
-    "operation_status_not_writable": {
-      "message": "このデバイスの動作状態プロパティは書き込みできません。"
+    "runtime_start_failed": {
+      "message": "ランタイムクライアントの起動に失敗しました: {error}"
     },
     "target_node_unknown": {
       "message": "対象ノードのアドレスが不明です。"
@@ -3533,17 +3532,8 @@
     "target_temperature_required": {
       "message": "目標温度の値が必要です。"
     },
-    "unsupported_fan_mode": {
-      "message": "サポートされていない風量モード: {fan_mode}"
-    },
-    "unsupported_hvac_mode": {
-      "message": "サポートされていないHVACモード: {hvac_mode}"
-    },
-    "unsupported_option": {
-      "message": "サポートされていないオプション: {option}"
-    },
-    "unsupported_swing_mode": {
-      "message": "サポートされていない風向モード: {swing_mode}"
+    "unsupported_value": {
+      "message": "サポートされていない値: {value}"
     }
   },
   "issues": {
