@@ -6,6 +6,7 @@ from typing import Any
 from pyhems import EntityDefinition
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
@@ -58,10 +59,9 @@ async def async_setup_entry(
     setup_echonet_lite_platform(
         entry,
         async_add_entities,
-        "switch",
+        Platform.SWITCH,
         _create_switch_description,
         EchonetLiteSwitch,
-        "switch",
     )
 
 

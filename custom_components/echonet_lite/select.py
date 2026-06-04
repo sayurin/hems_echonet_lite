@@ -12,7 +12,7 @@ from pyhems import (
 )
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
-from homeassistant.const import EntityCategory
+from homeassistant.const import EntityCategory, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.entity import Entity
@@ -91,10 +91,9 @@ async def async_setup_entry(
     setup_echonet_lite_platform(
         entry,
         async_add_entities,
-        "select",
+        Platform.SELECT,
         _create_select_description,
         EchonetLiteSelect,
-        "select",
     )
     setup_echonet_lite_device_platform(
         entry,

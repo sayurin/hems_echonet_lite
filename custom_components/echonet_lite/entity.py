@@ -4,7 +4,6 @@ from collections.abc import Callable
 from dataclasses import dataclass
 import logging
 import time
-from typing import Literal
 
 from pyhems import (
     BinaryCodec,
@@ -18,6 +17,7 @@ from pyhems import (
     get_codec_for_epc,
 )
 
+from homeassistant.const import Platform
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -36,11 +36,6 @@ from .coordinator import EchonetLiteCoordinator
 from .types import EchonetLiteConfigEntry, EchonetLiteRuntimeData
 
 _LOGGER = logging.getLogger(__name__)
-
-# Platform type for entity classification
-type PlatformType = Literal[
-    "binary_sensor", "button", "number", "select", "sensor", "switch"
-]
 
 
 @dataclass(frozen=True)
@@ -223,7 +218,7 @@ def can_process_enum_values(entity: EntityDefinition) -> bool:
     return True
 
 
-def infer_platform(entity: EntityDefinition) -> PlatformType | None:
+def infer_platform(entity: EntityDefinition) -> Platform | None:
     """Infer the platform type from entity definition using MRA get/set info.
 
     Decision matrix:
@@ -248,15 +243,15 @@ def infer_platform(entity: EntityDefinition) -> PlatformType | None:
                 # Single enum value on readable property is skipped
                 return None
             if len(entity.enum_values) == 2:
-                return "switch" if writable else "binary_sensor"
-            return "select" if writable else "sensor"
-        return "number" if writable else "sensor"
+                return Platform.SWITCH if writable else Platform.BINARY_SENSOR
+            return Platform.SELECT if writable else Platform.SENSOR
+        return Platform.NUMBER if writable else Platform.SENSOR
 
     # Write-only properties (get == notApplicable)
     if entity.set != "notApplicable":
         # Button: write-only with exactly 1 enum value (action command)
         if entity.enum_values and len(entity.enum_values) == 1:
-            return "button"
+            return Platform.BUTTON
     return None
 
 
@@ -517,10 +512,9 @@ class EchonetLiteDescribedEntity[DescriptionT: EchonetLiteEntityDescription](
 def setup_echonet_lite_platform[DescriptionT: EchonetLiteEntityDescription](
     entry: EchonetLiteConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
-    platform_type: PlatformType,
+    platform_type: Platform,
     description_factory: Callable[[int, EntityDefinition], DescriptionT],
     entity_factory: Callable[[EchonetLiteCoordinator, NodeState, DescriptionT], Entity],
-    platform_name: str,
 ) -> None:
     """Set up common entity platform setup pattern for ECHONET Lite.
 
@@ -535,11 +529,10 @@ def setup_echonet_lite_platform[DescriptionT: EchonetLiteEntityDescription](
     Args:
         entry: The config entry
         async_add_entities: Callback to add entities
-        platform_type: Type of platform (e.g. "sensor", "switch", "number")
+        platform_type: Type of platform (e.g. Platform.SENSOR, Platform.SWITCH)
         description_factory: Factory function to create descriptions from definitions.
             Args: (class_code, entity_def)
         entity_factory: Factory function to create entity instances
-        platform_name: Name of the platform for logging (e.g., "sensor", "switch")
 
     """
     runtime_data = entry.runtime_data
@@ -572,7 +565,7 @@ def setup_echonet_lite_platform[DescriptionT: EchonetLiteEntityDescription](
             if not description.should_create(node):
                 _LOGGER.debug(
                     "Skipping %s %s for %s: EPC 0x%02X not meeting criteria",
-                    platform_name,
+                    platform_type,
                     description.key,
                     node.device_key,
                     description.epc,
