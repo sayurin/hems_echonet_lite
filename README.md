@@ -44,6 +44,7 @@ Device classes fall into two categories:
 Verified hardware:
 - **Home Air Conditioner**: Mitsubishi Electric Kirigamine Z series
 - **Air Cleaner**: Sharp KI-SX70-W
+- **電気錠**: Yamato Denki ECHONET Lite Adapter
 - **Residential Solar Power Generation / Storage Battery**: Sharp SUNVISTA
 - **Switch**: Panasonic HF-JA1
 - **Controller**: Sharp JH-RVB1, JH-RWL8
