@@ -1,14 +1,22 @@
 """Base entity classes for the HEMS Echonet Lite integration."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 from dataclasses import dataclass
 import logging
 import time
 from typing import Literal
 
-from pyhems import EntityDefinition, NodeState, Property
+from pyhems import (
+    BinaryCodec,
+    DefinitionsRegistry,
+    EntityDefinition,
+    EnumCodec,
+    NodeState,
+    NumericCodec,
+    Property,
+    get_codec,
+    get_codec_for_epc,
+)
 
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
@@ -22,6 +30,7 @@ from .const import (
     DEDICATED_PLATFORM_EPCS,
     DOMAIN,
     RUNTIME_MONITOR_MAX_SILENCE,
+    camel_to_snake,
 )
 from .coordinator import EchonetLiteCoordinator
 from .types import EchonetLiteConfigEntry, EchonetLiteRuntimeData
@@ -32,6 +41,161 @@ _LOGGER = logging.getLogger(__name__)
 type PlatformType = Literal[
     "binary_sensor", "button", "number", "select", "sensor", "switch"
 ]
+
+
+@dataclass(frozen=True)
+class BinaryProp:
+    """EPC + BinaryCodec pair."""
+
+    epc: int
+    codec: BinaryCodec
+
+    def get(self, node: NodeState) -> bool | None:
+        """Return decoded value from coordinator state, or None if unavailable."""
+        edt = node.properties.get(self.epc)
+        return self.codec.decode(edt) if edt is not None else None
+
+    def make_property(self, value: bool) -> Property:
+        """Create a Property instance for this EPC with the encoded value."""
+        return Property(epc=self.epc, edt=self.codec.encode(value))
+
+    @classmethod
+    def from_registry(
+        cls,
+        definitions: DefinitionsRegistry,
+        class_code: int,
+        epc: int,
+    ) -> BinaryProp:
+        """Build from pyhems definitions by EPC lookup, raising TypeError on type mismatch."""
+        codec = get_codec_for_epc(definitions, class_code, epc)
+        if not isinstance(codec, BinaryCodec):
+            raise TypeError(
+                f"EPC 0x{epc:02X} on class 0x{class_code:04X} "
+                f"is not a BinaryCodec (got {type(codec).__name__})"
+            )
+        return cls(epc, codec)
+
+    @classmethod
+    def from_entity_def(
+        cls,
+        entity_def: EntityDefinition,
+    ) -> BinaryProp:
+        """Build from an EntityDefinition, raising TypeError if codec is not BinaryCodec."""
+        codec = get_codec(entity_def)
+        if not isinstance(codec, BinaryCodec):
+            raise TypeError(
+                f"EPC 0x{entity_def.epc:02X}: "
+                f"expected BinaryCodec, got {type(codec).__name__}"
+            )
+        return cls(entity_def.epc, codec)
+
+
+@dataclass(frozen=True)
+class NumericProp:
+    """EPC + NumericCodec pair."""
+
+    epc: int
+    codec: NumericCodec
+
+    def get(self, node: NodeState) -> int | float | None:
+        """Return decoded value from coordinator state, or None if unavailable."""
+        edt = node.properties.get(self.epc)
+        return self.codec.decode(edt) if edt is not None else None
+
+    def make_property(self, value: float) -> Property:
+        """Create a Property instance for this EPC with the encoded value."""
+        return Property(epc=self.epc, edt=self.codec.encode(value))
+
+    @classmethod
+    def from_registry(
+        cls,
+        definitions: DefinitionsRegistry,
+        class_code: int,
+        epc: int,
+    ) -> NumericProp:
+        """Build from pyhems definitions by EPC lookup, raising TypeError on type mismatch."""
+        codec = get_codec_for_epc(definitions, class_code, epc)
+        if not isinstance(codec, NumericCodec):
+            raise TypeError(
+                f"EPC 0x{epc:02X} on class 0x{class_code:04X} "
+                f"is not a NumericCodec (got {type(codec).__name__})"
+            )
+        return cls(epc, codec)
+
+    @classmethod
+    def from_entity_def(
+        cls,
+        entity_def: EntityDefinition,
+    ) -> NumericProp:
+        """Build from an EntityDefinition, raising TypeError if codec is not NumericCodec."""
+        codec = get_codec(entity_def)
+        if not isinstance(codec, NumericCodec):
+            raise TypeError(
+                f"EPC 0x{entity_def.epc:02X}: "
+                f"expected NumericCodec, got {type(codec).__name__}"
+            )
+        return cls(entity_def.epc, codec)
+
+
+@dataclass(frozen=True)
+class EnumProp:
+    """EPC + EnumCodec pair."""
+
+    epc: int
+    codec: EnumCodec
+
+    def get(self, node: NodeState) -> str | None:
+        """Return decoded value from coordinator state, or None if unavailable."""
+        edt = node.properties.get(self.epc)
+        return self.codec.decode(edt) if edt is not None else None
+
+    def make_property(self, value: str) -> Property:
+        """Create a Property instance for this EPC with the encoded value."""
+        return Property(epc=self.epc, edt=self.codec.encode(value))
+
+    @classmethod
+    def from_registry(
+        cls,
+        definitions: DefinitionsRegistry,
+        class_code: int,
+        epc: int,
+    ) -> EnumProp:
+        """Build from pyhems definitions by EPC lookup, raising TypeError on type mismatch."""
+        codec = get_codec_for_epc(definitions, class_code, epc)
+        if not isinstance(codec, EnumCodec):
+            raise TypeError(
+                f"EPC 0x{epc:02X} on class 0x{class_code:04X} "
+                f"is not an EnumCodec (got {type(codec).__name__})"
+            )
+        return cls.from_mapping(
+            epc, {camel_to_snake(k): v for k, v in codec.by_key.items()}
+        )
+
+    @classmethod
+    def from_entity_def(
+        cls,
+        entity_def: EntityDefinition,
+    ) -> EnumProp:
+        """Build from an EntityDefinition, raising TypeError if codec is not EnumCodec."""
+        codec = get_codec(entity_def)
+        if not isinstance(codec, EnumCodec):
+            raise TypeError(
+                f"EPC 0x{entity_def.epc:02X}: "
+                f"expected EnumCodec, got {type(codec).__name__}"
+            )
+        return cls.from_mapping(
+            entity_def.epc, {camel_to_snake(k): v for k, v in codec.by_key.items()}
+        )
+
+    @classmethod
+    def from_mapping(cls, epc: int, mapping: dict[str, int]) -> EnumProp:
+        """Build from an explicit key→EDT mapping (e.g. HA mode names → raw bytes)."""
+        return cls(epc, EnumCodec.from_mapping(mapping))
+
+    @property
+    def options(self) -> list[str]:
+        """Return available option keys."""
+        return list(self.codec.by_key)
 
 
 def can_process_enum_values(entity: EntityDefinition) -> bool:
@@ -63,12 +227,12 @@ def infer_platform(entity: EntityDefinition) -> PlatformType | None:
     """Infer the platform type from entity definition using MRA get/set info.
 
     Decision matrix:
-        | Data shape        | writable (set != notApplicable) | read-only (set == notApplicable) |
-        |-------------------|--------------------------------|----------------------------------|
-        | 2 enum values     | switch                         | binary_sensor                    |
-        | 3+ enum vals      | select                         | sensor (ENUM)                    |
-        | 1 enum value      | button (write-only only)       | None (skip)                      |
-        | numeric           | number                         | sensor                           |
+        | Data shape    | readable + writable | readable only | write-only         |
+        |---------------|---------------------|---------------|-----------         |
+        | 2 enum values | switch              | binary_sensor | None (skip)        |
+        | 3+ enum vals  | select              | sensor (ENUM) | None (skip)        |
+        | 1 enum value  | None (skip)         | None (skip)   | button             |
+        | numeric       | number              | sensor        | None (skip)        |
 
     Args:
         entity: Entity definition to analyze.
@@ -235,6 +399,16 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
             node.device_key
         )
 
+    async def _async_send_prop(
+        self, prop: BinaryProp | NumericProp | EnumProp, value: bool | float | str
+    ) -> None:
+        """Encode value via prop and send as a SetC request for this EPC.
+
+        Raises:
+            HomeAssistantError: If the EPC is not writable by the device.
+        """
+        await self._async_send_properties([prop.make_property(value)])  # type: ignore[arg-type]
+
 
 @dataclass(frozen=True, kw_only=True)
 class EchonetLiteEntityDescription(EntityDescription):
@@ -284,12 +458,13 @@ class EchonetLiteDescribedEntity[DescriptionT: EchonetLiteEntityDescription](
     """Base class for ECHONET Lite entities with EntityDescription.
 
     This intermediate class handles the common initialization pattern shared by
-    binary_sensor, sensor, select, and switch platforms. It extracts the
-    repetitive __init__ logic that sets up unique_id, translation_key/name,
-    and epc from the entity description.
+    binary_sensor, button, number, select, sensor, and switch platforms. It
+    extracts the repetitive __init__ logic that sets up unique_id,
+    translation_key/name, and epc from the entity description.
 
-    Climate entities should inherit from EchonetLiteEntity directly since they manage
-    multiple EPCs and don't use the standard EntityDescription pattern.
+    Entities that manage multiple EPCs (climate, fan, cover, light, lock,
+    water_heater) inherit from EchonetLiteEntity directly and handle their own
+    initialization.
 
     The `description` attribute provides type-safe access to the entity
     description with the correct generic type, avoiding mypy conflicts with

@@ -1,11 +1,8 @@
 """Binary sensor platform for the HEMS Echonet Lite integration."""
 
-from __future__ import annotations
-
-from collections.abc import Callable
 from dataclasses import dataclass
 
-from pyhems import EntityDefinition, create_binary_decoder
+from pyhems import EntityDefinition
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
@@ -17,6 +14,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import infer_entity_category, infer_entity_registry_enabled_default
 from .entity import (
+    BinaryProp,
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
     setup_echonet_lite_platform,
@@ -86,7 +84,7 @@ class EchonetLiteBinarySensorEntityDescription(
 ):
     """Entity description that tracks EPC metadata."""
 
-    decoder: Callable[[bytes], bool | None]
+    prop: BinaryProp
 
 
 def _create_binary_sensor_description(
@@ -94,8 +92,6 @@ def _create_binary_sensor_description(
     entity_def: EntityDefinition,
 ) -> EchonetLiteBinarySensorEntityDescription:
     """Create a binary sensor entity description from an EntityDefinition."""
-    on_value, _ = entity_def.get_binary_values()
-
     return EchonetLiteBinarySensorEntityDescription(
         key=f"{entity_def.epc:02x}",
         translation_key=entity_def.id,
@@ -106,7 +102,7 @@ def _create_binary_sensor_description(
         entity_registry_enabled_default=infer_entity_registry_enabled_default(
             entity_def
         ),
-        decoder=create_binary_decoder(on_value),
+        prop=BinaryProp.from_entity_def(entity_def),
         manufacturer_code=entity_def.manufacturer_code,
     )
 
@@ -136,8 +132,7 @@ class EchonetLiteBinarySensor(
     @property
     def is_on(self) -> bool | None:
         """Return the state of the binary sensor."""
-        state = self._node.properties.get(self._epc)
-        return self.description.decoder(state) if state is not None else None
+        return self.description.prop.get(self._node)
 
 
 __all__ = ["EchonetLiteBinarySensor", "EchonetLiteBinarySensorEntityDescription"]

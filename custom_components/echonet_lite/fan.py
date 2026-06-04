@@ -1,7 +1,5 @@
 """Fan platform for the HEMS Echonet Lite integration."""
 
-from __future__ import annotations
-
 import logging
 from typing import Any
 
@@ -13,10 +11,9 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util.percentage import (
-    percentage_to_ranged_value,
-    ranged_value_to_percentage,
+    ordered_list_item_to_percentage,
+    percentage_to_ordered_list_item,
 )
-from homeassistant.util.scaling import int_states_in_range
 
 from .const import (
     CLASS_CODE_AIR_CLEANER,
@@ -27,7 +24,12 @@ from .const import (
     EPC_OPERATION_STATUS,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .entity import (
+    BinaryProp,
+    EchonetLiteEntity,
+    EnumProp,
+    setup_echonet_lite_device_platform,
+)
 from .types import EchonetLiteConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
@@ -43,11 +45,17 @@ FAN_CLASS_CODES: frozenset[int] = frozenset(
     }
 )
 
-# Air flow rate setting values (0x31-0x38 in ECHONET Lite protocol)
-_SPEED_RANGE = (0x31, 0x38)
-
-# Auto mode EDT value
-_EDT_AUTO = 0x41
+# Ordered list of pyhems speed level keys (level_1 = slowest, level_8 = fastest)
+_SPEED_LEVELS = [
+    "level_1",
+    "level_2",
+    "level_3",
+    "level_4",
+    "level_5",
+    "level_6",
+    "level_7",
+    "level_8",
+]
 
 # Preset modes
 PRESET_MODE_AUTO = "auto"
@@ -85,7 +93,7 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
 
     _attr_name = None
     _attr_preset_modes = [PRESET_MODE_AUTO, PRESET_MODE_MANUAL]
-    _attr_speed_count = int_states_in_range(_SPEED_RANGE)
+    _attr_speed_count = len(_SPEED_LEVELS)
 
     def __init__(
         self,
@@ -97,6 +105,15 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         self._attr_unique_id = f"{node.device_key}-fan"
         self._attr_translation_key = (
             "air_cleaner" if node.eoj.class_code == CLASS_CODE_AIR_CLEANER else "fan"
+        )
+        # bool ⇔ EDT codec for the common operation status EPC.
+        definitions = coordinator.config_entry.runtime_data.definitions
+        class_code = node.eoj.class_code
+        self._op_status = BinaryProp.from_registry(
+            definitions, class_code, EPC_OPERATION_STATUS
+        )
+        self._air_flow_prop = EnumProp.from_registry(
+            definitions, class_code, EPC_AIR_FLOW_LEVEL
         )
         features = FanEntityFeature(0)
 
@@ -113,9 +130,7 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
     @property
     def is_on(self) -> bool | None:
         """Return true if the fan is on."""
-        if edt := self._node.properties.get(EPC_OPERATION_STATUS):
-            return edt == b"\x30"  # 0x30 = ON
-        return None
+        return self._op_status.get(self._node)
 
     @property
     def percentage(self) -> int | None:
@@ -123,33 +138,24 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
 
         Returns None when in preset mode (auto) or when air flow level is unavailable.
         """
-        if edt := self._node.properties.get(EPC_AIR_FLOW_LEVEL):
-            if len(edt) != 1:
-                return None
-            value = edt[0]
-            # Auto mode (0x41) - return None to indicate preset mode is active
-            if value == _EDT_AUTO:
-                return None
-            # EDT values 0x31-0x38
-            if 0x31 <= value <= 0x38:
-                return ranged_value_to_percentage(_SPEED_RANGE, value)
-        return None
+        key = self._air_flow_prop.get(self._node)
+        if key is None or key == PRESET_MODE_AUTO:
+            return None
+        if key not in _SPEED_LEVELS:
+            return None
+        return ordered_list_item_to_percentage(_SPEED_LEVELS, key)
 
     @property
     def preset_mode(self) -> str | None:
         """Return the current preset mode."""
-        if edt := self._node.properties.get(EPC_AIR_FLOW_LEVEL):
-            if len(edt) != 1:
-                return None
-            if edt[0] == _EDT_AUTO:
-                return PRESET_MODE_AUTO
-            if 0x31 <= edt[0] <= 0x38:
-                return PRESET_MODE_MANUAL
+        key = self._air_flow_prop.get(self._node)
+        if key is None:
+            return None
+        if key == PRESET_MODE_AUTO:
+            return PRESET_MODE_AUTO
+        if key in _SPEED_LEVELS:
+            return PRESET_MODE_MANUAL
         return None
-
-    def _percentage_to_edt(self, percentage: int) -> int:
-        """Convert a percentage to an EDT value (0x31-0x38)."""
-        return int(round(percentage_to_ranged_value(_SPEED_RANGE, percentage)))
 
     async def async_turn_on(
         self,
@@ -173,26 +179,24 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         if EPC_OPERATION_STATUS not in self._node.set_epcs:
             raise HomeAssistantError(
                 translation_domain=DOMAIN,
-                translation_key="operation_status_not_writable",
+                translation_key="epc_not_writable",
+                translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
             )
 
         # Turn off the fan if percentage is explicitly set to 0
         if percentage == 0:
-            await self._async_send_property(EPC_OPERATION_STATUS, b"\x31")
+            await self._async_send_prop(self._op_status, False)
             return
 
-        properties: list[Property] = [Property(epc=EPC_OPERATION_STATUS, edt=b"\x30")]
+        properties: list[Property] = [self._op_status.make_property(True)]
 
         if EPC_AIR_FLOW_LEVEL in self._node.set_epcs:
             if preset_mode == PRESET_MODE_AUTO:
-                properties.append(
-                    Property(epc=EPC_AIR_FLOW_LEVEL, edt=bytes([_EDT_AUTO]))
-                )
+                properties.append(self._air_flow_prop.make_property(PRESET_MODE_AUTO))
             elif percentage is not None:
                 properties.append(
-                    Property(
-                        epc=EPC_AIR_FLOW_LEVEL,
-                        edt=bytes([self._percentage_to_edt(percentage)]),
+                    self._air_flow_prop.make_property(
+                        percentage_to_ordered_list_item(_SPEED_LEVELS, percentage)
                     )
                 )
 
@@ -200,7 +204,7 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the fan."""
-        await self._async_send_property(EPC_OPERATION_STATUS, b"\x31")
+        await self._async_send_prop(self._op_status, False)
 
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed percentage of the fan.
@@ -212,18 +216,18 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         is treated as OFF per HA convention.
         """
         if percentage == 0:
-            await self._async_send_property(EPC_OPERATION_STATUS, b"\x31")
+            await self._async_send_prop(self._op_status, False)
             return
         if EPC_AIR_FLOW_LEVEL not in self._node.set_epcs:
             return
-        edt = bytes([self._percentage_to_edt(percentage)])
+        key = percentage_to_ordered_list_item(_SPEED_LEVELS, percentage)
         if self.is_on:
-            await self._async_send_property(EPC_AIR_FLOW_LEVEL, edt)
+            await self._async_send_prop(self._air_flow_prop, key)
             return
         await self._async_send_properties(
             [
-                Property(epc=EPC_OPERATION_STATUS, edt=b"\x30"),
-                Property(epc=EPC_AIR_FLOW_LEVEL, edt=edt),
+                self._op_status.make_property(True),
+                self._air_flow_prop.make_property(key),
             ]
         )
 
@@ -243,14 +247,13 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         if preset_mode == PRESET_MODE_AUTO:
             if EPC_AIR_FLOW_LEVEL not in self._node.set_epcs:
                 return
-            edt = bytes([_EDT_AUTO])
             if self.is_on:
-                await self._async_send_property(EPC_AIR_FLOW_LEVEL, edt)
+                await self._async_send_prop(self._air_flow_prop, PRESET_MODE_AUTO)
                 return
             await self._async_send_properties(
                 [
-                    Property(epc=EPC_OPERATION_STATUS, edt=b"\x30"),
-                    Property(epc=EPC_AIR_FLOW_LEVEL, edt=edt),
+                    self._op_status.make_property(True),
+                    self._air_flow_prop.make_property(PRESET_MODE_AUTO),
                 ]
             )
             return
@@ -261,9 +264,10 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         if EPC_OPERATION_STATUS not in self._node.set_epcs:
             raise HomeAssistantError(
                 translation_domain=DOMAIN,
-                translation_key="operation_status_not_writable",
+                translation_key="epc_not_writable",
+                translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
             )
-        await self._async_send_property(EPC_OPERATION_STATUS, b"\x30")
+        await self._async_send_prop(self._op_status, True)
 
 
 __all__ = ["EchonetLiteFan"]

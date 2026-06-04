@@ -15,8 +15,6 @@ left to the generic binary_sensor / switch platforms because they expose
 information that does not fit Home Assistant's ``LockEntity`` contract.
 """
 
-from __future__ import annotations
-
 from typing import Any
 
 from pyhems import NodeState
@@ -33,18 +31,15 @@ from .const import (
     EPC_LOCK_SETTING_2,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .entity import (
+    BinaryProp,
+    EchonetLiteEntity,
+    EnumProp,
+    setup_echonet_lite_device_platform,
+)
 from .types import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 1
-
-# EPC 0xE0 / 0xE1 raw values
-_LOCK_LOCKED = 0x41
-_LOCK_UNLOCKED = 0x42
-
-# EPC 0xE5 (Alarm status) raw values. 0x40 is the "normal" indicator;
-# any other value means the device reports some abnormal condition.
-_ALARM_NORMAL = 0x40
 
 
 async def async_setup_entry(
@@ -82,14 +77,21 @@ class EchonetLiteLock(EchonetLiteEntity, LockEntity):
         """Initialize the lock entity."""
         super().__init__(coordinator, node)
         self._attr_unique_id = f"{node.device_key}-lock"
-        # Sub-lock is reported only when the device advertises EPC 0xE1.
-        self._has_sub_lock = EPC_LOCK_SETTING_2 in node.get_epcs
-
-    def _raw(self, epc: int) -> int | None:
-        """Return the single-byte raw value for ``epc`` if known."""
-        if edt := self._node.properties.get(epc):
-            return edt[0]
-        return None
+        definitions = coordinator.config_entry.runtime_data.definitions
+        class_code = node.eoj.class_code
+        self._lock_prop = BinaryProp.from_registry(
+            definitions, class_code, EPC_LOCK_SETTING_1
+        )
+        self._sub_lock_prop: BinaryProp | None = (
+            BinaryProp.from_registry(definitions, class_code, EPC_LOCK_SETTING_2)
+            if EPC_LOCK_SETTING_2 in node.get_epcs
+            else None
+        )
+        self._alarm_prop: EnumProp | None = (
+            EnumProp.from_registry(definitions, class_code, EPC_LOCK_ALARM_STATUS)
+            if EPC_LOCK_ALARM_STATUS in node.get_epcs
+            else None
+        )
 
     @property
     def is_locked(self) -> bool | None:
@@ -102,18 +104,13 @@ class EchonetLiteLock(EchonetLiteEntity, LockEntity):
         reported as ``unlocked`` so that automations and the UI surface a
         not-fully-secured door.
         """
-        main = self._raw(EPC_LOCK_SETTING_1)
+        main = self._lock_prop.get(self._node)
         if main is None:
             return None
-        if main == _LOCK_LOCKED:
-            if self._has_sub_lock:
-                sub = self._raw(EPC_LOCK_SETTING_2)
-                if sub != _LOCK_LOCKED:
-                    return False
-            return True
-        if main == _LOCK_UNLOCKED:
-            return False
-        return None
+        if self._sub_lock_prop is None:
+            return main
+        sub = self._sub_lock_prop.get(self._node)
+        return None if sub is None else main and sub
 
     @property
     def is_jammed(self) -> bool | None:
@@ -124,10 +121,10 @@ class EchonetLiteLock(EchonetLiteEntity, LockEntity):
         We collapse all alarm values to ``is_jammed = True`` so HA users
         get a single actionable signal.
         """
-        alarm = self._raw(EPC_LOCK_ALARM_STATUS)
-        if alarm is None:
+        if self._alarm_prop is None:
             return None
-        return alarm != _ALARM_NORMAL
+        key = self._alarm_prop.get(self._node)
+        return None if key is None else key != "normal"
 
     async def async_lock(self, **kwargs: Any) -> None:
         """Lock the device by writing the primary lock EPC only.
@@ -138,11 +135,11 @@ class EchonetLiteLock(EchonetLiteEntity, LockEntity):
         sub-lock typically engage it themselves via Auto-Lock or via the
         physical mechanism.
         """
-        await self._async_send_property(EPC_LOCK_SETTING_1, bytes([_LOCK_LOCKED]))
+        await self._async_send_prop(self._lock_prop, True)
 
     async def async_unlock(self, **kwargs: Any) -> None:
         """Unlock the device by writing the primary lock EPC only."""
-        await self._async_send_property(EPC_LOCK_SETTING_1, bytes([_LOCK_UNLOCKED]))
+        await self._async_send_prop(self._lock_prop, False)
 
 
 __all__ = ["EchonetLiteLock"]

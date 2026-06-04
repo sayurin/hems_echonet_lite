@@ -1,11 +1,8 @@
 """Sensor platform for the HEMS Echonet Lite integration."""
 
-from __future__ import annotations
-
-from collections.abc import Callable
 from dataclasses import dataclass
 
-from pyhems import EntityDefinition, create_enum_decoder, create_numeric_decoder
+from pyhems import EntityDefinition, EnumCodec, get_codec
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -17,7 +14,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
-    camel_to_snake,
     infer_device_classes,
     infer_entity_category,
     infer_entity_registry_enabled_default,
@@ -26,6 +22,8 @@ from .const import (
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
+    EnumProp,
+    NumericProp,
     setup_echonet_lite_platform,
 )
 from .types import EchonetLiteConfigEntry
@@ -61,7 +59,7 @@ class EchonetLiteSensorEntityDescription(
 ):
     """Entity description with EPC metadata."""
 
-    decoder: Callable[[bytes], float | int | str | None]
+    prop: EnumProp | NumericProp
 
 
 def _create_sensor_description(
@@ -69,25 +67,11 @@ def _create_sensor_description(
     entity_def: EntityDefinition,
 ) -> EchonetLiteSensorEntityDescription:
     """Create a sensor entity description from an EntityDefinition."""
+    codec = get_codec(entity_def)
+
     # Read-only multi-value enum → ENUM sensor
-    if entity_def.enum_values:
-        value_map = {
-            enum_val.edt: camel_to_snake(enum_val.key)
-            for enum_val in entity_def.enum_values
-        }
-        options = list(value_map.values())
-        raw_decoder = create_enum_decoder()
-
-        def _enum_sensor_decoder(
-            state: bytes,
-            *,
-            _raw_decoder: Callable[[bytes], int | None] = raw_decoder,
-            _value_map: dict[int, str] = value_map,
-        ) -> str | None:
-            if (raw_value := _raw_decoder(state)) is None:
-                return None
-            return _value_map.get(raw_value)
-
+    if isinstance(codec, EnumCodec):
+        enum_prop = EnumProp.from_entity_def(entity_def)
         return EchonetLiteSensorEntityDescription(
             key=f"{entity_def.epc:02x}",
             translation_key=entity_def.id,
@@ -98,19 +82,12 @@ def _create_sensor_description(
             entity_registry_enabled_default=infer_entity_registry_enabled_default(
                 entity_def
             ),
-            options=options,
-            decoder=_enum_sensor_decoder,
+            options=enum_prop.options,
+            prop=enum_prop,
             manufacturer_code=entity_def.manufacturer_code,
         )
 
     # Numeric sensor
-    if (
-        entity_def.format is None
-    ):  # pragma: no cover - validated upstream in pyhems._validate_entity
-        raise ValueError(
-            f"Numeric sensor EPC 0x{entity_def.epc:02X} for class 0x{class_code:04X} "
-            "has no format defined"
-        )
     return EchonetLiteSensorEntityDescription(
         key=f"{entity_def.epc:02x}_{entity_def.byte_offset}",
         translation_key=entity_def.id,
@@ -123,13 +100,7 @@ def _create_sensor_description(
         ),
         native_unit_of_measurement=infer_ha_unit(entity_def),
         state_class=_infer_state_class(entity_def),
-        decoder=create_numeric_decoder(
-            mra_format=entity_def.format,
-            minimum=entity_def.minimum,
-            maximum=entity_def.maximum,
-            scale=entity_def.multiple_of,
-            byte_offset=entity_def.byte_offset,
-        ),
+        prop=NumericProp.from_entity_def(entity_def),
         manufacturer_code=entity_def.manufacturer_code,
     )
 
@@ -158,8 +129,7 @@ class EchonetLiteSensor(
     @property
     def native_value(self) -> float | int | str | None:
         """Return the state of the sensor."""
-        state = self._node.properties.get(self._epc)
-        return self.description.decoder(state) if state is not None else None
+        return self.description.prop.get(self._node)
 
 
 __all__ = ["EchonetLiteSensor", "EchonetLiteSensorEntityDescription"]

@@ -1,16 +1,8 @@
 """Number platform for the HEMS Echonet Lite integration."""
 
-from __future__ import annotations
-
-from collections.abc import Callable
 from dataclasses import dataclass
 
-from pyhems import (
-    EntityDefinition,
-    NodeState,
-    create_numeric_decoder,
-    create_numeric_encoder,
-)
+from pyhems import EntityDefinition, NodeState
 
 from homeassistant.components.number import (
     NumberDeviceClass,
@@ -30,6 +22,7 @@ from .coordinator import EchonetLiteCoordinator
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
+    NumericProp,
     setup_echonet_lite_platform,
 )
 from .types import EchonetLiteConfigEntry
@@ -50,10 +43,7 @@ class EchonetLiteNumberEntityDescription(
 ):
     """Entity description with EPC metadata for number entities."""
 
-    decoder: Callable[[bytes], float | int | None]
-    encoder: Callable[[float | int], bytes]
-    mra_format: str
-    scale: float
+    prop: NumericProp
 
 
 def _create_number_description(
@@ -61,13 +51,6 @@ def _create_number_description(
     entity_def: EntityDefinition,
 ) -> EchonetLiteNumberEntityDescription:
     """Create a number entity description from an EntityDefinition."""
-    if (
-        entity_def.format is None
-    ):  # pragma: no cover - validated upstream in pyhems._validate_entity
-        raise ValueError(
-            f"Number entity EPC 0x{entity_def.epc:02X} for class 0x{class_code:04X} "
-            "has no format defined"
-        )
     return EchonetLiteNumberEntityDescription(
         key=f"{entity_def.epc:02x}_{entity_def.byte_offset}",
         translation_key=entity_def.id,
@@ -90,19 +73,7 @@ def _create_number_description(
             else None
         ),
         native_step=entity_def.multiple_of if entity_def.multiple_of != 1.0 else None,
-        decoder=create_numeric_decoder(
-            mra_format=entity_def.format,
-            minimum=entity_def.minimum,
-            maximum=entity_def.maximum,
-            scale=entity_def.multiple_of,
-            byte_offset=entity_def.byte_offset,
-        ),
-        encoder=create_numeric_encoder(
-            mra_format=entity_def.format,
-            scale=entity_def.multiple_of,
-        ),
-        mra_format=entity_def.format,
-        scale=entity_def.multiple_of,
+        prop=NumericProp.from_entity_def(entity_def),
         manufacturer_code=entity_def.manufacturer_code,
     )
 
@@ -140,13 +111,11 @@ class EchonetLiteNumber(
     @property
     def native_value(self) -> float | int | None:
         """Return the current value."""
-        state = self._node.properties.get(self._epc)
-        return self.description.decoder(state) if state is not None else None
+        return self.description.prop.get(self._node)
 
     async def async_set_native_value(self, value: float) -> None:
         """Set the value by sending an ECHONET Lite command."""
-        encoded = self.description.encoder(value)
-        await self._async_send_property(self._epc, encoded)
+        await self._async_send_prop(self.description.prop, value)
 
 
 __all__ = ["EchonetLiteNumber", "EchonetLiteNumberEntityDescription"]

@@ -1,12 +1,9 @@
 """Switch platform for the HEMS Echonet Lite integration."""
 
-from __future__ import annotations
-
-from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from pyhems import EntityDefinition, create_binary_decoder
+from pyhems import EntityDefinition
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.core import HomeAssistant
@@ -14,6 +11,7 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import infer_entity_category, infer_entity_registry_enabled_default
 from .entity import (
+    BinaryProp,
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
     setup_echonet_lite_platform,
@@ -29,9 +27,7 @@ class EchonetLiteSwitchEntityDescription(
 ):
     """Entity description that also stores EPC metadata."""
 
-    decoder: Callable[[bytes], bool | None] = lambda _: None
-    on_value: bytes  # Byte value for ON command
-    off_value: bytes  # Byte value for OFF command
+    prop: BinaryProp
 
 
 def _create_switch_description(
@@ -39,21 +35,16 @@ def _create_switch_description(
     entity_def: EntityDefinition,
 ) -> EchonetLiteSwitchEntityDescription:
     """Create a switch entity description from an EntityDefinition."""
-    on_value, off_value = entity_def.get_binary_values()
-
     return EchonetLiteSwitchEntityDescription(
         key=f"{entity_def.epc:02x}",
         translation_key=entity_def.id,
         class_code=class_code,
         epc=entity_def.epc,
-        device_class=None,
         entity_category=infer_entity_category(entity_def),
         entity_registry_enabled_default=infer_entity_registry_enabled_default(
             entity_def
         ),
-        decoder=create_binary_decoder(on_value),
-        on_value=on_value,
-        off_value=off_value,
+        prop=BinaryProp.from_entity_def(entity_def),
         manufacturer_code=entity_def.manufacturer_code,
     )
 
@@ -82,16 +73,15 @@ class EchonetLiteSwitch(
     @property
     def is_on(self) -> bool | None:
         """Return the decoded boolean value stored in the coordinator."""
-        state = self._node.properties.get(self._epc)
-        return self.description.decoder(state) if state is not None else None
+        return self.description.prop.get(self._node)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Send the On command via the pyhems runtime client."""
-        await self._async_send_property(self._epc, self.description.on_value)
+        await self._async_send_prop(self.description.prop, True)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Send the Off command via the pyhems runtime client."""
-        await self._async_send_property(self._epc, self.description.off_value)
+        await self._async_send_prop(self.description.prop, False)
 
 
 __all__ = ["EchonetLiteSwitch"]

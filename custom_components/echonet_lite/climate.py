@@ -1,23 +1,13 @@
 """Climate platform for the HEMS Echonet Lite integration."""
 
-from __future__ import annotations
-
-from collections.abc import Callable
 from dataclasses import dataclass
 import logging
-from typing import Any, TypeVar
+from typing import Any
 
-from pyhems import (
-    DefinitionsRegistry,
-    NodeState,
-    Property,
-    create_numeric_decoder,
-    create_numeric_encoder,
-)
+from pyhems import DefinitionsRegistry, NodeState
 
 from homeassistant.components.climate import (
     ATTR_TEMPERATURE,
-    FAN_AUTO,
     SWING_BOTH,
     SWING_HORIZONTAL,
     SWING_OFF,
@@ -52,12 +42,16 @@ from .const import (
     EPC_TARGET_TEMPERATURE,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .entity import (
+    BinaryProp,
+    EchonetLiteEntity,
+    EnumProp,
+    NumericProp,
+    setup_echonet_lite_device_platform,
+)
 from .types import EchonetLiteConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
-
-_T = TypeVar("_T")
 
 PARALLEL_UPDATES = 1
 
@@ -76,63 +70,52 @@ _SUPPORTED_HVAC_MODES: list[HVACMode] = [
 # Mapping between HA ``HVACMode`` and ECHONET Lite operation mode (EPC 0xB0).
 #
 # ECHONET Lite models operation status (0x80 = ON/OFF) and operation mode
-# (0xB0) as independent axes. Value 0xB0 = 0x40 ("other") is used by some
-# appliances as a persistent, vendor-defined mode (internal clean, coil
-# drying, air purification, etc.) that has no direct equivalent in Home
-# Assistant's ``HVACMode`` enum. We map it to ``HVACMode.FAN_ONLY`` +
-# ``HVACAction.IDLE`` so that:
+# (0xB0) as independent axes. Value 0xB0 = 0x40 (pyhems key ``"other"``) is
+# used by some appliances as a persistent, vendor-defined mode (internal
+# clean, coil drying, air purification, etc.) that has no direct equivalent
+# in Home Assistant's ``HVACMode`` enum. We map it to ``HVACMode.FAN_ONLY``
+# + ``HVACAction.IDLE`` so that:
 #   - ``hvac_mode`` stays a valid enum value (avoids a chronically
-#     "unknown" entity on devices that sit in 0x40 for long periods);
-#   - 0x45 ("fan only") remains distinguishable because it maps to
-#     ``HVACAction.FAN`` while 0x40 maps to ``HVACAction.IDLE``.
-# 0x40 is not written back by this integration; ``async_set_hvac_mode``
-# only writes values present in ``_HA_TO_ECHONET_MODE``.
-_HA_TO_ECHONET_MODE: dict[HVACMode, int] = {
-    HVACMode.AUTO: 0x41,
-    HVACMode.COOL: 0x42,
-    HVACMode.HEAT: 0x43,
-    HVACMode.DRY: 0x44,
-    HVACMode.FAN_ONLY: 0x45,
-}
-_ECHONET_TO_HA_MODE: dict[int, HVACMode] = {
-    0x40: HVACMode.FAN_ONLY,  # "other" — vendor-defined; see module comment
-    0x41: HVACMode.AUTO,
-    0x42: HVACMode.COOL,
-    0x43: HVACMode.HEAT,
-    0x44: HVACMode.DRY,
-    0x45: HVACMode.FAN_ONLY,
+#     "unknown" entity on devices that sit in "other" for long periods);
+#   - "circulation" (0x45, fan-only) remains distinguishable because it
+#     maps to ``HVACAction.FAN`` while "other" maps to ``HVACAction.IDLE``.
+# "other" is not written back by this integration; ``async_set_hvac_mode``
+# only writes values present in ``_HA_TO_PYHEMS_MODE``.
+_HA_TO_PYHEMS_MODE: dict[HVACMode, str] = {
+    HVACMode.AUTO: "auto",
+    HVACMode.COOL: "cooling",
+    HVACMode.HEAT: "heating",
+    HVACMode.DRY: "dehumidification",
+    HVACMode.FAN_ONLY: "circulation",
 }
 
-_ECHONET_TO_HA_ACTION: dict[int, HVACAction | None] = {
-    0x40: HVACAction.IDLE,  # "other" — distinguishes from 0x45 (FAN)
-    0x41: None,  # auto — see _infer_auto_action()
-    0x42: HVACAction.COOLING,
-    0x43: HVACAction.HEATING,
-    0x44: HVACAction.DRYING,
-    0x45: HVACAction.FAN,
+# pyhems key (from EnumCodec) → HA mode. Covers "other" (0x40) read-only mode.
+_PYHEMS_TO_HA_MODE: dict[str, HVACMode] = {
+    "other": HVACMode.FAN_ONLY,  # vendor-defined; see comment above
+    "auto": HVACMode.AUTO,
+    "cooling": HVACMode.COOL,
+    "heating": HVACMode.HEAT,
+    "dehumidification": HVACMode.DRY,
+    "circulation": HVACMode.FAN_ONLY,
 }
 
-# Special state mapping (EPC 0xAA)
-_ECHONET_SPECIAL_STATE_TO_ACTION: dict[int, HVACAction | None] = {
-    0x40: None,  # normal — falls through to operation mode logic
-    0x41: HVACAction.DEFROSTING,
-    0x42: HVACAction.PREHEATING,
-    0x43: HVACAction.IDLE,  # heat removal
+# pyhems key → HA action for EPC 0xB0 (operation mode).
+_PYHEMS_TO_HA_ACTION: dict[str, HVACAction | None] = {
+    "other": HVACAction.IDLE,  # distinguishes from "circulation" (FAN)
+    "auto": None,  # see _infer_auto_action()
+    "cooling": HVACAction.COOLING,
+    "heating": HVACAction.HEATING,
+    "dehumidification": HVACAction.DRYING,
+    "circulation": HVACAction.FAN,
 }
 
-# Fan speed mapping (0xA0 Air flow rate setting)
-_HA_TO_ECHONET_FAN: dict[str, int] = {
-    FAN_AUTO: 0x41,
-    "level_1": 0x31,
-    "level_2": 0x32,
-    "level_3": 0x33,
-    "level_4": 0x34,
-    "level_5": 0x35,
-    "level_6": 0x36,
-    "level_7": 0x37,
-    "level_8": 0x38,
+# pyhems key → HA action for EPC 0xAA (special state).
+_PYHEMS_SPECIAL_STATE_TO_ACTION: dict[str, HVACAction | None] = {
+    "normal": None,  # falls through to operation mode logic
+    "defrosting": HVACAction.DEFROSTING,
+    "preheating": HVACAction.PREHEATING,
+    "heat_removal": HVACAction.IDLE,  # heat removal
 }
-_ECHONET_TO_HA_FAN = {v: k for k, v in _HA_TO_ECHONET_FAN.items()}
 
 # Swing mode mapping (0xA3 Swing direction setting)
 _HA_TO_ECHONET_SWING: dict[str, int] = {
@@ -141,15 +124,6 @@ _HA_TO_ECHONET_SWING: dict[str, int] = {
     SWING_HORIZONTAL: 0x42,
     SWING_BOTH: 0x43,
 }
-_ECHONET_TO_HA_SWING = {v: k for k, v in _HA_TO_ECHONET_SWING.items()}
-
-
-def _decode_unsigned_temperature(edt: bytes) -> float | None:
-    """Fallback decoder used only when no EPC 0xB3 definition is available."""
-    if len(edt) != 1:
-        return None
-    value = edt[0]
-    return None if value == 0xFD else float(value)
 
 
 def _precision_from_scale(scale: float) -> float:
@@ -174,14 +148,15 @@ class EchonetLiteClimateEntityDescription(ClimateEntityDescription):
     """
 
     class_code: int
-    target_temp_encoder: Callable[[float | int], bytes] | None = None
-    target_temp_decoder: Callable[[bytes], float | int | None] = (
-        _decode_unsigned_temperature
-    )
+    target_temp_prop: NumericProp
     target_temp_min: float | None = None
     target_temp_max: float | None = None
     target_temp_step: float | None = None
     target_temp_precision: float = PRECISION_WHOLE
+    room_temp_prop: NumericProp
+    humidity_prop: NumericProp
+    fan_mode_prop: EnumProp
+    swing_mode_prop: EnumProp
 
 
 def _create_climate_description(
@@ -190,41 +165,42 @@ def _create_climate_description(
 ) -> EchonetLiteClimateEntityDescription:
     """Build a climate description from pyhems definitions.
 
-    Falls back to conservative defaults (unsigned-byte 0..50 decoder, no
-    encoder) when the definitions do not describe EPC 0xB3 for this class.
+    get_codec_for_epc is guaranteed by pyhems test_platform_epc_codec_type
+    to return NumericCodec for the EPCs used here (0xB3, 0xBB, 0xBA on class 0x0130).
     """
-    for entity_def in definitions.entities.get(class_code, ()):
-        if entity_def.epc != EPC_TARGET_TEMPERATURE or entity_def.format is None:
-            continue
-        scale = entity_def.multiple_of
-        target_temp_min = (
-            entity_def.minimum * scale if entity_def.minimum is not None else None
-        )
-        target_temp_max = (
-            entity_def.maximum * scale if entity_def.maximum is not None else None
-        )
-        return EchonetLiteClimateEntityDescription(
-            key="climate",
-            class_code=class_code,
-            target_temp_decoder=create_numeric_decoder(
-                mra_format=entity_def.format,
-                minimum=entity_def.minimum,
-                maximum=entity_def.maximum,
-                scale=scale,
-                byte_offset=entity_def.byte_offset,
-            ),
-            target_temp_encoder=create_numeric_encoder(
-                mra_format=entity_def.format,
-                scale=scale,
-            ),
-            target_temp_min=target_temp_min,
-            target_temp_max=target_temp_max,
-            target_temp_step=scale,
-            target_temp_precision=_precision_from_scale(scale),
-        )
+    target_temp_prop = NumericProp.from_registry(
+        definitions, class_code, EPC_TARGET_TEMPERATURE
+    )
+    room_temp_prop = NumericProp.from_registry(
+        definitions, class_code, EPC_ROOM_TEMPERATURE
+    )
+    humidity_prop = NumericProp.from_registry(
+        definitions, class_code, EPC_ROOM_HUMIDITY
+    )
+
+    scale = target_temp_prop.codec.scale
     return EchonetLiteClimateEntityDescription(
         key="climate",
         class_code=class_code,
+        target_temp_prop=target_temp_prop,
+        target_temp_min=(
+            target_temp_prop.codec.minimum * scale
+            if target_temp_prop.codec.minimum is not None
+            else None
+        ),
+        target_temp_max=(
+            target_temp_prop.codec.maximum * scale
+            if target_temp_prop.codec.maximum is not None
+            else None
+        ),
+        target_temp_step=scale,
+        target_temp_precision=_precision_from_scale(scale),
+        room_temp_prop=room_temp_prop,
+        humidity_prop=humidity_prop,
+        fan_mode_prop=EnumProp.from_registry(definitions, class_code, EPC_FAN_SPEED),
+        swing_mode_prop=EnumProp.from_mapping(
+            EPC_SWING_AIR_FLOW, dict(_HA_TO_ECHONET_SWING)
+        ),
     )
 
 
@@ -277,7 +253,6 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
     _attr_translation_key = "climate"
     _attr_precision: float = PRECISION_WHOLE
     _attr_hvac_modes = _SUPPORTED_HVAC_MODES
-    _attr_fan_modes = list(_HA_TO_ECHONET_FAN.keys())
 
     def __init__(
         self,
@@ -302,6 +277,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
             features |= ClimateEntityFeature.TARGET_TEMPERATURE
         if EPC_FAN_SPEED in node.set_epcs:
             features |= ClimateEntityFeature.FAN_MODE
+            self._attr_fan_modes = description.fan_mode_prop.options
         if EPC_SWING_AIR_FLOW in node.set_epcs:
             features |= ClimateEntityFeature.SWING_MODE
             swing_modes = list(_HA_TO_ECHONET_SWING.keys())
@@ -310,68 +286,76 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
             features |= ClimateEntityFeature.TURN_OFF
         self._attr_supported_features = features
         self._attr_swing_modes = swing_modes
+        definitions = coordinator.config_entry.runtime_data.definitions
+        class_code = node.eoj.class_code
+        self._op_status = BinaryProp.from_registry(
+            definitions, class_code, EPC_OPERATION_STATUS
+        )
+        self._op_mode_prop = EnumProp.from_registry(
+            definitions, class_code, EPC_OPERATION_MODE
+        )
+        self._special_state_prop = EnumProp.from_registry(
+            definitions, class_code, EPC_SPECIAL_STATE
+        )
 
     @property
     def hvac_mode(self) -> HVACMode | None:
         """Return the current HVAC mode."""
-        status = self._get_value(EPC_OPERATION_STATUS, lambda edt: edt[0])
-        if status == 0x30:
-            return self._get_value(
-                EPC_OPERATION_MODE, lambda edt: _ECHONET_TO_HA_MODE.get(edt[0])
-            )
-        if status == 0x31:
+        if (status := self._operation_status()) is None:
+            return None
+        if not status:
             return HVACMode.OFF
-        return None
+        key = self._op_mode_prop.get(self._node)
+        return _PYHEMS_TO_HA_MODE.get(key) if key is not None else None
+
+    def _operation_status(self) -> bool | None:
+        """Return decoded operation status (True=on, False=off, None=unknown)."""
+        return self._op_status.get(self._node)
 
     @property
     def hvac_action(self) -> HVACAction | None:
         """Return the current HVAC action."""
-        special_raw = self._get_value(EPC_SPECIAL_STATE, lambda edt: edt[0])
-        if special_raw is not None and special_raw in _ECHONET_SPECIAL_STATE_TO_ACTION:
-            if (action := _ECHONET_SPECIAL_STATE_TO_ACTION[special_raw]) is not None:
+        special_key = self._special_state_prop.get(self._node)
+        if special_key is not None and special_key in _PYHEMS_SPECIAL_STATE_TO_ACTION:
+            if (action := _PYHEMS_SPECIAL_STATE_TO_ACTION[special_key]) is not None:
                 return action
-        status = self._get_value(EPC_OPERATION_STATUS, lambda edt: edt[0])
-        if status == 0x31:
-            return HVACAction.OFF
-        if status != 0x30:
+        if (status := self._operation_status()) is None:
             return None
-        mode = self._get_value(EPC_OPERATION_MODE, lambda edt: edt[0])
-        if mode is not None and mode in _ECHONET_TO_HA_ACTION:
-            if (action := _ECHONET_TO_HA_ACTION[mode]) is not None:
-                return action
-            return self._infer_auto_action()
-        return None
+        if not status:
+            return HVACAction.OFF
+        if (mode_key := self._op_mode_prop.get(self._node)) is None:
+            return None
+        if mode_key not in _PYHEMS_TO_HA_ACTION:
+            return None
+        action = _PYHEMS_TO_HA_ACTION[mode_key]
+        return action if action is not None else self._infer_auto_action()
 
     @property
     def fan_mode(self) -> str | None:
         """Return the current fan mode."""
-        return self._get_value(
-            EPC_FAN_SPEED, lambda edt: _ECHONET_TO_HA_FAN.get(edt[0])
-        )
+        return self.entity_description.fan_mode_prop.get(self._node)
 
     @property
     def swing_mode(self) -> str | None:
         """Return the current swing mode based on vertical/horizontal settings."""
-        return self._get_value(
-            EPC_SWING_AIR_FLOW, lambda edt: _ECHONET_TO_HA_SWING.get(edt[0])
-        )
+        return self.entity_description.swing_mode_prop.get(self._node)
 
     @property
     def current_temperature(self) -> float | None:
         """Return the measured indoor temperature."""
-        return self._get_value(EPC_ROOM_TEMPERATURE, _SIGNED_BYTE_TEMPERATURE_DECODER)
+        value = self.entity_description.room_temp_prop.get(self._node)
+        return float(value) if value is not None else None
 
     @property
     def current_humidity(self) -> float | None:
         """Return the measured indoor relative humidity."""
-        return self._get_value(EPC_ROOM_HUMIDITY, _HUMIDITY_DECODER)
+        value = self.entity_description.humidity_prop.get(self._node)
+        return float(value) if value is not None else None
 
     @property
     def target_temperature(self) -> float | None:
         """Return the currently configured setpoint."""
-        value = self._get_value(
-            EPC_TARGET_TEMPERATURE, self.entity_description.target_temp_decoder
-        )
+        value = self.entity_description.target_temp_prop.get(self._node)
         return float(value) if value is not None else None
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
@@ -388,24 +372,26 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
         if EPC_OPERATION_MODE not in self._node.set_epcs:
             raise HomeAssistantError(
                 translation_domain=DOMAIN,
-                translation_key="operation_mode_not_writable",
+                translation_key="epc_not_writable",
+                translation_placeholders={"epc_list": f"0x{EPC_OPERATION_MODE:02X}"},
             )
         if EPC_OPERATION_STATUS not in self._node.set_epcs:
             raise HomeAssistantError(
                 translation_domain=DOMAIN,
-                translation_key="operation_status_not_writable",
+                translation_key="epc_not_writable",
+                translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
             )
-        echonet_mode = _HA_TO_ECHONET_MODE.get(hvac_mode)
-        if echonet_mode is None:
+        pyhems_mode = _HA_TO_PYHEMS_MODE.get(hvac_mode)
+        if pyhems_mode is None:
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
-                translation_key="unsupported_hvac_mode",
-                translation_placeholders={"hvac_mode": str(hvac_mode)},
+                translation_key="unsupported_value",
+                translation_placeholders={"value": str(hvac_mode)},
             )
         await self._async_send_properties(
             [
-                Property(epc=EPC_OPERATION_MODE, edt=bytes([echonet_mode])),
-                Property(epc=EPC_OPERATION_STATUS, edt=b"\x30"),
+                self._op_mode_prop.make_property(pyhems_mode),
+                self._op_status.make_property(True),
             ]
         )
 
@@ -414,18 +400,20 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
         if EPC_OPERATION_STATUS not in self._node.set_epcs:
             raise HomeAssistantError(
                 translation_domain=DOMAIN,
-                translation_key="operation_status_not_writable",
+                translation_key="epc_not_writable",
+                translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
             )
-        await self._async_send_property(EPC_OPERATION_STATUS, b"\x30")
+        await self._async_send_prop(self._op_status, True)
 
     async def async_turn_off(self) -> None:
         """Turn off the climate device."""
         if EPC_OPERATION_STATUS not in self._node.set_epcs:
             raise HomeAssistantError(
                 translation_domain=DOMAIN,
-                translation_key="operation_status_not_writable",
+                translation_key="epc_not_writable",
+                translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
             )
-        await self._async_send_property(EPC_OPERATION_STATUS, b"\x31")
+        await self._async_send_prop(self._op_status, False)
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set the target temperature for the current mode."""
@@ -434,37 +422,37 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
                 translation_domain=DOMAIN,
                 translation_key="target_temperature_required",
             )
-        encoder = self.entity_description.target_temp_encoder
-        if encoder is None:
+        if EPC_TARGET_TEMPERATURE not in self._node.set_epcs:
             raise HomeAssistantError(
                 translation_domain=DOMAIN,
-                translation_key="operation_mode_not_writable",
+                translation_key="epc_not_writable",
+                translation_placeholders={
+                    "epc_list": f"0x{EPC_TARGET_TEMPERATURE:02X}"
+                },
             )
         temperature = float(kwargs[ATTR_TEMPERATURE])
         clamped = min(max(temperature, self._attr_min_temp), self._attr_max_temp)
-        await self._async_send_property(EPC_TARGET_TEMPERATURE, encoder(clamped))
+        await self._async_send_prop(self.entity_description.target_temp_prop, clamped)
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
         """Set the fan mode."""
-        fan_value = _HA_TO_ECHONET_FAN.get(fan_mode)
-        if fan_value is None:
+        if fan_mode not in self.entity_description.fan_mode_prop.options:
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
-                translation_key="unsupported_fan_mode",
-                translation_placeholders={"fan_mode": fan_mode},
+                translation_key="unsupported_value",
+                translation_placeholders={"value": fan_mode},
             )
-        await self._async_send_property(EPC_FAN_SPEED, bytes([fan_value]))
+        await self._async_send_prop(self.entity_description.fan_mode_prop, fan_mode)
 
     async def async_set_swing_mode(self, swing_mode: str) -> None:
         """Set the swing mode."""
-        swing_value = _HA_TO_ECHONET_SWING.get(swing_mode)
-        if swing_value is None:
+        if swing_mode not in _HA_TO_ECHONET_SWING:
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
-                translation_key="unsupported_swing_mode",
-                translation_placeholders={"swing_mode": swing_mode},
+                translation_key="unsupported_value",
+                translation_placeholders={"value": swing_mode},
             )
-        await self._async_send_property(EPC_SWING_AIR_FLOW, bytes([swing_value]))
+        await self._async_send_prop(self.entity_description.swing_mode_prop, swing_mode)
 
     def _infer_auto_action(self) -> HVACAction:
         """Infer HVAC action for AUTO mode from temperatures."""
@@ -475,24 +463,6 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
         if target <= current:
             return HVACAction.COOLING
         return HVACAction.HEATING
-
-    def _get_value(self, epc: int, converter: Callable[[bytes], _T]) -> _T | None:
-        """Helper to get and decode a property value from the node."""
-        if edt := self._node.properties.get(epc):
-            return converter(edt)
-        return None
-
-
-# Decoder for signed byte temperature (ECHONET Lite specification)
-# min/max -127 to 125 excludes special values: 0x7E (126: immeasurable),
-# 0x7F (127: overflow), 0x80 (-128: underflow)
-_SIGNED_BYTE_TEMPERATURE_DECODER = create_numeric_decoder(
-    mra_format="int8", minimum=-127, maximum=125
-)
-
-# Decoder for unsigned byte humidity (ECHONET Lite specification)
-# Range 0-100%, 0xFD (253) and above are special/overflow values
-_HUMIDITY_DECODER = create_numeric_decoder(mra_format="uint8", minimum=0, maximum=100)
 
 
 __all__ = ["EchonetLiteClimate"]

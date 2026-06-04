@@ -15,8 +15,6 @@ the ECHONET 0-100% percentage in EPC 0xB0 and Home Assistant's 0-255
 byte scale.
 """
 
-from __future__ import annotations
-
 from typing import Any, Final
 
 from pyhems import NodeState
@@ -44,7 +42,13 @@ from .const import (
     EPC_OPERATION_STATUS,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .entity import (
+    BinaryProp,
+    EchonetLiteEntity,
+    EnumProp,
+    NumericProp,
+    setup_echonet_lite_device_platform,
+)
 from .types import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 1
@@ -57,36 +61,20 @@ _CLASS_CODE_TO_TRANSLATION_KEY: Final[dict[int, str]] = {
     CLASS_CODE_EXTENDED_LIGHTING_SYSTEM: "extended_lighting_system",
 }
 
-# EPC 0x80 (Operation status) raw values.
-_POWER_ON = 0x30
-_POWER_OFF = 0x31
-
-# Mapping between EPC 0xB1 (Light color setting) raw values and the
+# Mapping between EPC 0xB1 (Light color setting) snake_case enum keys and the
 # kelvin presets exposed to Home Assistant.
-_COLOR_RAW_TO_KELVIN: Final[dict[int, int]] = {
-    0x41: 2700,  # Incandescent lamp color
-    0x42: 4000,  # White
-    0x43: 5000,  # Daylight white
-    0x44: 6500,  # Daylight color
+# Keys correspond to camel_to_snake() applied to the pyhems EnumCodec keys.
+_COLOR_KEY_TO_KELVIN: Final[dict[str, int]] = {
+    "incandescent": 2700,  # Incandescent lamp color
+    "white": 4000,  # White
+    "daylight_white": 5000,  # Daylight white
+    "daylight_color": 6500,  # Daylight color
 }
-_KELVIN_TO_COLOR_RAW: Final[dict[int, int]] = {
-    k: v for v, k in _COLOR_RAW_TO_KELVIN.items()
+_KELVIN_TO_COLOR_KEY: Final[dict[int, str]] = {
+    k: v for v, k in _COLOR_KEY_TO_KELVIN.items()
 }
-_MIN_KELVIN = min(_COLOR_RAW_TO_KELVIN.values())
-_MAX_KELVIN = max(_COLOR_RAW_TO_KELVIN.values())
-
-# Mapping between EPC 0xB6 (Lighting mode setting) raw values and effect names.
-# The keys here match the snake_case forms used in strings.json under
-# ``entity.light.general_lighting.state_attributes.effect.state``.
-_MODE_RAW_TO_EFFECT: Final[dict[int, str]] = {
-    0x41: "auto",
-    0x42: "normal",
-    0x43: "night",
-    0x45: "color",
-}
-_EFFECT_TO_MODE_RAW: Final[dict[str, int]] = {
-    name: raw for raw, name in _MODE_RAW_TO_EFFECT.items()
-}
+_MIN_KELVIN = min(_COLOR_KEY_TO_KELVIN.values())
+_MAX_KELVIN = max(_COLOR_KEY_TO_KELVIN.values())
 
 
 def _brightness_pct_to_ha(pct: int) -> int:
@@ -105,15 +93,15 @@ def _brightness_ha_to_pct(value: int) -> int:
     return max(1, min(100, round(value * 100 / 255)))
 
 
-def _closest_kelvin_raw(kelvin: int) -> int:
-    """Snap an arbitrary kelvin value to the closest supported preset.
+def _closest_kelvin_key(kelvin: int) -> str:
+    """Snap an arbitrary kelvin value to the closest supported preset key.
 
     Home Assistant always sends a continuous value via
     ``ATTR_COLOR_TEMP_KELVIN``; the device only exposes four presets so we
     snap by absolute distance.
     """
-    return _KELVIN_TO_COLOR_RAW[
-        min(_KELVIN_TO_COLOR_RAW, key=lambda k: abs(k - kelvin))
+    return _KELVIN_TO_COLOR_KEY[
+        min(_KELVIN_TO_COLOR_KEY, key=lambda k: abs(k - kelvin))
     ]
 
 
@@ -181,87 +169,88 @@ class EchonetLiteLight(EchonetLiteEntity, LightEntity):
             self._attr_min_color_temp_kelvin = _MIN_KELVIN
             self._attr_max_color_temp_kelvin = _MAX_KELVIN
 
-        if supports_effect:
-            self._attr_supported_features = LightEntityFeature.EFFECT
-            self._attr_effect_list = list(_MODE_RAW_TO_EFFECT.values())
-
         self._supports_brightness = supports_brightness
         self._supports_color_temp = supports_color_temp
         self._supports_effect = supports_effect
-
-    def _raw(self, epc: int) -> int | None:
-        """Return the single-byte raw value for ``epc`` if known."""
-        if edt := self._node.properties.get(epc):
-            return edt[0]
-        return None
+        definitions = coordinator.config_entry.runtime_data.definitions
+        self._op_status = BinaryProp.from_registry(
+            definitions, class_code, EPC_OPERATION_STATUS
+        )
+        if supports_brightness:
+            self._brightness_prop = NumericProp.from_registry(
+                definitions, class_code, EPC_LIGHT_LEVEL
+            )
+        if supports_color_temp:
+            self._color_prop = EnumProp.from_registry(
+                definitions, class_code, EPC_LIGHT_COLOR
+            )
+        if supports_effect:
+            self._mode_prop = EnumProp.from_registry(
+                definitions, class_code, EPC_LIGHTING_MODE
+            )
+            self._attr_supported_features = LightEntityFeature.EFFECT
+            self._attr_effect_list = self._mode_prop.options
 
     @property
     def is_on(self) -> bool | None:
         """Return True if the device is reporting Operation status = ON."""
-        power = self._raw(EPC_OPERATION_STATUS)
-        if power is None:
-            return None
-        return power == _POWER_ON
+        return self._op_status.get(self._node)
 
     @property
     def brightness(self) -> int | None:
         """Return brightness on HA's 0-255 scale, derived from EPC 0xB0 (%)."""
         if not self._supports_brightness:
             return None
-        pct = self._raw(EPC_LIGHT_LEVEL)
+        pct = self._brightness_prop.get(self._node)
         if pct is None:
             return None
-        return _brightness_pct_to_ha(pct)
+        return _brightness_pct_to_ha(int(pct))
 
     @property
     def color_temp_kelvin(self) -> int | None:
         """Return the currently active color temperature preset in kelvin."""
         if not self._supports_color_temp:
             return None
-        raw = self._raw(EPC_LIGHT_COLOR)
-        if raw is None:
+        key = self._color_prop.get(self._node)
+        if key is None:
             return None
-        return _COLOR_RAW_TO_KELVIN.get(raw)
+        return _COLOR_KEY_TO_KELVIN.get(key)
 
     @property
     def effect(self) -> str | None:
         """Return the active lighting mode as the effect name."""
         if not self._supports_effect:
             return None
-        raw = self._raw(EPC_LIGHTING_MODE)
-        if raw is None:
-            return None
-        return _MODE_RAW_TO_EFFECT.get(raw)
+        return self._mode_prop.get(self._node)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the light on, applying any brightness/color/effect overrides."""
         # Always send the power-on command first so subsequent setters apply
         # to an already-powered device.
-        await self._async_send_property(EPC_OPERATION_STATUS, bytes([_POWER_ON]))
+        await self._async_send_prop(self._op_status, True)
         if (
             self._supports_brightness
             and (brightness := kwargs.get(ATTR_BRIGHTNESS)) is not None
         ):
             pct = _brightness_ha_to_pct(int(brightness))
-            await self._async_send_property(EPC_LIGHT_LEVEL, bytes([pct]))
+            await self._async_send_prop(self._brightness_prop, float(pct))
         if (
             self._supports_color_temp
             and (kelvin := kwargs.get(ATTR_COLOR_TEMP_KELVIN)) is not None
         ):
-            raw = _closest_kelvin_raw(int(kelvin))
-            await self._async_send_property(EPC_LIGHT_COLOR, bytes([raw]))
+            await self._async_send_prop(
+                self._color_prop, _closest_kelvin_key(int(kelvin))
+            )
         if (
             self._supports_effect
             and (effect := kwargs.get(ATTR_EFFECT)) is not None
-            and effect in _EFFECT_TO_MODE_RAW
+            and effect in self._mode_prop.options
         ):
-            await self._async_send_property(
-                EPC_LIGHTING_MODE, bytes([_EFFECT_TO_MODE_RAW[effect]])
-            )
+            await self._async_send_prop(self._mode_prop, effect)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        """Turn the light off via EPC 0x80 = 0x31."""
-        await self._async_send_property(EPC_OPERATION_STATUS, bytes([_POWER_OFF]))
+        """Turn the light off via the operation status codec."""
+        await self._async_send_prop(self._op_status, False)
 
 
 __all__ = ["EchonetLiteLight"]

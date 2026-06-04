@@ -204,6 +204,176 @@
       }
     }
   },
+  "device": {
+    "class_0002": {
+      "name": "Crime prevention sensor"
+    },
+    "class_0003": {
+      "name": "Emergency button"
+    },
+    "class_0007": {
+      "name": "Human detection sensor"
+    },
+    "class_0011": {
+      "name": "Temperature sensor"
+    },
+    "class_0012": {
+      "name": "Humidity sensor"
+    },
+    "class_0016": {
+      "name": "Bath heating status sensor"
+    },
+    "class_001b": {
+      "name": "CO2 sensor"
+    },
+    "class_001d": {
+      "name": "VOC sensor"
+    },
+    "class_0022": {
+      "name": "Electric energy sensor"
+    },
+    "class_0023": {
+      "name": "Current sensor"
+    },
+    "class_00d0": {
+      "name": "Illuminance sensor"
+    },
+    "class_0130": {
+      "name": "Home air conditioner"
+    },
+    "class_0133": {
+      "name": "Ventilation fan"
+    },
+    "class_0134": {
+      "name": "Air conditioner ventilation fan"
+    },
+    "class_0135": {
+      "name": "Air cleaner"
+    },
+    "class_0156": {
+      "name": "Package-type commercial air conditioner (indoor unit) (except those for facilities)"
+    },
+    "class_0157": {
+      "name": "Package-type commercial air conditioner (outdoor unit)"
+    },
+    "class_0260": {
+      "name": "Electrically operated blind/shade"
+    },
+    "class_0263": {
+      "name": "Electrically operated rain sliding door/shutter"
+    },
+    "class_026b": {
+      "name": "Electric water heater"
+    },
+    "class_026f": {
+      "name": "Electric lock"
+    },
+    "class_0272": {
+      "name": "Instantaneous water heater"
+    },
+    "class_0273": {
+      "name": "Bathroom heater dryer"
+    },
+    "class_0279": {
+      "name": "Household solar power generation"
+    },
+    "class_027a": {
+      "name": "Cold or hot water heat source equipment"
+    },
+    "class_027b": {
+      "name": "Floor heater"
+    },
+    "class_027c": {
+      "name": "Fuel cell"
+    },
+    "class_027d": {
+      "name": "Storage battery"
+    },
+    "class_027e": {
+      "name": "EV charger and discharger"
+    },
+    "class_0280": {
+      "name": "Watt-hour meter"
+    },
+    "class_0281": {
+      "name": "Water flowmeter"
+    },
+    "class_0282": {
+      "name": "Gas meter"
+    },
+    "class_0287": {
+      "name": "Power distribution board metering"
+    },
+    "class_0288": {
+      "name": "Low-voltage smart electric energy meter"
+    },
+    "class_028a": {
+      "name": "High-voltage smart electric energy meter"
+    },
+    "class_028d": {
+      "name": "Smart electric energy meter for sub-metering"
+    },
+    "class_028e": {
+      "name": "distributed generator's electric energy meter"
+    },
+    "class_028f": {
+      "name": "Bidirectional high voltage smart electric energy meter"
+    },
+    "class_0290": {
+      "name": "General lighting"
+    },
+    "class_0291": {
+      "name": "Mono functional lighting"
+    },
+    "class_02a1": {
+      "name": "EV Charger"
+    },
+    "class_02a3": {
+      "name": "Lighting system"
+    },
+    "class_02a4": {
+      "name": "Extended lighting system"
+    },
+    "class_02a5": {
+      "name": "Multiple input pcs"
+    },
+    "class_02a6": {
+      "name": "Hybrid water heater"
+    },
+    "class_02a7": {
+      "name": "Frequency regulation"
+    },
+    "class_03b7": {
+      "name": "Refrigerator"
+    },
+    "class_03b9": {
+      "name": "Cooking heater"
+    },
+    "class_03bb": {
+      "name": "Rice cooker"
+    },
+    "class_03ce": {
+      "name": "Commercial showcase"
+    },
+    "class_03d3": {
+      "name": "Washer and dryer"
+    },
+    "class_03d4": {
+      "name": "Commercial show case outdoor unit"
+    },
+    "class_05fd": {
+      "name": "Switch (supporting JEM-A/HA terminals)"
+    },
+    "class_05ff": {
+      "name": "Controller"
+    },
+    "class_0602": {
+      "name": "Television"
+    },
+    "unknown_class": {
+      "name": "ECHONET Lite device {class_code}"
+    }
+  },
   "entity": {
     "binary_sensor": {
       "class_0000_epc_88": {
@@ -668,14 +838,6 @@
         }
       }
     },
-    "cover": {
-      "electrically_operated_blind": {
-        "name": "Electrically operated blind"
-      },
-      "electrically_operated_shutter": {
-        "name": "Electrically operated shutter"
-      }
-    },
     "fan": {
       "air_cleaner": {
         "state_attributes": {
@@ -699,11 +861,7 @@
       }
     },
     "light": {
-      "extended_lighting_system": {
-        "name": "Extended lighting system"
-      },
       "general_lighting": {
-        "name": "General lighting",
         "state_attributes": {
           "effect": {
             "state": {
@@ -714,17 +872,6 @@
             }
           }
         }
-      },
-      "lighting_system": {
-        "name": "Lighting system"
-      },
-      "mono_functional_lighting": {
-        "name": "Mono-functional lighting"
-      }
-    },
-    "lock": {
-      "electric_lock": {
-        "name": "Electric lock"
       }
     },
     "number": {
@@ -3524,13 +3671,12 @@
     },
     "water_heater": {
       "electric_water_heater": {
-        "name": "Electric water heater",
         "state_attributes": {
           "operation_mode": {
             "state": {
               "auto": "[%key:common::state::auto%]",
-              "manual": "[%key:common::state::manual%]",
-              "manual_off": "Manual (heating stopped)",
+              "manual_heating": "Manual (heating)",
+              "manual_no_heating": "Manual (heating stopped)",
               "off": "[%key:common::state::off%]"
             }
           }
@@ -3539,17 +3685,17 @@
     }
   },
   "exceptions": {
+    "definitions_load_error": {
+      "message": "Device definitions file could not be loaded."
+    },
     "epc_not_writable": {
       "message": "EPC {epc_list} is not writable by the device."
     },
     "installation_location_number_unset": {
       "message": "Cannot set location number: no installation location code is currently set. Select a location first."
     },
-    "operation_mode_not_writable": {
-      "message": "The operation mode property is not writable on this device."
-    },
-    "operation_status_not_writable": {
-      "message": "The operation status property is not writable on this device."
+    "runtime_start_failed": {
+      "message": "Failed to start runtime client: {error}"
     },
     "target_node_unknown": {
       "message": "The target node address is unknown."
@@ -3557,20 +3703,8 @@
     "target_temperature_required": {
       "message": "A target temperature value is required."
     },
-    "unsupported_fan_mode": {
-      "message": "Unsupported fan mode: {fan_mode}"
-    },
-    "unsupported_hvac_mode": {
-      "message": "Unsupported HVAC mode: {hvac_mode}"
-    },
-    "unsupported_operation_mode": {
-      "message": "Unsupported operation mode: {operation_mode}"
-    },
-    "unsupported_option": {
-      "message": "Unsupported option: {option}"
-    },
-    "unsupported_swing_mode": {
-      "message": "Unsupported swing mode: {swing_mode}"
+    "unsupported_value": {
+      "message": "Unsupported value: {value}"
     }
   },
   "issues": {

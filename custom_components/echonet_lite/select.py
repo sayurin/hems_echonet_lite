@@ -1,15 +1,13 @@
 """Select platform for the HEMS Echonet Lite integration."""
 
-from __future__ import annotations
-
-from collections.abc import Callable
 from dataclasses import dataclass
 
 from pyhems import (
     INSTALLATION_LOCATIONS,
     EntityDefinition,
+    InstallationLocation,
+    InstallationLocationCodec,
     NodeState,
-    create_enum_decoder,
     decode_installation_location,
 )
 
@@ -25,7 +23,6 @@ from .const import (
     EPC_INSTALLATION_LOCATION,
     INSTALLATION_LOCATION_NUMBER_OPTIONS,
     INSTALLATION_LOCATION_UNSET,
-    camel_to_snake,
     infer_entity_category,
     infer_entity_registry_enabled_default,
 )
@@ -34,6 +31,7 @@ from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntity,
     EchonetLiteEntityDescription,
+    EnumProp,
     setup_echonet_lite_device_platform,
     setup_echonet_lite_platform,
 )
@@ -48,9 +46,7 @@ class EchonetLiteSelectEntityDescription(
 ):
     """Entity description that stores EPC metadata and value mapping."""
 
-    decoder: Callable[[bytes], int | None]
-    value_to_option: dict[int, str]
-    option_to_value: dict[str, int]
+    prop: EnumProp
 
 
 def _create_select_description(
@@ -62,17 +58,10 @@ def _create_select_description(
     All select entities in definitions.json are validated to have enum_values,
     so this function always returns a valid description.
     """
-    value_to_option: dict[int, str] = {}
-    option_to_value: dict[str, int] = {}
-
-    # enum_values is tuple[EnumValue, ...] with edt, key, name_en, name_ja
-    for enum_val in entity_def.enum_values:
-        option_key = camel_to_snake(enum_val.key)
-        value_to_option[enum_val.edt] = option_key
-        option_to_value[option_key] = enum_val.edt
+    prop = EnumProp.from_entity_def(entity_def)
 
     if (
-        not option_to_value
+        not prop.options
     ):  # pragma: no cover - validated upstream in pyhems._validate_entity
         raise ValueError(
             f"Select entity EPC 0x{entity_def.epc:02X} for class 0x{class_code:04X} "
@@ -88,9 +77,7 @@ def _create_select_description(
         entity_registry_enabled_default=infer_entity_registry_enabled_default(
             entity_def
         ),
-        decoder=create_enum_decoder(),
-        value_to_option=value_to_option,
-        option_to_value=option_to_value,
+        prop=prop,
         manufacturer_code=entity_def.manufacturer_code,
     )
 
@@ -129,7 +116,7 @@ class EchonetLiteSelect(
     ) -> None:
         """Initialize the ECHONET Lite select entity."""
         super().__init__(coordinator, node, description)
-        self._attr_options = list(description.option_to_value)
+        self._attr_options = description.prop.options
 
     @property
     def current_option(self) -> str | None:
@@ -137,21 +124,18 @@ class EchonetLiteSelect(
 
         The raw property value is decoded and mapped to the option name.
         """
-        if (state := self._node.properties.get(self._epc)) is None:
-            return None
-        if (value := self.description.decoder(state)) is None:
-            return None
-        return self.description.value_to_option.get(value)
+        return self.description.prop.get(self._node)
 
     async def async_select_option(self, option: str) -> None:
         """Select the given option by sending the corresponding payload."""
-        if (value := self.description.option_to_value.get(option)) is None:
+        try:
+            await self._async_send_prop(self.description.prop, option)
+        except ValueError as err:
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
-                translation_key="unsupported_option",
-                translation_placeholders={"option": option},
-            )
-        await self._async_send_property(self._epc, bytes([value]))
+                translation_key="unsupported_value",
+                translation_placeholders={"value": option},
+            ) from err
 
 
 # ============================================================================
@@ -239,12 +223,14 @@ class InstallationLocationCodeSelect(EchonetLiteEntity, SelectEntity):
         if new_llll == 0:
             # "unset" selected — write 0x00; forcing NNN=0 avoids generating
             # the prohibited 0x01-0x07 range (17-byte format indicators).
-            new_byte = 0x00
-        else:
-            fields = _decode_location_fields(self._node)
-            nnn = fields[1] if fields is not None else 0
-            new_byte = (new_llll << 3) | nnn
-        await self._async_send_property(EPC_INSTALLATION_LOCATION, bytes([new_byte]))
+            await self._async_send_property(EPC_INSTALLATION_LOCATION, b"\x00")
+            return
+        fields = _decode_location_fields(self._node)
+        nnn = fields[1] if fields is not None else 0
+        edt = InstallationLocationCodec().encode(
+            InstallationLocation.from_code(new_llll, nnn)
+        )
+        await self._async_send_property(EPC_INSTALLATION_LOCATION, edt)
 
 
 class InstallationLocationNumberSelect(EchonetLiteEntity, SelectEntity):
@@ -295,5 +281,7 @@ class InstallationLocationNumberSelect(EchonetLiteEntity, SelectEntity):
             )
         llll = fields[0]
         new_nnn = int(option)
-        new_byte = (llll << 3) | new_nnn
-        await self._async_send_property(EPC_INSTALLATION_LOCATION, bytes([new_byte]))
+        edt = InstallationLocationCodec().encode(
+            InstallationLocation.from_code(llll, new_nnn)
+        )
+        await self._async_send_property(EPC_INSTALLATION_LOCATION, edt)

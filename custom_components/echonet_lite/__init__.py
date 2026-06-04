@@ -22,8 +22,6 @@ The poll set is automatically reduced to ``get_epcs - inf_epcs`` per device
 so properties the device does actively push are not re-polled.
 """
 
-from __future__ import annotations
-
 import asyncio
 from collections.abc import Callable
 from contextlib import suppress
@@ -124,7 +122,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     try:
         definitions = await hass.async_add_executor_job(load_definitions_registry)
     except DefinitionsLoadError as err:
-        raise ConfigEntryError("Device definitions file could not be loaded") from err
+        raise ConfigEntryError(
+            translation_domain=DOMAIN,
+            translation_key="definitions_load_error",
+        ) from err
 
     # Build device-specific EPC sets for polling/notification
     # Start with definitions-based EPCs (MRA + vendor)
@@ -446,7 +447,11 @@ class _RuntimeController:
             await self._client.start()
         except OSError as err:
             unsubscribe()
-            raise ConfigEntryNotReady(f"Failed to start runtime client: {err}") from err
+            raise ConfigEntryNotReady(
+                translation_domain=DOMAIN,
+                translation_key="runtime_start_failed",
+                translation_placeholders={"error": str(err)},
+            ) from err
 
         self.unsubscribe_runtime = unsubscribe
 

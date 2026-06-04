@@ -1,7 +1,5 @@
 """Button platform for the HEMS Echonet Lite integration."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 
 from pyhems import EntityDefinition
@@ -62,7 +60,6 @@ def _create_button_description(
         translation_key=entity_def.id,
         class_code=class_code,
         epc=entity_def.epc,
-        device_class=None,
         entity_category=infer_entity_category(entity_def),
         entity_registry_enabled_default=infer_entity_registry_enabled_default(
             entity_def

@@ -1,7 +1,5 @@
 """Data coordinator for the HEMS Echonet Lite integration."""
 
-from __future__ import annotations
-
 import logging
 
 from pyhems import DeviceManager, HemsFrameEvent, HemsInstanceListEvent, NodeState
