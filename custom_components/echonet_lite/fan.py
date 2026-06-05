@@ -24,12 +24,8 @@ from .const import (
     EPC_OPERATION_STATUS,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import (
-    BinaryProp,
-    EchonetLiteEntity,
-    EnumProp,
-    setup_echonet_lite_device_platform,
-)
+from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .prop import BinaryProp, EnumProp
 from .types import EchonetLiteConfigEntry
 
 _LOGGER = logging.getLogger(__name__)

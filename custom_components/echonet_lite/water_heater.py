@@ -26,13 +26,8 @@ from .const import (
     EPC_TARGET_TEMPERATURE,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import (
-    BinaryProp,
-    EchonetLiteEntity,
-    EnumProp,
-    NumericProp,
-    setup_echonet_lite_device_platform,
-)
+from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .prop import BinaryProp, EnumProp, NumericProp
 from .types import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 1

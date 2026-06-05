@@ -31,10 +31,10 @@ from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntity,
     EchonetLiteEntityDescription,
-    EnumProp,
     setup_echonet_lite_device_platform,
     setup_echonet_lite_platform,
 )
+from .prop import EnumProp
 from .types import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 1

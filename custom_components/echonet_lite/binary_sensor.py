@@ -15,11 +15,11 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import infer_entity_category, infer_entity_registry_enabled_default
 from .entity import (
-    BinaryProp,
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
     setup_echonet_lite_platform,
 )
+from .prop import BinaryProp
 from .types import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 0

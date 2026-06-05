@@ -11,8 +11,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.device_registry import DeviceInfo
 
 if TYPE_CHECKING:
-    from . import _RuntimeIssueMonitor
     from .coordinator import EchonetLiteCoordinator
+    from .runtime import RuntimeIssueMonitor
 
 
 @dataclass(slots=True)
@@ -34,7 +34,7 @@ class EchonetLiteRuntimeData:
     client: HemsClient
     unsubscribe_runtime: Callable[[], None]
     property_poller: PropertyPoller
-    issue_monitor: _RuntimeIssueMonitor
+    issue_monitor: RuntimeIssueMonitor
     health: RuntimeHealth
     discovery_task: asyncio.Task[Any]
     event_consumer_task: asyncio.Task[Any]

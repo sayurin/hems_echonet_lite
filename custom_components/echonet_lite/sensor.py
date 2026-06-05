@@ -23,10 +23,9 @@ from .const import (
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
-    EnumProp,
-    NumericProp,
     setup_echonet_lite_platform,
 )
+from .prop import EnumProp, NumericProp
 from .types import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 0
