@@ -1,19 +1,4 @@
-"""Lock platform for the HEMS Echonet Lite integration.
-
-Supports the ECHONET Lite electric lock class (0x026F).
-
-Like the climate / water_heater platforms, this platform exposes a high-level
-``LockEntity`` that aggregates the main lock (EPC 0xE0), the optional sub-lock
-(EPC 0xE1) and the alarm status (EPC 0xE5) into a single entity. EPCs that
-are aggregated by this entity are listed in :data:`DEDICATED_PLATFORM_EPCS`
-so that the generic switch / binary_sensor platforms do not produce duplicate
-entities for them.
-
-The other lock-related EPCs -- door guard 0xE2, door open/close 0xE3,
-occupancy 0xE4, auto-lock setting 0xE6, battery level 0xE7 -- are intentionally
-left to the generic binary_sensor / switch platforms because they expose
-information that does not fit Home Assistant's ``LockEntity`` contract.
-"""
+"""Lock platform for the HEMS Echonet Lite integration."""
 
 from typing import Any
 
