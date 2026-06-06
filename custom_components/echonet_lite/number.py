@@ -9,6 +9,7 @@ from homeassistant.components.number import (
     NumberEntity,
     NumberEntityDescription,
 )
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
@@ -22,10 +23,10 @@ from .coordinator import EchonetLiteCoordinator
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
-    NumericProp,
     setup_echonet_lite_platform,
 )
-from .types import EchonetLiteConfigEntry
+from .prop import NumericProp
+from .runtime import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 1
 
@@ -87,10 +88,9 @@ async def async_setup_entry(
     setup_echonet_lite_platform(
         entry,
         async_add_entities,
-        "number",
+        Platform.NUMBER,
         _create_number_description,
         EchonetLiteNumber,
-        "number",
     )
 
 
@@ -116,6 +116,3 @@ class EchonetLiteNumber(
     async def async_set_native_value(self, value: float) -> None:
         """Set the value by sending an ECHONET Lite command."""
         await self._async_send_prop(self.description.prop, value)
-
-
-__all__ = ["EchonetLiteNumber", "EchonetLiteNumberEntityDescription"]

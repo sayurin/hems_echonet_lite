@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pyhems import EntityDefinition
 
 from homeassistant.components.button import ButtonEntity, ButtonEntityDescription
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
@@ -14,7 +15,7 @@ from .entity import (
     EchonetLiteEntityDescription,
     setup_echonet_lite_platform,
 )
-from .types import EchonetLiteConfigEntry
+from .runtime import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 1
 
@@ -78,10 +79,9 @@ async def async_setup_entry(
     setup_echonet_lite_platform(
         entry,
         async_add_entities,
-        "button",
+        Platform.BUTTON,
         _create_button_description,
         EchonetLiteButton,
-        "button",
     )
 
 
@@ -98,6 +98,3 @@ class EchonetLiteButton(
     async def async_press(self) -> None:
         """Send the button press command via the pyhems runtime client."""
         await self._async_send_property(self._epc, self.description.press_value)
-
-
-__all__ = ["EchonetLiteButton"]

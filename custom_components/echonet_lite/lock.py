@@ -1,19 +1,4 @@
-"""Lock platform for the HEMS Echonet Lite integration.
-
-Supports the ECHONET Lite electric lock class (0x026F).
-
-Like the climate / water_heater platforms, this platform exposes a high-level
-``LockEntity`` that aggregates the main lock (EPC 0xE0), the optional sub-lock
-(EPC 0xE1) and the alarm status (EPC 0xE5) into a single entity. EPCs that
-are aggregated by this entity are listed in :data:`DEDICATED_PLATFORM_EPCS`
-so that the generic switch / binary_sensor platforms do not produce duplicate
-entities for them.
-
-The other lock-related EPCs -- door guard 0xE2, door open/close 0xE3,
-occupancy 0xE4, auto-lock setting 0xE6, battery level 0xE7 -- are intentionally
-left to the generic binary_sensor / switch platforms because they expose
-information that does not fit Home Assistant's ``LockEntity`` contract.
-"""
+"""Lock platform for the HEMS Echonet Lite integration."""
 
 from typing import Any
 
@@ -31,13 +16,9 @@ from .const import (
     EPC_LOCK_SETTING_2,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import (
-    BinaryProp,
-    EchonetLiteEntity,
-    EnumProp,
-    setup_echonet_lite_device_platform,
-)
-from .types import EchonetLiteConfigEntry
+from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .prop import BinaryProp, EnumProp
+from .runtime import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 1
 
@@ -140,6 +121,3 @@ class EchonetLiteLock(EchonetLiteEntity, LockEntity):
     async def async_unlock(self, **kwargs: Any) -> None:
         """Unlock the device by writing the primary lock EPC only."""
         await self._async_send_prop(self._lock_prop, False)
-
-
-__all__ = ["EchonetLiteLock"]

@@ -9,17 +9,18 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import infer_entity_category, infer_entity_registry_enabled_default
 from .entity import (
-    BinaryProp,
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
     setup_echonet_lite_platform,
 )
-from .types import EchonetLiteConfigEntry
+from .prop import BinaryProp
+from .runtime import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 0
 
@@ -116,10 +117,9 @@ async def async_setup_entry(
     setup_echonet_lite_platform(
         entry,
         async_add_entities,
-        "binary_sensor",
+        Platform.BINARY_SENSOR,
         _create_binary_sensor_description,
         EchonetLiteBinarySensor,
-        "binary_sensor",
     )
 
 
@@ -133,6 +133,3 @@ class EchonetLiteBinarySensor(
     def is_on(self) -> bool | None:
         """Return the state of the binary sensor."""
         return self.description.prop.get(self._node)
-
-
-__all__ = ["EchonetLiteBinarySensor", "EchonetLiteBinarySensorEntityDescription"]

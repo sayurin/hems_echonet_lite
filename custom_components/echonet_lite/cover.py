@@ -1,21 +1,4 @@
-"""Cover platform for the HEMS Echonet Lite integration.
-
-Supports the ECHONET Lite "electrically operated blind / sunshade" class
-(0x0260) and "electrically operated shutter" class (0x0263). Other 0x026x
-classes (rain sliding door 0x0261, curtain 0x0262, gate 0x0264, window 0x0265,
-automatic entrance door 0x0266) are not currently represented in the MRA
-data shipped with pyhems and are therefore not exposed by this platform.
-
-The cover entity aggregates the open/close trigger (EPC 0xE0), the
-degree-of-opening setting (EPC 0xE1), the blind angle setting (EPC 0xE2)
-and the open/close status (EPC 0xEA) into a single Home Assistant
-``CoverEntity``.
-
-Slat / blind angle is exposed through Home Assistant's tilt API. ECHONET
-Lite expresses the angle as 0-180 degrees while HA tilt is 0-100; the
-two scales are bridged via ``round(deg * 100 / 180)`` and
-``round(pos * 180 / 100)``.
-"""
+"""Cover platform for the HEMS Echonet Lite integration."""
 
 from typing import Any, Final
 
@@ -41,13 +24,9 @@ from .const import (
     EPC_COVER_POSITION,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import (
-    EchonetLiteEntity,
-    EnumProp,
-    NumericProp,
-    setup_echonet_lite_device_platform,
-)
-from .types import EchonetLiteConfigEntry
+from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .prop import EnumProp, NumericProp
+from .runtime import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 1
 
@@ -214,6 +193,3 @@ class EchonetLiteCover(EchonetLiteEntity, CoverEntity):
         """Set the slat angle (EPC 0xE2 0-180 deg) from HA tilt 0-100."""
         deg = _tilt_ha_to_deg(int(kwargs[ATTR_TILT_POSITION]))
         await self._async_send_prop(self._cover_angle_prop, float(deg))
-
-
-__all__ = ["EchonetLiteCover"]

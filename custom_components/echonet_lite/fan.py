@@ -24,13 +24,9 @@ from .const import (
     EPC_OPERATION_STATUS,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import (
-    BinaryProp,
-    EchonetLiteEntity,
-    EnumProp,
-    setup_echonet_lite_device_platform,
-)
-from .types import EchonetLiteConfigEntry
+from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .prop import BinaryProp, EnumProp
+from .runtime import EchonetLiteConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -268,6 +264,3 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
                 translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
             )
         await self._async_send_prop(self._op_status, True)
-
-
-__all__ = ["EchonetLiteFan"]

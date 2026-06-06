@@ -6,17 +6,18 @@ from typing import Any
 from pyhems import EntityDefinition
 
 from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import infer_entity_category, infer_entity_registry_enabled_default
 from .entity import (
-    BinaryProp,
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
     setup_echonet_lite_platform,
 )
-from .types import EchonetLiteConfigEntry
+from .prop import BinaryProp
+from .runtime import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 1
 
@@ -58,10 +59,9 @@ async def async_setup_entry(
     setup_echonet_lite_platform(
         entry,
         async_add_entities,
-        "switch",
+        Platform.SWITCH,
         _create_switch_description,
         EchonetLiteSwitch,
-        "switch",
     )
 
 
@@ -82,6 +82,3 @@ class EchonetLiteSwitch(
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Send the Off command via the pyhems runtime client."""
         await self._async_send_prop(self.description.prop, False)
-
-
-__all__ = ["EchonetLiteSwitch"]

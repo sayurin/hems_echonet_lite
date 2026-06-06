@@ -1,20 +1,4 @@
-"""Water heater platform for the HEMS Echonet Lite integration.
-
-Supports the ECHONET Lite electric water heater class (0x026B, electric heat-pump
-water heater).
-
-Like the climate platform, this platform exposes a high-level ``WaterHeaterEntity``
-that aggregates the operation status (EPC 0x80), the operation mode (EPC 0xB0) and
-the target / current temperature EPCs into a single entity. EPCs that are aggregated
-by this entity are listed in :data:`DEDICATED_PLATFORM_EPCS` so that the generic
-sensor / number / select / switch platforms do not produce duplicate entities for
-them.
-
-Following the same convention as climate -- which exposes the room temperature both
-via ``current_temperature`` and as a standalone sensor -- this platform deliberately
-does **not** suppress the measured-water-temperature EPC (0xC1). The user sees the
-same temperature via both surfaces.
-"""
+"""Water heater platform for the HEMS Echonet Lite integration."""
 
 from dataclasses import dataclass
 from typing import Any
@@ -42,14 +26,9 @@ from .const import (
     EPC_TARGET_TEMPERATURE,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import (
-    BinaryProp,
-    EchonetLiteEntity,
-    EnumProp,
-    NumericProp,
-    setup_echonet_lite_device_platform,
-)
-from .types import EchonetLiteConfigEntry
+from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .prop import BinaryProp, EnumProp, NumericProp
+from .runtime import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 1
 
@@ -292,6 +271,3 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
         temperature = float(kwargs[ATTR_TEMPERATURE])
         clamped = min(max(temperature, self._attr_min_temp), self._attr_max_temp)
         await self._async_send_prop(self.entity_description.target_temp_prop, clamped)
-
-
-__all__ = ["EchonetLiteWaterHeater"]

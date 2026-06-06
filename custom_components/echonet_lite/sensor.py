@@ -10,6 +10,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
@@ -22,11 +23,10 @@ from .const import (
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
-    EnumProp,
-    NumericProp,
     setup_echonet_lite_platform,
 )
-from .types import EchonetLiteConfigEntry
+from .prop import EnumProp, NumericProp
+from .runtime import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 0
 
@@ -114,10 +114,9 @@ async def async_setup_entry(
     setup_echonet_lite_platform(
         entry,
         async_add_entities,
-        "sensor",
+        Platform.SENSOR,
         _create_sensor_description,
         EchonetLiteSensor,
-        "sensor",
     )
 
 
@@ -130,6 +129,3 @@ class EchonetLiteSensor(
     def native_value(self) -> float | int | str | None:
         """Return the state of the sensor."""
         return self.description.prop.get(self._node)
-
-
-__all__ = ["EchonetLiteSensor", "EchonetLiteSensorEntityDescription"]

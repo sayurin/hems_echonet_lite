@@ -1,19 +1,4 @@
-"""Light platform for the HEMS Echonet Lite integration.
-
-Supports the ECHONET Lite lighting classes:
-
-* 0x0290 General lighting -- on/off (0x80), brightness (0xB0),
-  color temperature presets (0xB1) and lighting mode / effect (0xB6).
-* 0x0291 Mono-functional lighting -- on/off (0x80), brightness (0xB0).
-* 0x02A3 Lighting system -- on/off (0x80), brightness (0xB0).
-* 0x02A4 Extended lighting system -- on/off (0x80), brightness (0xB0).
-
-A single :class:`EchonetLiteLight` implementation handles all four classes,
-adapting its color mode and supported features to the device's advertised
-GET/SET property map at instantiation time. Brightness is scaled between
-the ECHONET 0-100% percentage in EPC 0xB0 and Home Assistant's 0-255
-byte scale.
-"""
+"""Light platform for the HEMS Echonet Lite integration."""
 
 from typing import Any, Final
 
@@ -42,14 +27,9 @@ from .const import (
     EPC_OPERATION_STATUS,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import (
-    BinaryProp,
-    EchonetLiteEntity,
-    EnumProp,
-    NumericProp,
-    setup_echonet_lite_device_platform,
-)
-from .types import EchonetLiteConfigEntry
+from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .prop import BinaryProp, EnumProp, NumericProp
+from .runtime import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 1
 
@@ -251,6 +231,3 @@ class EchonetLiteLight(EchonetLiteEntity, LightEntity):
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the light off via the operation status codec."""
         await self._async_send_prop(self._op_status, False)
-
-
-__all__ = ["EchonetLiteLight"]

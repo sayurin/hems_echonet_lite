@@ -42,14 +42,9 @@ from .const import (
     EPC_TARGET_TEMPERATURE,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import (
-    BinaryProp,
-    EchonetLiteEntity,
-    EnumProp,
-    NumericProp,
-    setup_echonet_lite_device_platform,
-)
-from .types import EchonetLiteConfigEntry
+from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .prop import BinaryProp, EnumProp, NumericProp
+from .runtime import EchonetLiteConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -463,6 +458,3 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
         if target <= current:
             return HVACAction.COOLING
         return HVACAction.HEATING
-
-
-__all__ = ["EchonetLiteClimate"]
