@@ -18,7 +18,7 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import CONF_ENABLE_EXPERIMENTAL, CONF_INTERFACE, DEFAULT_INTERFACE, DOMAIN
-from .types import EchonetLiteConfigEntry
+from .runtime import EchonetLiteConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 

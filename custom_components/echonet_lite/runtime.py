@@ -2,30 +2,44 @@
 
 import asyncio
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 import logging
 import time
 from typing import Any
 
 from pyhems import (
+    DefinitionsRegistry,
     DeviceManager,
     HemsClient,
     HemsErrorEvent,
     HemsFrameEvent,
     HemsInstanceListEvent,
+    PropertyPoller,
     RuntimeEvent,
 )
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.event import async_track_time_interval
 
 from .const import DOMAIN, ISSUE_RUNTIME_CLIENT_ERROR, ISSUE_RUNTIME_INACTIVE
 from .coordinator import EchonetLiteCoordinator
-from .types import EchonetLiteConfigEntry, RuntimeHealth
 
 _LOGGER = logging.getLogger(__name__)
+
+
+@dataclass(slots=True)
+class RuntimeHealth:
+    """Health metadata tracked for the runtime client."""
+
+    last_client_error: str | None = None
+    last_client_error_at: float | None = None
+    last_restart_at: float | None = None
+    restart_attempts: int = 0
 
 
 class RuntimeIssueMonitor:
@@ -305,3 +319,19 @@ class RuntimeController:
             # by ``DeviceManager`` and only mutated from the single event
             # consumer task, so concurrent readers see a consistent snapshot.
             self.coordinator.async_set_updated_data(dict(self._device_manager.data))
+
+
+@dataclass(slots=True)
+class EchonetLiteRuntimeData:
+    """Runtime data stored on the config entry."""
+
+    definitions: DefinitionsRegistry
+    controller: RuntimeController
+    property_poller: PropertyPoller
+    # Per-node ``DeviceInfo`` cache keyed by ``node.device_key``. Built once
+    # on first entity instantiation for a node and shared by every entity
+    # platform bound to that node.
+    device_info_cache: dict[str, DeviceInfo]
+
+
+EchonetLiteConfigEntry = ConfigEntry[EchonetLiteRuntimeData]

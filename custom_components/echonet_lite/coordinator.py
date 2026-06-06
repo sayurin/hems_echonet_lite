@@ -1,6 +1,7 @@
 """Data coordinator for the HEMS Echonet Lite integration."""
 
 import logging
+from typing import TYPE_CHECKING
 
 from pyhems import DeviceManager, HemsFrameEvent, HemsInstanceListEvent, NodeState
 
@@ -8,7 +9,9 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import DOMAIN
-from .types import EchonetLiteConfigEntry
+
+if TYPE_CHECKING:
+    from .runtime import EchonetLiteConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -11,7 +11,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntry
 
 from .const import CONF_INTERFACE, DOMAIN
-from .types import EchonetLiteConfigEntry
+from .runtime import EchonetLiteConfigEntry
 
 TO_REDACT = {
     CONF_INTERFACE,

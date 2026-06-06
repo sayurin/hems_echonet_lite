@@ -18,7 +18,7 @@ from .const import (
 from .coordinator import EchonetLiteCoordinator
 from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
 from .prop import BinaryProp, EnumProp
-from .types import EchonetLiteConfigEntry
+from .runtime import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 1
 

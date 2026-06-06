@@ -26,7 +26,7 @@ from .entity import (
     setup_echonet_lite_platform,
 )
 from .prop import NumericProp
-from .types import EchonetLiteConfigEntry
+from .runtime import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 1
 

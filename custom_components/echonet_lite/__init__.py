@@ -35,8 +35,13 @@ from .const import (
     STABLE_CLASS_CODES,
 )
 from .coordinator import EchonetLiteCoordinator
-from .runtime import RuntimeController, RuntimeIssueMonitor
-from .types import EchonetLiteConfigEntry, EchonetLiteRuntimeData, RuntimeHealth
+from .runtime import (
+    EchonetLiteConfigEntry,
+    EchonetLiteRuntimeData,
+    RuntimeController,
+    RuntimeHealth,
+    RuntimeIssueMonitor,
+)
 
 _LOGGER = logging.getLogger(__name__)
 

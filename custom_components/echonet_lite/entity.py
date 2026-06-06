@@ -23,7 +23,7 @@ from .const import (
 )
 from .coordinator import EchonetLiteCoordinator
 from .prop import Prop
-from .types import EchonetLiteConfigEntry, EchonetLiteRuntimeData
+from .runtime import EchonetLiteConfigEntry, EchonetLiteRuntimeData
 
 _LOGGER = logging.getLogger(__name__)
 

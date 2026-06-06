@@ -15,7 +15,7 @@ from .entity import (
     EchonetLiteEntityDescription,
     setup_echonet_lite_platform,
 )
-from .types import EchonetLiteConfigEntry
+from .runtime import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 1
 
