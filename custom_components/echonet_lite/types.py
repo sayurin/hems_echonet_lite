@@ -1,18 +1,15 @@
 """Shared types and data models for the HEMS Echonet Lite integration."""
 
-import asyncio
-from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from pyhems import DefinitionsRegistry, HemsClient, PropertyPoller
+from pyhems import DefinitionsRegistry, PropertyPoller
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.device_registry import DeviceInfo
 
 if TYPE_CHECKING:
-    from .coordinator import EchonetLiteCoordinator
-    from .runtime import RuntimeIssueMonitor
+    from .runtime import RuntimeController
 
 
 @dataclass(slots=True)
@@ -30,14 +27,8 @@ class EchonetLiteRuntimeData:
     """Runtime data stored on the config entry."""
 
     definitions: DefinitionsRegistry
-    coordinator: EchonetLiteCoordinator
-    client: HemsClient
-    unsubscribe_runtime: Callable[[], None]
+    controller: RuntimeController
     property_poller: PropertyPoller
-    issue_monitor: RuntimeIssueMonitor
-    health: RuntimeHealth
-    discovery_task: asyncio.Task[Any]
-    event_consumer_task: asyncio.Task[Any]
     # Per-node ``DeviceInfo`` cache keyed by ``node.device_key``. Built once
     # on first entity instantiation for a node and shared by every entity
     # platform bound to that node.

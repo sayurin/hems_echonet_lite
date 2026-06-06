@@ -165,11 +165,11 @@ class RuntimeController:
         """Initialise the controller with all runtime dependencies."""
         self._hass = hass
         self._entry = entry
-        self._client = client
+        self.client = client
         self._device_manager = device_manager
-        self._coordinator = coordinator
-        self._issue_monitor = issue_monitor
-        self._health = health
+        self.coordinator = coordinator
+        self.issue_monitor = issue_monitor
+        self.health = health
         self._restart_lock = asyncio.Lock()
         self._event_queue: asyncio.Queue[RuntimeEvent] = asyncio.Queue()
         # Populated by ``async_start``; safe to access directly from
@@ -181,9 +181,9 @@ class RuntimeController:
 
     async def async_start(self) -> None:
         """Subscribe, start the client and spawn background tasks."""
-        unsubscribe = self._client.subscribe(self._handle_runtime_event)
+        unsubscribe = self.client.subscribe(self._handle_runtime_event)
         try:
-            await self._client.start()
+            await self.client.start()
         except OSError as err:
             unsubscribe()
             raise ConfigEntryNotReady(
@@ -195,16 +195,16 @@ class RuntimeController:
         self.unsubscribe_runtime = unsubscribe
 
         # Initialize with empty state; nodes are discovered through runtime events
-        self._coordinator.async_set_updated_data({})
+        self.coordinator.async_set_updated_data({})
 
         # ``RuntimeIssueMonitor.start`` seeds the inactivity baseline with
         # the current monotonic time so that a cold start with zero frames
         # still trips the threshold.
-        self._issue_monitor.start()
+        self.issue_monitor.start()
 
         self.discovery_task = self._entry.async_create_background_task(
             self._hass,
-            self._client.probe_nodes(),
+            self.client.probe_nodes(),
             name="echonet_lite_discovery",
         )
         self.event_consumer_task = self._entry.async_create_background_task(
@@ -235,24 +235,24 @@ class RuntimeController:
             event = await self._event_queue.get()
             try:
                 if isinstance(event, HemsFrameEvent):
-                    await self._coordinator.async_process_frame_event(event)
-                    self._issue_monitor.record_activity(event.received_at)
+                    await self.coordinator.async_process_frame_event(event)
+                    self.issue_monitor.record_activity(event.received_at)
                 elif isinstance(event, HemsInstanceListEvent):
                     _LOGGER.debug(
                         "Runtime event: HemsInstanceListEvent from %s with %d instances",
                         event.node_id,
                         len(event.instances),
                     )
-                    await self._coordinator.async_process_instance_list_event(event)
-                    self._issue_monitor.record_activity(event.received_at)
+                    await self.coordinator.async_process_instance_list_event(event)
+                    self.issue_monitor.record_activity(event.received_at)
                 elif isinstance(event, HemsErrorEvent):
-                    self._health.last_client_error = str(event.error)
-                    self._health.last_client_error_at = event.received_at
+                    self.health.last_client_error = str(event.error)
+                    self.health.last_client_error_at = event.received_at
                     _LOGGER.warning(
                         "ECHONET Lite runtime client encountered an error: %s",
                         event.error,
                     )
-                    self._issue_monitor.record_client_error(str(event.error))
+                    self.issue_monitor.record_client_error(str(event.error))
                     await self._async_restart_runtime()
             # Python 3.14+ multi-except syntax (PEP 758): a parenthesis-less
             # tuple of exception classes. Equivalent to ``except (A, B, C):``
@@ -274,28 +274,28 @@ class RuntimeController:
         if self._restart_lock.locked():
             return
         async with self._restart_lock:
-            self._health.restart_attempts += 1
+            self.health.restart_attempts += 1
             try:
-                await self._client.stop()
+                await self.client.stop()
             except (
                 OSError,
                 RuntimeError,
             ) as err:  # pragma: no cover - best effort cleanup
                 _LOGGER.debug("Failed to stop ECHONET Lite runtime client: %s", err)
             try:
-                await self._client.start()
+                await self.client.start()
             except OSError as err:
                 _LOGGER.error("Failed to restart ECHONET Lite runtime client: %s", err)
-                self._health.last_client_error = str(err)
-                self._health.last_client_error_at = time.monotonic()
-                self._issue_monitor.record_client_error(str(err))
+                self.health.last_client_error = str(err)
+                self.health.last_client_error_at = time.monotonic()
+                self.issue_monitor.record_client_error(str(err))
                 return
-            self._health.last_restart_at = time.monotonic()
-            self._issue_monitor.clear_client_error()
+            self.health.last_restart_at = time.monotonic()
+            self.issue_monitor.clear_client_error()
             # Treat a successful restart as activity so the inactivity issue
             # (if any) is cleared immediately instead of waiting for the
             # next incoming frame.
-            self._issue_monitor.record_activity(time.monotonic())
+            self.issue_monitor.record_activity(time.monotonic())
             # Re-publish the current DeviceManager state so entities for
             # already-known devices stay available after the restart.
             # DeviceManager retains its ``data`` across client stop/start,
@@ -304,4 +304,4 @@ class RuntimeController:
             # A shallow copy is sufficient: ``NodeState`` values are owned
             # by ``DeviceManager`` and only mutated from the single event
             # consumer task, so concurrent readers see a consistent snapshot.
-            self._coordinator.async_set_updated_data(dict(self._device_manager.data))
+            self.coordinator.async_set_updated_data(dict(self._device_manager.data))

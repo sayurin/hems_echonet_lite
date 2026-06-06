@@ -212,7 +212,8 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
                 translation_key="epc_not_writable",
                 translation_placeholders={"epc_list": hex_list},
             )
-        sent = await self.coordinator.config_entry.runtime_data.client.set_properties(
+        runtime = self.coordinator.config_entry.runtime_data
+        sent = await runtime.controller.client.set_properties(
             node_id=node.node_id,
             deoj=node.eoj,
             properties=properties,
@@ -225,9 +226,7 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
 
         # After a Set operation, schedule an earlier poll so the UI reflects the
         # updated device state sooner.
-        self.coordinator.config_entry.runtime_data.property_poller.schedule_immediate_poll(
-            node.device_key
-        )
+        runtime.property_poller.schedule_immediate_poll(node.device_key)
 
     async def _async_send_prop[ValueT](self, prop: Prop[ValueT], value: ValueT) -> None:
         """Encode value via prop and send as a SetC request for this EPC.
@@ -433,7 +432,7 @@ def setup_echonet_lite_device_platform(
         async_add_entities: Callback to add entities
         entity_factory: Callable building entities for a given node.
     """
-    coordinator = entry.runtime_data.coordinator
+    coordinator = entry.runtime_data.controller.coordinator
     known_device_keys: set[str] = set()
 
     @callback

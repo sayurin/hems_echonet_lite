@@ -173,14 +173,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
 
     entry.runtime_data = EchonetLiteRuntimeData(
         definitions=definitions,
-        coordinator=coordinator,
-        client=client,
-        unsubscribe_runtime=controller.unsubscribe_runtime,
+        controller=controller,
         property_poller=property_poller,
-        issue_monitor=issue_monitor,
-        health=runtime_health,
-        discovery_task=controller.discovery_task,
-        event_consumer_task=controller.event_consumer_task,
         device_info_cache={},
     )
 
@@ -208,7 +202,7 @@ async def async_remove_config_entry_device(
     Removal is permitted only when the device is no longer actively
     discovered on the local network (i.e. not present in coordinator data).
     """
-    coordinator = config_entry.runtime_data.coordinator
+    coordinator = config_entry.runtime_data.controller.coordinator
     return not device_entry.identifiers.intersection(
         (DOMAIN, device_key) for device_key in coordinator.data
     )
@@ -223,15 +217,15 @@ async def async_unload_entry(
 
     runtime = entry.runtime_data
     if runtime:
-        runtime.unsubscribe_runtime()
-        runtime.issue_monitor.stop()
+        runtime.controller.unsubscribe_runtime()
+        runtime.controller.issue_monitor.stop()
         runtime.property_poller.stop()
-        runtime.discovery_task.cancel()
+        runtime.controller.discovery_task.cancel()
         with suppress(asyncio.CancelledError):
-            await runtime.discovery_task
-        runtime.event_consumer_task.cancel()
+            await runtime.controller.discovery_task
+        runtime.controller.event_consumer_task.cancel()
         with suppress(asyncio.CancelledError):
-            await runtime.event_consumer_task
-        await runtime.client.stop()
+            await runtime.controller.event_consumer_task
+        await runtime.controller.client.stop()
 
     return True
