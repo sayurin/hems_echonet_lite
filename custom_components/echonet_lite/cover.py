@@ -193,6 +193,3 @@ class EchonetLiteCover(EchonetLiteEntity, CoverEntity):
         """Set the slat angle (EPC 0xE2 0-180 deg) from HA tilt 0-100."""
         deg = _tilt_ha_to_deg(int(kwargs[ATTR_TILT_POSITION]))
         await self._async_send_prop(self._cover_angle_prop, float(deg))
-
-
-__all__ = ["EchonetLiteCover"]

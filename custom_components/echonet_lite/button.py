@@ -98,6 +98,3 @@ class EchonetLiteButton(
     async def async_press(self) -> None:
         """Send the button press command via the pyhems runtime client."""
         await self._async_send_property(self._epc, self.description.press_value)
-
-
-__all__ = ["EchonetLiteButton"]

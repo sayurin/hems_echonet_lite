@@ -129,6 +129,3 @@ class EchonetLiteSensor(
     def native_value(self) -> float | int | str | None:
         """Return the state of the sensor."""
         return self.description.prop.get(self._node)
-
-
-__all__ = ["EchonetLiteSensor", "EchonetLiteSensorEntityDescription"]

@@ -116,6 +116,3 @@ class EchonetLiteNumber(
     async def async_set_native_value(self, value: float) -> None:
         """Set the value by sending an ECHONET Lite command."""
         await self._async_send_prop(self.description.prop, value)
-
-
-__all__ = ["EchonetLiteNumber", "EchonetLiteNumberEntityDescription"]

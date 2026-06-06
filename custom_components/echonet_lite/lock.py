@@ -121,6 +121,3 @@ class EchonetLiteLock(EchonetLiteEntity, LockEntity):
     async def async_unlock(self, **kwargs: Any) -> None:
         """Unlock the device by writing the primary lock EPC only."""
         await self._async_send_prop(self._lock_prop, False)
-
-
-__all__ = ["EchonetLiteLock"]

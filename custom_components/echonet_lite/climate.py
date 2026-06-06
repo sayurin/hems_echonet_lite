@@ -458,6 +458,3 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
         if target <= current:
             return HVACAction.COOLING
         return HVACAction.HEATING
-
-
-__all__ = ["EchonetLiteClimate"]

@@ -231,6 +231,3 @@ class EchonetLiteLight(EchonetLiteEntity, LightEntity):
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the light off via the operation status codec."""
         await self._async_send_prop(self._op_status, False)
-
-
-__all__ = ["EchonetLiteLight"]

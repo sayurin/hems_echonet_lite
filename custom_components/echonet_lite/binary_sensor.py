@@ -133,6 +133,3 @@ class EchonetLiteBinarySensor(
     def is_on(self) -> bool | None:
         """Return the state of the binary sensor."""
         return self.description.prop.get(self._node)
-
-
-__all__ = ["EchonetLiteBinarySensor", "EchonetLiteBinarySensorEntityDescription"]

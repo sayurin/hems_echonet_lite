@@ -271,6 +271,3 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
         temperature = float(kwargs[ATTR_TEMPERATURE])
         clamped = min(max(temperature, self._attr_min_temp), self._attr_max_temp)
         await self._async_send_prop(self.entity_description.target_temp_prop, clamped)
-
-
-__all__ = ["EchonetLiteWaterHeater"]

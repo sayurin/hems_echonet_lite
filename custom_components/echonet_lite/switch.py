@@ -82,6 +82,3 @@ class EchonetLiteSwitch(
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Send the Off command via the pyhems runtime client."""
         await self._async_send_prop(self.description.prop, False)
-
-
-__all__ = ["EchonetLiteSwitch"]
