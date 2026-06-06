@@ -14,7 +14,7 @@ from pyhems import (
 )
 
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryError
 from homeassistant.helpers import config_validation as cv, device_registry as dr
 
@@ -144,25 +144,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
         config_entry=entry,
         device_manager=device_manager,
     )
-
-    # Wire DeviceManager callbacks to coordinator
-    @callback
-    def _on_device_added(device_key: str) -> None:
-        """Handle new device from DeviceManager."""
-        # ``async_set_updated_data`` is the documented contract for publishing
-        # new data on ``DataUpdateCoordinator``; it notifies all listeners
-        # registered via ``async_add_listener``. Platforms register their own
-        # listener in :func:`setup_echonet_lite_device_platform` and detect
-        # newly added devices by diffing ``coordinator.data`` keys.
-        coordinator.async_set_updated_data(dict(device_manager.data))
-
-    @callback
-    def _on_device_updated(device_key: str) -> None:
-        """Handle property update from DeviceManager."""
-        coordinator.async_update_listeners()
-
-    device_manager.on_device_added(_on_device_added)
-    device_manager.on_device_updated(_on_device_updated)
 
     runtime_health = RuntimeHealth()
 

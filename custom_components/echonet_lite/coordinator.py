@@ -4,7 +4,7 @@ import logging
 
 from pyhems import DeviceManager, HemsFrameEvent, HemsInstanceListEvent, NodeState
 
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import DOMAIN
@@ -46,6 +46,25 @@ class EchonetLiteCoordinator(DataUpdateCoordinator[dict[str, NodeState]]):
         self.data: dict[str, NodeState] = {}
         self._last_runtime_activity_at: float | None = None
         self.device_manager = device_manager
+
+        # Wire DeviceManager callbacks to coordinator
+        device_manager.on_device_added(self._on_device_added)
+        device_manager.on_device_updated(self._on_device_updated)
+
+    @callback
+    def _on_device_added(self, device_key: str) -> None:
+        """Handle new device from DeviceManager."""
+        # ``async_set_updated_data`` is the documented contract for publishing
+        # new data on ``DataUpdateCoordinator``; it notifies all listeners
+        # registered via ``async_add_listener``. Platforms register their own
+        # listener in :func:`setup_echonet_lite_device_platform` and detect
+        # newly added devices by diffing ``coordinator.data`` keys.
+        self.async_set_updated_data(dict(self.device_manager.data))
+
+    @callback
+    def _on_device_updated(self, device_key: str) -> None:
+        """Handle property update from DeviceManager."""
+        self.async_update_listeners()
 
     @property
     def last_runtime_activity_at(self) -> float | None:
