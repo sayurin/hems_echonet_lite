@@ -1,8 +1,9 @@
 """Light platform for the HEMS Echonet Lite integration."""
 
+from dataclasses import dataclass
 from typing import Any, Final
 
-from pyhems import NodeState
+from pyhems import DefinitionsRegistry, NodeState
 
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
@@ -10,6 +11,7 @@ from homeassistant.components.light import (
     ATTR_EFFECT,
     ColorMode,
     LightEntity,
+    LightEntityDescription,
     LightEntityFeature,
 )
 from homeassistant.core import HomeAssistant, callback
@@ -33,13 +35,15 @@ from .runtime import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 1
 
-# Class codes handled by this platform and their translation keys.
-_CLASS_CODE_TO_TRANSLATION_KEY: Final[dict[int, str]] = {
-    CLASS_CODE_GENERAL_LIGHTING: "general_lighting",
-    CLASS_CODE_MONO_FUNCTIONAL_LIGHTING: "mono_functional_lighting",
-    CLASS_CODE_LIGHTING_SYSTEM: "lighting_system",
-    CLASS_CODE_EXTENDED_LIGHTING_SYSTEM: "extended_lighting_system",
-}
+# Class codes handled by this platform.
+_LIGHT_CLASS_CODES: Final[frozenset[int]] = frozenset(
+    {
+        CLASS_CODE_GENERAL_LIGHTING,
+        CLASS_CODE_MONO_FUNCTIONAL_LIGHTING,
+        CLASS_CODE_LIGHTING_SYSTEM,
+        CLASS_CODE_EXTENDED_LIGHTING_SYSTEM,
+    }
+)
 
 # Mapping between EPC 0xB1 (Light color setting) snake_case enum keys and the
 # kelvin presets exposed to Home Assistant.
@@ -85,20 +89,80 @@ def _closest_kelvin_key(kelvin: int) -> str:
     ]
 
 
+@dataclass(frozen=True, kw_only=True)
+class EchonetLiteLightEntityDescription(LightEntityDescription):
+    """Description for an ECHONET Lite lighting entity."""
+
+    op_status: BinaryProp
+    brightness_prop: NumericProp
+    color_prop: EnumProp | None = None
+    mode_prop: EnumProp | None = None
+
+
+def _create_light_description(
+    class_code: int,
+    definitions: DefinitionsRegistry,
+    translation_key: str,
+    *,
+    build_color: bool = False,
+    build_mode: bool = False,
+) -> EchonetLiteLightEntityDescription:
+    """Build a light description from pyhems definitions."""
+    return EchonetLiteLightEntityDescription(
+        key="light",
+        translation_key=translation_key,
+        op_status=BinaryProp.from_registry(
+            definitions, class_code, EPC_OPERATION_STATUS
+        ),
+        brightness_prop=NumericProp.from_registry(
+            definitions, class_code, EPC_LIGHT_LEVEL
+        ),
+        color_prop=(
+            EnumProp.from_registry(definitions, class_code, EPC_LIGHT_COLOR)
+            if build_color
+            else None
+        ),
+        mode_prop=(
+            EnumProp.from_registry(definitions, class_code, EPC_LIGHTING_MODE)
+            if build_mode
+            else None
+        ),
+    )
+
+
 async def async_setup_entry(
     _hass: HomeAssistant,
     entry: EchonetLiteConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite light entities from a config entry."""
+    definitions = entry.runtime_data.definitions
+    descriptions: dict[int, EchonetLiteLightEntityDescription] = {
+        CLASS_CODE_GENERAL_LIGHTING: _create_light_description(
+            CLASS_CODE_GENERAL_LIGHTING,
+            definitions,
+            "general_lighting",
+            build_color=True,
+            build_mode=True,
+        ),
+        CLASS_CODE_MONO_FUNCTIONAL_LIGHTING: _create_light_description(
+            CLASS_CODE_MONO_FUNCTIONAL_LIGHTING, definitions, "mono_functional_lighting"
+        ),
+        CLASS_CODE_LIGHTING_SYSTEM: _create_light_description(
+            CLASS_CODE_LIGHTING_SYSTEM, definitions, "lighting_system"
+        ),
+        CLASS_CODE_EXTENDED_LIGHTING_SYSTEM: _create_light_description(
+            CLASS_CODE_EXTENDED_LIGHTING_SYSTEM, definitions, "extended_lighting_system"
+        ),
+    }
 
     @callback
     def _entity_factory(
         coordinator: EchonetLiteCoordinator, node: NodeState
     ) -> list[Entity]:
-        if node.eoj.class_code not in _CLASS_CODE_TO_TRANSLATION_KEY:
+        if (description := descriptions.get(node.eoj.class_code)) is None:
             return []
-        return [EchonetLiteLight(coordinator, node)]
+        return [EchonetLiteLight(coordinator, node, description)]
 
     setup_echonet_lite_device_platform(
         entry,
@@ -111,29 +175,28 @@ class EchonetLiteLight(EchonetLiteEntity, LightEntity):
     """Representation of an ECHONET Lite lighting device."""
 
     _attr_name = None
+    entity_description: EchonetLiteLightEntityDescription
 
     def __init__(
         self,
         coordinator: EchonetLiteCoordinator,
         node: NodeState,
+        description: EchonetLiteLightEntityDescription,
     ) -> None:
         """Initialize the light entity based on the node's advertised EPCs."""
         super().__init__(coordinator, node)
-        class_code = node.eoj.class_code
-        self._attr_unique_id = f"{node.device_key}-light"
-        self._attr_translation_key = _CLASS_CODE_TO_TRANSLATION_KEY[class_code]
+        self.entity_description = description
+        self._attr_unique_id = f"{node.device_key}-{description.key}"
 
         # Determine supported color modes from the writable property map.
         # 0xB1 (color) implies brightness via 0xB0; if 0xB1 is missing but
         # 0xB0 is writable we still get BRIGHTNESS. Otherwise it's ONOFF.
         supports_brightness = EPC_LIGHT_LEVEL in node.set_epcs
         supports_color_temp = (
-            class_code == CLASS_CODE_GENERAL_LIGHTING
-            and EPC_LIGHT_COLOR in node.set_epcs
+            description.color_prop is not None and EPC_LIGHT_COLOR in node.set_epcs
         )
         supports_effect = (
-            class_code == CLASS_CODE_GENERAL_LIGHTING
-            and EPC_LIGHTING_MODE in node.set_epcs
+            description.mode_prop is not None and EPC_LIGHTING_MODE in node.set_epcs
         )
 
         if supports_color_temp:
@@ -152,82 +215,70 @@ class EchonetLiteLight(EchonetLiteEntity, LightEntity):
         self._supports_brightness = supports_brightness
         self._supports_color_temp = supports_color_temp
         self._supports_effect = supports_effect
-        definitions = coordinator.config_entry.runtime_data.definitions
-        self._op_status = BinaryProp.from_registry(
-            definitions, class_code, EPC_OPERATION_STATUS
-        )
-        if supports_brightness:
-            self._brightness_prop = NumericProp.from_registry(
-                definitions, class_code, EPC_LIGHT_LEVEL
-            )
-        if supports_color_temp:
-            self._color_prop = EnumProp.from_registry(
-                definitions, class_code, EPC_LIGHT_COLOR
-            )
+
         if supports_effect:
-            self._mode_prop = EnumProp.from_registry(
-                definitions, class_code, EPC_LIGHTING_MODE
-            )
             self._attr_supported_features = LightEntityFeature.EFFECT
-            self._attr_effect_list = self._mode_prop.options
+            self._attr_effect_list = description.mode_prop.options  # type: ignore[union-attr]
 
     @property
     def is_on(self) -> bool | None:
         """Return True if the device is reporting Operation status = ON."""
-        return self._op_status.get(self._node)
+        return self.entity_description.op_status.get(self._node)
 
     @property
     def brightness(self) -> int | None:
         """Return brightness on HA's 0-255 scale, derived from EPC 0xB0 (%)."""
         if not self._supports_brightness:
             return None
-        pct = self._brightness_prop.get(self._node)
-        if pct is None:
-            return None
-        return _brightness_pct_to_ha(int(pct))
+        pct = self.entity_description.brightness_prop.get(self._node)
+        return None if pct is None else _brightness_pct_to_ha(int(pct))
 
     @property
     def color_temp_kelvin(self) -> int | None:
         """Return the currently active color temperature preset in kelvin."""
         if not self._supports_color_temp:
             return None
-        key = self._color_prop.get(self._node)
-        if key is None:
-            return None
-        return _COLOR_KEY_TO_KELVIN.get(key)
+        key = self.entity_description.color_prop.get(self._node)  # type: ignore[union-attr]
+        return None if key is None else _COLOR_KEY_TO_KELVIN.get(key)
 
     @property
     def effect(self) -> str | None:
         """Return the active lighting mode as the effect name."""
         if not self._supports_effect:
             return None
-        return self._mode_prop.get(self._node)
+        return self.entity_description.mode_prop.get(self._node)  # type: ignore[union-attr]
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the light on, applying any brightness/color/effect overrides."""
         # Always send the power-on command first so subsequent setters apply
         # to an already-powered device.
-        await self._async_send_prop(self._op_status, True)
+        await self._async_send_prop(self.entity_description.op_status, True)
         if (
             self._supports_brightness
             and (brightness := kwargs.get(ATTR_BRIGHTNESS)) is not None
         ):
             pct = _brightness_ha_to_pct(int(brightness))
-            await self._async_send_prop(self._brightness_prop, float(pct))
+            await self._async_send_prop(
+                self.entity_description.brightness_prop, float(pct)
+            )
         if (
             self._supports_color_temp
             and (kelvin := kwargs.get(ATTR_COLOR_TEMP_KELVIN)) is not None
         ):
             await self._async_send_prop(
-                self._color_prop, _closest_kelvin_key(int(kelvin))
+                self.entity_description.color_prop,  # type: ignore[arg-type]
+                _closest_kelvin_key(int(kelvin)),
             )
         if (
             self._supports_effect
             and (effect := kwargs.get(ATTR_EFFECT)) is not None
-            and effect in self._mode_prop.options
+            and effect in self.entity_description.mode_prop.options  # type: ignore[union-attr]
         ):
-            await self._async_send_prop(self._mode_prop, effect)
+            await self._async_send_prop(
+                self.entity_description.mode_prop,  # type: ignore[arg-type]
+                effect,
+            )
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the light off via the operation status codec."""
-        await self._async_send_prop(self._op_status, False)
+        await self._async_send_prop(self.entity_description.op_status, False)

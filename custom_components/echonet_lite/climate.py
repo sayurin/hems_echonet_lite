@@ -143,6 +143,9 @@ class EchonetLiteClimateEntityDescription(ClimateEntityDescription):
     """
 
     class_code: int
+    op_status: BinaryProp
+    op_mode_prop: EnumProp
+    special_state_prop: EnumProp
     target_temp_prop: NumericProp
     target_temp_min: float | None = None
     target_temp_max: float | None = None
@@ -177,6 +180,15 @@ def _create_climate_description(
     return EchonetLiteClimateEntityDescription(
         key="climate",
         class_code=class_code,
+        op_status=BinaryProp.from_registry(
+            definitions, class_code, EPC_OPERATION_STATUS
+        ),
+        op_mode_prop=EnumProp.from_registry(
+            definitions, class_code, EPC_OPERATION_MODE
+        ),
+        special_state_prop=EnumProp.from_registry(
+            definitions, class_code, EPC_SPECIAL_STATE
+        ),
         target_temp_prop=target_temp_prop,
         target_temp_min=(
             target_temp_prop.codec.minimum * scale
@@ -281,17 +293,6 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
             features |= ClimateEntityFeature.TURN_OFF
         self._attr_supported_features = features
         self._attr_swing_modes = swing_modes
-        definitions = coordinator.config_entry.runtime_data.definitions
-        class_code = node.eoj.class_code
-        self._op_status = BinaryProp.from_registry(
-            definitions, class_code, EPC_OPERATION_STATUS
-        )
-        self._op_mode_prop = EnumProp.from_registry(
-            definitions, class_code, EPC_OPERATION_MODE
-        )
-        self._special_state_prop = EnumProp.from_registry(
-            definitions, class_code, EPC_SPECIAL_STATE
-        )
 
     @property
     def hvac_mode(self) -> HVACMode | None:
@@ -300,17 +301,17 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
             return None
         if not status:
             return HVACMode.OFF
-        key = self._op_mode_prop.get(self._node)
+        key = self.entity_description.op_mode_prop.get(self._node)
         return _PYHEMS_TO_HA_MODE.get(key) if key is not None else None
 
     def _operation_status(self) -> bool | None:
         """Return decoded operation status (True=on, False=off, None=unknown)."""
-        return self._op_status.get(self._node)
+        return self.entity_description.op_status.get(self._node)
 
     @property
     def hvac_action(self) -> HVACAction | None:
         """Return the current HVAC action."""
-        special_key = self._special_state_prop.get(self._node)
+        special_key = self.entity_description.special_state_prop.get(self._node)
         if special_key is not None and special_key in _PYHEMS_SPECIAL_STATE_TO_ACTION:
             if (action := _PYHEMS_SPECIAL_STATE_TO_ACTION[special_key]) is not None:
                 return action
@@ -318,7 +319,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
             return None
         if not status:
             return HVACAction.OFF
-        if (mode_key := self._op_mode_prop.get(self._node)) is None:
+        if (mode_key := self.entity_description.op_mode_prop.get(self._node)) is None:
             return None
         if mode_key not in _PYHEMS_TO_HA_ACTION:
             return None
@@ -385,8 +386,8 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
             )
         await self._async_send_properties(
             [
-                self._op_mode_prop.make_property(pyhems_mode),
-                self._op_status.make_property(True),
+                self.entity_description.op_mode_prop.make_property(pyhems_mode),
+                self.entity_description.op_status.make_property(True),
             ]
         )
 
@@ -398,7 +399,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
                 translation_key="epc_not_writable",
                 translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
             )
-        await self._async_send_prop(self._op_status, True)
+        await self._async_send_prop(self.entity_description.op_status, True)
 
     async def async_turn_off(self) -> None:
         """Turn off the climate device."""
@@ -408,7 +409,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
                 translation_key="epc_not_writable",
                 translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
             )
-        await self._async_send_prop(self._op_status, False)
+        await self._async_send_prop(self.entity_description.op_status, False)
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set the target temperature for the current mode."""
