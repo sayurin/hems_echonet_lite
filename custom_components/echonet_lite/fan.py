@@ -1,11 +1,16 @@
 """Fan platform for the HEMS Echonet Lite integration."""
 
+from dataclasses import dataclass
 import logging
-from typing import Any
+from typing import Any, Final
 
-from pyhems import NodeState, Property
+from pyhems import DefinitionsRegistry, NodeState, Property
 
-from homeassistant.components.fan import FanEntity, FanEntityFeature
+from homeassistant.components.fan import (
+    FanEntity,
+    FanEntityDescription,
+    FanEntityFeature,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity import Entity
@@ -57,6 +62,38 @@ _SPEED_LEVELS = [
 PRESET_MODE_AUTO = "auto"
 PRESET_MODE_MANUAL = "manual"
 
+# Translation keys per class code
+_FAN_CLASS_CODE_TO_TRANSLATION_KEY: Final[dict[int, str]] = {
+    CLASS_CODE_VENTILATION_FAN: "fan",
+    CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN: "fan",
+    CLASS_CODE_AIR_CLEANER: "air_cleaner",
+}
+
+
+@dataclass(frozen=True, kw_only=True)
+class EchonetLiteFanEntityDescription(FanEntityDescription):
+    """Description for an ECHONET Lite fan entity."""
+
+    op_status: BinaryProp
+    air_flow_prop: EnumProp
+
+
+def _create_fan_description(
+    class_code: int,
+    definitions: DefinitionsRegistry,
+) -> EchonetLiteFanEntityDescription:
+    """Build a fan description from pyhems definitions."""
+    return EchonetLiteFanEntityDescription(
+        key="fan",
+        translation_key=_FAN_CLASS_CODE_TO_TRANSLATION_KEY[class_code],
+        op_status=BinaryProp.from_registry(
+            definitions, class_code, EPC_OPERATION_STATUS
+        ),
+        air_flow_prop=EnumProp.from_registry(
+            definitions, class_code, EPC_AIR_FLOW_LEVEL
+        ),
+    )
+
 
 async def async_setup_entry(
     _hass: HomeAssistant,
@@ -64,14 +101,19 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite fan entities from a config entry."""
+    definitions = entry.runtime_data.definitions
+    descriptions: dict[int, EchonetLiteFanEntityDescription] = {
+        class_code: _create_fan_description(class_code, definitions)
+        for class_code in FAN_CLASS_CODES
+    }
 
     @callback
     def _entity_factory(
         coordinator: EchonetLiteCoordinator, node: NodeState
     ) -> list[Entity]:
-        if node.eoj.class_code not in FAN_CLASS_CODES:
+        if (description := descriptions.get(node.eoj.class_code)) is None:
             return []
-        return [EchonetLiteFan(coordinator, node)]
+        return [EchonetLiteFan(coordinator, node, description)]
 
     setup_echonet_lite_device_platform(
         entry,
@@ -90,43 +132,32 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
     _attr_name = None
     _attr_preset_modes = [PRESET_MODE_AUTO, PRESET_MODE_MANUAL]
     _attr_speed_count = len(_SPEED_LEVELS)
+    entity_description: EchonetLiteFanEntityDescription
 
     def __init__(
         self,
         coordinator: EchonetLiteCoordinator,
         node: NodeState,
+        description: EchonetLiteFanEntityDescription,
     ) -> None:
         """Initialize an ECHONET Lite fan entity."""
         super().__init__(coordinator, node)
-        self._attr_unique_id = f"{node.device_key}-fan"
-        self._attr_translation_key = (
-            "air_cleaner" if node.eoj.class_code == CLASS_CODE_AIR_CLEANER else "fan"
-        )
-        # bool ⇔ EDT codec for the common operation status EPC.
-        definitions = coordinator.config_entry.runtime_data.definitions
-        class_code = node.eoj.class_code
-        self._op_status = BinaryProp.from_registry(
-            definitions, class_code, EPC_OPERATION_STATUS
-        )
-        self._air_flow_prop = EnumProp.from_registry(
-            definitions, class_code, EPC_AIR_FLOW_LEVEL
-        )
-        features = FanEntityFeature(0)
+        self.entity_description = description
+        self._attr_unique_id = f"{node.device_key}-{description.key}"
 
+        features = FanEntityFeature(0)
         if EPC_OPERATION_STATUS in node.set_epcs:
             features |= FanEntityFeature.TURN_ON
             features |= FanEntityFeature.TURN_OFF
-
         if EPC_AIR_FLOW_LEVEL in node.set_epcs:
             features |= FanEntityFeature.SET_SPEED
             features |= FanEntityFeature.PRESET_MODE
-
         self._attr_supported_features = features
 
     @property
     def is_on(self) -> bool | None:
         """Return true if the fan is on."""
-        return self._op_status.get(self._node)
+        return self.entity_description.op_status.get(self._node)
 
     @property
     def percentage(self) -> int | None:
@@ -134,24 +165,19 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
 
         Returns None when in preset mode (auto) or when air flow level is unavailable.
         """
-        key = self._air_flow_prop.get(self._node)
-        if key is None or key == PRESET_MODE_AUTO:
-            return None
-        if key not in _SPEED_LEVELS:
+        key = self.entity_description.air_flow_prop.get(self._node)
+        if key is None or key == PRESET_MODE_AUTO or key not in _SPEED_LEVELS:
             return None
         return ordered_list_item_to_percentage(_SPEED_LEVELS, key)
 
     @property
     def preset_mode(self) -> str | None:
         """Return the current preset mode."""
-        key = self._air_flow_prop.get(self._node)
-        if key is None:
+        if (key := self.entity_description.air_flow_prop.get(self._node)) is None:
             return None
         if key == PRESET_MODE_AUTO:
             return PRESET_MODE_AUTO
-        if key in _SPEED_LEVELS:
-            return PRESET_MODE_MANUAL
-        return None
+        return PRESET_MODE_MANUAL if key in _SPEED_LEVELS else None
 
     async def async_turn_on(
         self,
@@ -181,17 +207,23 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
 
         # Turn off the fan if percentage is explicitly set to 0
         if percentage == 0:
-            await self._async_send_prop(self._op_status, False)
+            await self._async_send_prop(self.entity_description.op_status, False)
             return
 
-        properties: list[Property] = [self._op_status.make_property(True)]
+        properties: list[Property] = [
+            self.entity_description.op_status.make_property(True)
+        ]
 
         if EPC_AIR_FLOW_LEVEL in self._node.set_epcs:
             if preset_mode == PRESET_MODE_AUTO:
-                properties.append(self._air_flow_prop.make_property(PRESET_MODE_AUTO))
+                properties.append(
+                    self.entity_description.air_flow_prop.make_property(
+                        PRESET_MODE_AUTO
+                    )
+                )
             elif percentage is not None:
                 properties.append(
-                    self._air_flow_prop.make_property(
+                    self.entity_description.air_flow_prop.make_property(
                         percentage_to_ordered_list_item(_SPEED_LEVELS, percentage)
                     )
                 )
@@ -200,7 +232,7 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the fan."""
-        await self._async_send_prop(self._op_status, False)
+        await self._async_send_prop(self.entity_description.op_status, False)
 
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed percentage of the fan.
@@ -212,20 +244,16 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         is treated as OFF per HA convention.
         """
         if percentage == 0:
-            await self._async_send_prop(self._op_status, False)
+            await self._async_send_prop(self.entity_description.op_status, False)
             return
         if EPC_AIR_FLOW_LEVEL not in self._node.set_epcs:
             return
+        properties: list[Property] = []
+        if not self.is_on:
+            properties.append(self.entity_description.op_status.make_property(True))
         key = percentage_to_ordered_list_item(_SPEED_LEVELS, percentage)
-        if self.is_on:
-            await self._async_send_prop(self._air_flow_prop, key)
-            return
-        await self._async_send_properties(
-            [
-                self._op_status.make_property(True),
-                self._air_flow_prop.make_property(key),
-            ]
-        )
+        properties.append(self.entity_description.air_flow_prop.make_property(key))
+        await self._async_send_properties(properties)
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set the preset mode of the fan.
@@ -243,15 +271,13 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         if preset_mode == PRESET_MODE_AUTO:
             if EPC_AIR_FLOW_LEVEL not in self._node.set_epcs:
                 return
-            if self.is_on:
-                await self._async_send_prop(self._air_flow_prop, PRESET_MODE_AUTO)
-                return
-            await self._async_send_properties(
-                [
-                    self._op_status.make_property(True),
-                    self._air_flow_prop.make_property(PRESET_MODE_AUTO),
-                ]
+            properties: list[Property] = []
+            if not self.is_on:
+                properties.append(self.entity_description.op_status.make_property(True))
+            properties.append(
+                self.entity_description.air_flow_prop.make_property(PRESET_MODE_AUTO)
             )
+            await self._async_send_properties(properties)
             return
 
         # preset_mode == PRESET_MODE_MANUAL
@@ -263,4 +289,4 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
                 translation_key="epc_not_writable",
                 translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
             )
-        await self._async_send_prop(self._op_status, True)
+        await self._async_send_prop(self.entity_description.op_status, True)
