@@ -47,6 +47,8 @@ class EchonetLiteWaterHeaterEntityDescription(WaterHeaterEntityDescription):
 
     target_temp_prop: NumericProp
     current_temp_prop: NumericProp
+    op_status: BinaryProp
+    op_mode: EnumProp
     target_temp_min: float | None = None
     target_temp_max: float | None = None
     target_temp_step: float | None = None
@@ -72,6 +74,12 @@ def _create_water_heater_description(
         key="water_heater",
         target_temp_prop=target_prop,
         current_temp_prop=current_prop,
+        op_status=BinaryProp.from_registry(
+            definitions, CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_OPERATION_STATUS
+        ),
+        op_mode=EnumProp.from_registry(
+            definitions, CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_OPERATION_MODE
+        ),
         target_temp_min=(
             target_prop.codec.minimum * scale
             if target_prop.codec.minimum is not None
@@ -141,12 +149,6 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
         if EPC_OPERATION_STATUS in node.set_epcs:
             features |= WaterHeaterEntityFeature.ON_OFF
 
-        definitions = coordinator.config_entry.runtime_data.definitions
-        class_code = node.eoj.class_code
-        # Build op_mode from pyhems definitions; camelCase keys are auto-converted to snake_case.
-        self._op_mode = EnumProp.from_registry(
-            definitions, class_code, EPC_OPERATION_MODE
-        )
         # STATE_OFF is only meaningful when 0x80 is writable; some
         # always-on water heaters do not allow turning off via 0x80.
         operation_list: list[str] = (
@@ -157,14 +159,11 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
             # Preserve the EDT-byte order so the UI lists modes in the
             # order defined by the ECHONET Lite specification.
             operation_list.extend(
-                k for k, _ in sorted(self._op_mode.codec.by_key.items())
+                k for k, _ in sorted(description.op_mode.codec.by_key.items())
             )
 
         self._attr_supported_features = features
         self._attr_operation_list = operation_list
-        self._op_status = BinaryProp.from_registry(
-            definitions, class_code, EPC_OPERATION_STATUS
-        )
 
     @property
     def is_away_mode_on(self) -> bool | None:
@@ -175,7 +174,7 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
         state attribute so automations can act on it without the HA UI
         showing an away-mode toggle.
         """
-        key = self._op_mode.get(self._node)
+        key = self.entity_description.op_mode.get(self._node)
         return None if key is None else key == "manual_no_heating"
 
     @property
@@ -186,9 +185,13 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
         ``WaterHeaterEntity`` base class, so OFF must be one of the
         operation list values (``STATE_OFF``).
         """
-        if (status_on := self._op_status.get(self._node)) is None:
+        if (status_on := self.entity_description.op_status.get(self._node)) is None:
             return None
-        return STATE_OFF if not status_on else self._op_mode.get(self._node)
+        return (
+            STATE_OFF
+            if not status_on
+            else self.entity_description.op_mode.get(self._node)
+        )
 
     @property
     def current_temperature(self) -> float | None:
@@ -210,7 +213,7 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
                 translation_key="epc_not_writable",
                 translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
             )
-        await self._async_send_prop(self._op_status, True)
+        await self._async_send_prop(self.entity_description.op_status, True)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the water heater."""
@@ -220,14 +223,14 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
                 translation_key="epc_not_writable",
                 translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
             )
-        await self._async_send_prop(self._op_status, False)
+        await self._async_send_prop(self.entity_description.op_status, False)
 
     async def async_set_operation_mode(self, operation_mode: str) -> None:
         """Set the operation mode (HA service handler)."""
         if operation_mode == STATE_OFF:
             await self.async_turn_off()
             return
-        if operation_mode not in self._op_mode.options:
+        if operation_mode not in self.entity_description.op_mode.options:
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
                 translation_key="unsupported_value",
@@ -242,14 +245,14 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
         if EPC_OPERATION_STATUS not in self._node.set_epcs:
             # Always-on devices do not allow writing 0x80; send only the
             # operation mode and let 0x80 stay at its current value.
-            await self._async_send_prop(self._op_mode, operation_mode)
+            await self._async_send_prop(self.entity_description.op_mode, operation_mode)
             return
         # Send mode + ON together so flipping the operation mode from
         # the "Off" state in the UI also turns the device on.
         await self._async_send_properties(
             [
-                self._op_mode.make_property(operation_mode),
-                self._op_status.make_property(True),
+                self.entity_description.op_mode.make_property(operation_mode),
+                self.entity_description.op_status.make_property(True),
             ]
         )
 
