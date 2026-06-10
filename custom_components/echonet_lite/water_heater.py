@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from pyhems import DefinitionsRegistry, NodeState
+from pyhems import NodeState
 
 from homeassistant.components.water_heater import (
     STATE_OFF,
@@ -54,19 +54,17 @@ class EchonetLiteWaterHeaterEntityDescription(WaterHeaterEntityDescription):
     target_temp_step: float | None = None
 
 
-def _create_water_heater_description(
-    definitions: DefinitionsRegistry,
-) -> EchonetLiteWaterHeaterEntityDescription:
+def _create_water_heater_description() -> EchonetLiteWaterHeaterEntityDescription:
     """Build the entity description from pyhems definitions.
 
     get_codec_for_epc is guaranteed by pyhems test_platform_epc_codec_type
     to return NumericCodec for EPC 0xB3 and 0xC1 on class 0x026B.
     """
     target_prop = NumericProp.from_registry(
-        definitions, CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_TARGET_TEMPERATURE
+        CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_TARGET_TEMPERATURE
     )
     current_prop = NumericProp.from_registry(
-        definitions, CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_MEASURED_WATER_TEMPERATURE
+        CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_MEASURED_WATER_TEMPERATURE
     )
 
     scale = target_prop.codec.scale
@@ -75,10 +73,10 @@ def _create_water_heater_description(
         target_temp_prop=target_prop,
         current_temp_prop=current_prop,
         op_status=BinaryProp.from_registry(
-            definitions, CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_OPERATION_STATUS
+            CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_OPERATION_STATUS
         ),
         op_mode=EnumProp.from_registry(
-            definitions, CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_OPERATION_MODE
+            CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_OPERATION_MODE
         ),
         target_temp_min=(
             target_prop.codec.minimum * scale
@@ -100,7 +98,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite water heater entities from a config entry."""
-    description = _create_water_heater_description(entry.runtime_data.definitions)
+    description = _create_water_heater_description()
 
     @callback
     def _entity_factory(

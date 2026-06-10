@@ -6,16 +6,14 @@ import logging
 from typing import Final
 
 from pyhems import (
-    DefinitionsLoadError,
+    REGISTRY,
     DeviceManager,
     HemsClient,
     PropertyPoller,
-    load_definitions_registry,
 )
 
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryError
 from homeassistant.helpers import config_validation as cv, device_registry as dr
 
 from .const import (
@@ -88,20 +86,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
 
     _LOGGER.debug("Setting up ECHONET Lite with interface %s", interface)
 
-    # Load device definitions from pyhems
-    try:
-        definitions = await hass.async_add_executor_job(load_definitions_registry)
-    except DefinitionsLoadError as err:
-        raise ConfigEntryError(
-            translation_domain=DOMAIN,
-            translation_key="definitions_load_error",
-        ) from err
-
     # Build device-specific EPC sets for polling/notification
     # Start with definitions-based EPCs (MRA + vendor)
     monitored_epcs: dict[int, frozenset[int]] = {
         class_code: frozenset(entity_def.epc for entity_def in entity_defs)
-        for class_code, entity_defs in definitions.entities.items()
+        for class_code, entity_defs in REGISTRY.entities.items()
     }
 
     # Add dedicated platform EPCs (used for both exclusion and polling)
@@ -141,7 +130,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     device_manager = DeviceManager(
         client=client,
         monitored_epcs=monitored_epcs,
-        definitions=definitions,
         class_code_filter=class_code_filter,
     )
     coordinator = EchonetLiteCoordinator(
@@ -177,7 +165,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     property_poller.start()
 
     entry.runtime_data = EchonetLiteRuntimeData(
-        definitions=definitions,
         controller=controller,
         property_poller=property_poller,
         device_info_cache={},

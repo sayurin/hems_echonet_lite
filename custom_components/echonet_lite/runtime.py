@@ -9,7 +9,6 @@ import time
 from typing import Any
 
 from pyhems import (
-    DefinitionsRegistry,
     DeviceManager,
     HemsClient,
     HemsErrorEvent,
@@ -325,7 +324,6 @@ class RuntimeController:
 class EchonetLiteRuntimeData:
     """Runtime data stored on the config entry."""
 
-    definitions: DefinitionsRegistry
     controller: RuntimeController
     property_poller: PropertyPoller
     # Per-node ``DeviceInfo`` cache keyed by ``node.device_key``. Built once

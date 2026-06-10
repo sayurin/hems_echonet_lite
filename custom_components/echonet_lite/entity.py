@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import logging
 import time
 
-from pyhems import EntityDefinition, NodeState, Property
+from pyhems import REGISTRY, EntityDefinition, NodeState, Property
 
 from homeassistant.const import Platform
 from homeassistant.core import callback
@@ -368,11 +368,10 @@ def setup_echonet_lite_platform[DescriptionT: EchonetLiteEntityDescription](
 
     """
     runtime_data = entry.runtime_data
-    definitions = runtime_data.definitions
 
     # Build descriptions from entity definitions, filtering by platform and dedicated platform EPCs
     descriptions_by_class_code: dict[int, list[DescriptionT]] = {}
-    for class_code, entity_defs in definitions.entities.items():
+    for class_code, entity_defs in REGISTRY.entities.items():
         excluded = DEDICATED_PLATFORM_EPCS.get(class_code, frozenset())
         descriptions_by_class_code[class_code] = [
             description_factory(class_code, entity_def)

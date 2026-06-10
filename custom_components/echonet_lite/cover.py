@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from pyhems import DefinitionsRegistry, NodeState
+from pyhems import NodeState
 
 from homeassistant.components.cover import (
     ATTR_POSITION,
@@ -45,23 +45,16 @@ class EchonetLiteCoverEntityDescription(CoverEntityDescription):
 
 def _create_cover_description(
     class_code: int,
-    definitions: DefinitionsRegistry,
     device_class: CoverDeviceClass,
 ) -> EchonetLiteCoverEntityDescription:
     """Build a cover description from pyhems definitions."""
     return EchonetLiteCoverEntityDescription(
         key="cover",
         device_class=device_class,
-        open_close_prop=EnumProp.from_registry(
-            definitions, class_code, EPC_COVER_OPEN_CLOSE
-        ),
-        position_prop=NumericProp.from_registry(
-            definitions, class_code, EPC_COVER_POSITION
-        ),
-        angle_prop=NumericProp.from_registry(definitions, class_code, EPC_COVER_ANGLE),
-        status_prop=EnumProp.from_registry(
-            definitions, class_code, EPC_COVER_OPEN_CLOSED_STATUS
-        ),
+        open_close_prop=EnumProp.from_registry(class_code, EPC_COVER_OPEN_CLOSE),
+        position_prop=NumericProp.from_registry(class_code, EPC_COVER_POSITION),
+        angle_prop=NumericProp.from_registry(class_code, EPC_COVER_ANGLE),
+        status_prop=EnumProp.from_registry(class_code, EPC_COVER_OPEN_CLOSED_STATUS),
     )
 
 
@@ -71,14 +64,12 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite cover entities from a config entry."""
-    definitions = entry.runtime_data.definitions
     descriptions: dict[int, EchonetLiteCoverEntityDescription] = {
         CLASS_CODE_ELECTRICALLY_OPERATED_BLIND: _create_cover_description(
-            CLASS_CODE_ELECTRICALLY_OPERATED_BLIND, definitions, CoverDeviceClass.BLIND
+            CLASS_CODE_ELECTRICALLY_OPERATED_BLIND, CoverDeviceClass.BLIND
         ),
         CLASS_CODE_ELECTRICALLY_OPERATED_SHUTTER: _create_cover_description(
             CLASS_CODE_ELECTRICALLY_OPERATED_SHUTTER,
-            definitions,
             CoverDeviceClass.SHUTTER,
         ),
     }

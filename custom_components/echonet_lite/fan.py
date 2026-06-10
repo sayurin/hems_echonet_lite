@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import logging
 from typing import Any, Final
 
-from pyhems import DefinitionsRegistry, NodeState, Property
+from pyhems import NodeState, Property
 
 from homeassistant.components.fan import (
     FanEntity,
@@ -80,18 +80,13 @@ class EchonetLiteFanEntityDescription(FanEntityDescription):
 
 def _create_fan_description(
     class_code: int,
-    definitions: DefinitionsRegistry,
 ) -> EchonetLiteFanEntityDescription:
     """Build a fan description from pyhems definitions."""
     return EchonetLiteFanEntityDescription(
         key="fan",
         translation_key=_FAN_CLASS_CODE_TO_TRANSLATION_KEY[class_code],
-        op_status=BinaryProp.from_registry(
-            definitions, class_code, EPC_OPERATION_STATUS
-        ),
-        air_flow_prop=EnumProp.from_registry(
-            definitions, class_code, EPC_AIR_FLOW_LEVEL
-        ),
+        op_status=BinaryProp.from_registry(class_code, EPC_OPERATION_STATUS),
+        air_flow_prop=EnumProp.from_registry(class_code, EPC_AIR_FLOW_LEVEL),
     )
 
 
@@ -101,9 +96,8 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite fan entities from a config entry."""
-    definitions = entry.runtime_data.definitions
     descriptions: dict[int, EchonetLiteFanEntityDescription] = {
-        class_code: _create_fan_description(class_code, definitions)
+        class_code: _create_fan_description(class_code)
         for class_code in FAN_CLASS_CODES
     }
 

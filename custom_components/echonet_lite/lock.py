@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from pyhems import DefinitionsRegistry, NodeState
+from pyhems import NodeState
 
 from homeassistant.components.lock import LockEntity, LockEntityDescription
 from homeassistant.core import HomeAssistant, callback
@@ -33,20 +33,18 @@ class EchonetLiteLockEntityDescription(LockEntityDescription):
     alarm_prop: EnumProp
 
 
-def _create_lock_description(
-    definitions: DefinitionsRegistry,
-) -> EchonetLiteLockEntityDescription:
+def _create_lock_description() -> EchonetLiteLockEntityDescription:
     """Build a lock description from pyhems definitions."""
     return EchonetLiteLockEntityDescription(
         key="lock",
         lock_prop=BinaryProp.from_registry(
-            definitions, CLASS_CODE_ELECTRIC_LOCK, EPC_LOCK_SETTING_1
+            CLASS_CODE_ELECTRIC_LOCK, EPC_LOCK_SETTING_1
         ),
         sub_lock_prop=BinaryProp.from_registry(
-            definitions, CLASS_CODE_ELECTRIC_LOCK, EPC_LOCK_SETTING_2
+            CLASS_CODE_ELECTRIC_LOCK, EPC_LOCK_SETTING_2
         ),
         alarm_prop=EnumProp.from_registry(
-            definitions, CLASS_CODE_ELECTRIC_LOCK, EPC_LOCK_ALARM_STATUS
+            CLASS_CODE_ELECTRIC_LOCK, EPC_LOCK_ALARM_STATUS
         ),
     )
 
@@ -57,7 +55,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite lock entities from a config entry."""
-    description = _create_lock_description(entry.runtime_data.definitions)
+    description = _create_lock_description()
 
     @callback
     def _entity_factory(

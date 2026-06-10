@@ -5,7 +5,6 @@ from typing import Protocol
 
 from pyhems import (
     BinaryCodec,
-    DefinitionsRegistry,
     EntityDefinition,
     EnumCodec,
     NodeState,
@@ -47,12 +46,11 @@ class BinaryProp:
     @classmethod
     def from_registry(
         cls,
-        definitions: DefinitionsRegistry,
         class_code: int,
         epc: int,
     ) -> BinaryProp:
         """Build from pyhems definitions by EPC lookup, raising TypeError on type mismatch."""
-        codec = get_codec_for_epc(definitions, class_code, epc)
+        codec = get_codec_for_epc(class_code, epc)
         if not isinstance(codec, BinaryCodec):
             raise TypeError(
                 f"EPC 0x{epc:02X} on class 0x{class_code:04X} "
@@ -94,12 +92,11 @@ class NumericProp:
     @classmethod
     def from_registry(
         cls,
-        definitions: DefinitionsRegistry,
         class_code: int,
         epc: int,
     ) -> NumericProp:
         """Build from pyhems definitions by EPC lookup, raising TypeError on type mismatch."""
-        codec = get_codec_for_epc(definitions, class_code, epc)
+        codec = get_codec_for_epc(class_code, epc)
         if not isinstance(codec, NumericCodec):
             raise TypeError(
                 f"EPC 0x{epc:02X} on class 0x{class_code:04X} "
@@ -141,12 +138,11 @@ class EnumProp:
     @classmethod
     def from_registry(
         cls,
-        definitions: DefinitionsRegistry,
         class_code: int,
         epc: int,
     ) -> EnumProp:
         """Build from pyhems definitions by EPC lookup, raising TypeError on type mismatch."""
-        codec = get_codec_for_epc(definitions, class_code, epc)
+        codec = get_codec_for_epc(class_code, epc)
         if not isinstance(codec, EnumCodec):
             raise TypeError(
                 f"EPC 0x{epc:02X} on class 0x{class_code:04X} "

@@ -30,9 +30,9 @@ from typing import Any
 
 from pyhems import (
     INSTALLATION_LOCATIONS,
+    REGISTRY,
     DefinitionsRegistry,
     EntityDefinition,
-    load_definitions_registry,
 )
 
 # Make the custom_components package importable when running this script from
@@ -309,7 +309,7 @@ def generate_ja(registry: DefinitionsRegistry) -> dict[str, Any]:
 def main() -> None:
     """Main entry point."""
     print("Loading pyhems DefinitionsRegistry...")
-    registry = load_definitions_registry()
+    registry = REGISTRY
     print(f"  MRA version: {registry.mra_version}")
 
     all_class_codes = set(registry.entities.keys())
