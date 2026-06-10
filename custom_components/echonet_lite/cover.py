@@ -13,8 +13,7 @@ from homeassistant.components.cover import (
     CoverEntityDescription,
     CoverEntityFeature,
 )
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity import Entity
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
@@ -26,7 +25,7 @@ from .const import (
     EPC_COVER_POSITION,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .entity import EchonetLiteEntity, setup_dedicated_platform
 from .prop import EnumProp, NumericProp
 from .runtime import EchonetLiteConfigEntry
 
@@ -58,35 +57,23 @@ def _create_cover_description(
     )
 
 
+_DESCRIPTIONS: dict[int, EchonetLiteCoverEntityDescription] = {
+    CLASS_CODE_ELECTRICALLY_OPERATED_BLIND: _create_cover_description(
+        CLASS_CODE_ELECTRICALLY_OPERATED_BLIND, CoverDeviceClass.BLIND
+    ),
+    CLASS_CODE_ELECTRICALLY_OPERATED_SHUTTER: _create_cover_description(
+        CLASS_CODE_ELECTRICALLY_OPERATED_SHUTTER, CoverDeviceClass.SHUTTER
+    ),
+}
+
+
 async def async_setup_entry(
     _hass: HomeAssistant,
     entry: EchonetLiteConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite cover entities from a config entry."""
-    descriptions: dict[int, EchonetLiteCoverEntityDescription] = {
-        CLASS_CODE_ELECTRICALLY_OPERATED_BLIND: _create_cover_description(
-            CLASS_CODE_ELECTRICALLY_OPERATED_BLIND, CoverDeviceClass.BLIND
-        ),
-        CLASS_CODE_ELECTRICALLY_OPERATED_SHUTTER: _create_cover_description(
-            CLASS_CODE_ELECTRICALLY_OPERATED_SHUTTER,
-            CoverDeviceClass.SHUTTER,
-        ),
-    }
-
-    @callback
-    def _entity_factory(
-        coordinator: EchonetLiteCoordinator, node: NodeState
-    ) -> list[Entity]:
-        if (description := descriptions.get(node.eoj.class_code)) is None:
-            return []
-        return [EchonetLiteCover(coordinator, node, description)]
-
-    setup_echonet_lite_device_platform(
-        entry,
-        async_add_entities,
-        entity_factory=_entity_factory,
-    )
+    setup_dedicated_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteCover)
 
 
 def _tilt_deg_to_ha(deg: int) -> int:

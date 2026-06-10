@@ -31,8 +31,9 @@ from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntity,
     EchonetLiteEntityDescription,
+    build_platform_descriptions,
+    setup_common_platform,
     setup_echonet_lite_device_platform,
-    setup_echonet_lite_platform,
 )
 from .prop import EnumProp
 from .runtime import EchonetLiteConfigEntry
@@ -82,19 +83,18 @@ def _create_select_description(
     )
 
 
+_DESCRIPTIONS: dict[int, list[EchonetLiteSelectEntityDescription]] = (
+    build_platform_descriptions(Platform.SELECT, _create_select_description)
+)
+
+
 async def async_setup_entry(
     _hass: HomeAssistant,
     entry: EchonetLiteConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite select entities from a config entry."""
-    setup_echonet_lite_platform(
-        entry,
-        async_add_entities,
-        Platform.SELECT,
-        _create_select_description,
-        EchonetLiteSelect,
-    )
+    setup_common_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteSelect)
     setup_echonet_lite_device_platform(
         entry,
         async_add_entities,

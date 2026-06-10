@@ -17,7 +17,8 @@ from .const import infer_entity_category, infer_entity_registry_enabled_default
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
-    setup_echonet_lite_platform,
+    build_platform_descriptions,
+    setup_common_platform,
 )
 from .prop import BinaryProp
 from .runtime import EchonetLiteConfigEntry
@@ -108,18 +109,21 @@ def _create_binary_sensor_description(
     )
 
 
+_DESCRIPTIONS: dict[int, list[EchonetLiteBinarySensorEntityDescription]] = (
+    build_platform_descriptions(
+        Platform.BINARY_SENSOR, _create_binary_sensor_description
+    )
+)
+
+
 async def async_setup_entry(
     _hass: HomeAssistant,
     entry: EchonetLiteConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite binary sensors from a config entry."""
-    setup_echonet_lite_platform(
-        entry,
-        async_add_entities,
-        Platform.BINARY_SENSOR,
-        _create_binary_sensor_description,
-        EchonetLiteBinarySensor,
+    setup_common_platform(
+        entry, async_add_entities, _DESCRIPTIONS, EchonetLiteBinarySensor
     )
 
 

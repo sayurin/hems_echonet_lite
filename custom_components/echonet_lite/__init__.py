@@ -5,12 +5,7 @@ from contextlib import suppress
 import logging
 from typing import Final
 
-from pyhems import (
-    REGISTRY,
-    DeviceManager,
-    HemsClient,
-    PropertyPoller,
-)
+from pyhems import REGISTRY, DeviceManager, HemsClient, PropertyPoller
 
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant

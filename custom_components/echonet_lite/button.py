@@ -13,7 +13,8 @@ from .const import infer_entity_category, infer_entity_registry_enabled_default
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
-    setup_echonet_lite_platform,
+    build_platform_descriptions,
+    setup_common_platform,
 )
 from .runtime import EchonetLiteConfigEntry
 
@@ -70,19 +71,18 @@ def _create_button_description(
     )
 
 
+_DESCRIPTIONS: dict[int, list[EchonetLiteButtonEntityDescription]] = (
+    build_platform_descriptions(Platform.BUTTON, _create_button_description)
+)
+
+
 async def async_setup_entry(
     _hass: HomeAssistant,
     entry: EchonetLiteConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite buttons from a config entry."""
-    setup_echonet_lite_platform(
-        entry,
-        async_add_entities,
-        Platform.BUTTON,
-        _create_button_description,
-        EchonetLiteButton,
-    )
+    setup_common_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteButton)
 
 
 class EchonetLiteButton(

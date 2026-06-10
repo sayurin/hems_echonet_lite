@@ -23,7 +23,8 @@ from .coordinator import EchonetLiteCoordinator
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
-    setup_echonet_lite_platform,
+    build_platform_descriptions,
+    setup_common_platform,
 )
 from .prop import NumericProp
 from .runtime import EchonetLiteConfigEntry
@@ -79,19 +80,18 @@ def _create_number_description(
     )
 
 
+_DESCRIPTIONS: dict[int, list[EchonetLiteNumberEntityDescription]] = (
+    build_platform_descriptions(Platform.NUMBER, _create_number_description)
+)
+
+
 async def async_setup_entry(
     _hass: HomeAssistant,
     entry: EchonetLiteConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite number entities from a config entry."""
-    setup_echonet_lite_platform(
-        entry,
-        async_add_entities,
-        Platform.NUMBER,
-        _create_number_description,
-        EchonetLiteNumber,
-    )
+    setup_common_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteNumber)
 
 
 class EchonetLiteNumber(

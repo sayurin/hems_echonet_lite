@@ -11,9 +11,8 @@ from homeassistant.components.fan import (
     FanEntityDescription,
     FanEntityFeature,
 )
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util.percentage import (
     ordered_list_item_to_percentage,
@@ -29,7 +28,7 @@ from .const import (
     EPC_OPERATION_STATUS,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .entity import EchonetLiteEntity, setup_dedicated_platform
 from .prop import BinaryProp, EnumProp
 from .runtime import EchonetLiteConfigEntry
 
@@ -90,30 +89,18 @@ def _create_fan_description(
     )
 
 
+_DESCRIPTIONS: dict[int, EchonetLiteFanEntityDescription] = {
+    class_code: _create_fan_description(class_code) for class_code in FAN_CLASS_CODES
+}
+
+
 async def async_setup_entry(
     _hass: HomeAssistant,
     entry: EchonetLiteConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite fan entities from a config entry."""
-    descriptions: dict[int, EchonetLiteFanEntityDescription] = {
-        class_code: _create_fan_description(class_code)
-        for class_code in FAN_CLASS_CODES
-    }
-
-    @callback
-    def _entity_factory(
-        coordinator: EchonetLiteCoordinator, node: NodeState
-    ) -> list[Entity]:
-        if (description := descriptions.get(node.eoj.class_code)) is None:
-            return []
-        return [EchonetLiteFan(coordinator, node, description)]
-
-    setup_echonet_lite_device_platform(
-        entry,
-        async_add_entities,
-        entity_factory=_entity_factory,
-    )
+    setup_dedicated_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteFan)
 
 
 class EchonetLiteFan(EchonetLiteEntity, FanEntity):

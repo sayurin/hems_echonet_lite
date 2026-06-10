@@ -14,8 +14,7 @@ from homeassistant.components.light import (
     LightEntityDescription,
     LightEntityFeature,
 )
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity import Entity
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
@@ -29,7 +28,7 @@ from .const import (
     EPC_OPERATION_STATUS,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .entity import EchonetLiteEntity, setup_dedicated_platform
 from .prop import BinaryProp, EnumProp, NumericProp
 from .runtime import EchonetLiteConfigEntry
 
@@ -123,43 +122,32 @@ def _create_light_description(
     )
 
 
+_DESCRIPTIONS: dict[int, EchonetLiteLightEntityDescription] = {
+    CLASS_CODE_GENERAL_LIGHTING: _create_light_description(
+        CLASS_CODE_GENERAL_LIGHTING,
+        "general_lighting",
+        build_color=True,
+        build_mode=True,
+    ),
+    CLASS_CODE_MONO_FUNCTIONAL_LIGHTING: _create_light_description(
+        CLASS_CODE_MONO_FUNCTIONAL_LIGHTING, "mono_functional_lighting"
+    ),
+    CLASS_CODE_LIGHTING_SYSTEM: _create_light_description(
+        CLASS_CODE_LIGHTING_SYSTEM, "lighting_system"
+    ),
+    CLASS_CODE_EXTENDED_LIGHTING_SYSTEM: _create_light_description(
+        CLASS_CODE_EXTENDED_LIGHTING_SYSTEM, "extended_lighting_system"
+    ),
+}
+
+
 async def async_setup_entry(
     _hass: HomeAssistant,
     entry: EchonetLiteConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite light entities from a config entry."""
-    descriptions: dict[int, EchonetLiteLightEntityDescription] = {
-        CLASS_CODE_GENERAL_LIGHTING: _create_light_description(
-            CLASS_CODE_GENERAL_LIGHTING,
-            "general_lighting",
-            build_color=True,
-            build_mode=True,
-        ),
-        CLASS_CODE_MONO_FUNCTIONAL_LIGHTING: _create_light_description(
-            CLASS_CODE_MONO_FUNCTIONAL_LIGHTING, "mono_functional_lighting"
-        ),
-        CLASS_CODE_LIGHTING_SYSTEM: _create_light_description(
-            CLASS_CODE_LIGHTING_SYSTEM, "lighting_system"
-        ),
-        CLASS_CODE_EXTENDED_LIGHTING_SYSTEM: _create_light_description(
-            CLASS_CODE_EXTENDED_LIGHTING_SYSTEM, "extended_lighting_system"
-        ),
-    }
-
-    @callback
-    def _entity_factory(
-        coordinator: EchonetLiteCoordinator, node: NodeState
-    ) -> list[Entity]:
-        if (description := descriptions.get(node.eoj.class_code)) is None:
-            return []
-        return [EchonetLiteLight(coordinator, node, description)]
-
-    setup_echonet_lite_device_platform(
-        entry,
-        async_add_entities,
-        entity_factory=_entity_factory,
-    )
+    setup_dedicated_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteLight)
 
 
 class EchonetLiteLight(EchonetLiteEntity, LightEntity):
