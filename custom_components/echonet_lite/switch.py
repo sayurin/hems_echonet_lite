@@ -10,7 +10,6 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import infer_entity_category, infer_entity_registry_enabled_default
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
@@ -31,28 +30,20 @@ class EchonetLiteSwitchEntityDescription(
 
     prop: BinaryProp
 
-
-def _create_switch_description(
-    class_code: int,
-    entity_def: EntityDefinition,
-) -> EchonetLiteSwitchEntityDescription:
-    """Create a switch entity description from an EntityDefinition."""
-    return EchonetLiteSwitchEntityDescription(
-        key=f"{entity_def.epc:02x}",
-        translation_key=entity_def.id,
-        class_code=class_code,
-        epc=entity_def.epc,
-        entity_category=infer_entity_category(entity_def),
-        entity_registry_enabled_default=infer_entity_registry_enabled_default(
-            entity_def
-        ),
-        prop=BinaryProp.from_entity_def(entity_def),
-        manufacturer_code=entity_def.manufacturer_code,
-    )
+    @classmethod
+    def build_from_entity_def(
+        cls, class_code: int, entity_def: EntityDefinition
+    ) -> EchonetLiteSwitchEntityDescription:
+        """Construct a switch description from an EntityDefinition."""
+        return cls(
+            key=f"{entity_def.epc:02x}",
+            prop=BinaryProp.from_entity_def(entity_def),
+            **cls._common_kwargs(class_code, entity_def),
+        )
 
 
 _DESCRIPTIONS: dict[int, list[EchonetLiteSwitchEntityDescription]] = (
-    build_platform_descriptions(Platform.SWITCH, _create_switch_description)
+    build_platform_descriptions(Platform.SWITCH, EchonetLiteSwitchEntityDescription)
 )
 
 

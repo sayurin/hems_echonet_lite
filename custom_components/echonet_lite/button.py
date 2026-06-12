@@ -9,7 +9,6 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import infer_entity_category, infer_entity_registry_enabled_default
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
@@ -29,50 +28,30 @@ class EchonetLiteButtonEntityDescription(
 
     press_value: bytes  # Byte value to send when button is pressed
 
+    @classmethod
+    def build_from_entity_def(
+        cls, class_code: int, entity_def: EntityDefinition
+    ) -> EchonetLiteButtonEntityDescription:
+        """Construct a button description from an EntityDefinition.
 
-def _create_button_description(
-    class_code: int,
-    entity_def: EntityDefinition,
-) -> EchonetLiteButtonEntityDescription:
-    """Create a button entity description from an EntityDefinition.
-
-    For write-only properties, the button press sends the first enum value's EDT.
-
-    Args:
-        class_code: ECHONET Lite class code
-        entity_def: Entity definition from pyhems
-
-    Returns:
-        Button entity description
-
-    Raises:
-        ValueError: If entity has no enum values (unsupported for button)
-    """
-    if not entity_def.enum_values:
-        raise ValueError(
-            f"Button entity requires enum values, but {entity_def.id} has none"
+        Raises:
+            ValueError: If entity has no enum values (unsupported for button)
+        """
+        if not entity_def.enum_values:
+            raise ValueError(
+                f"Button entity requires enum values, but {entity_def.id} has none"
+            )
+        # Use the first enum value's EDT as the press value
+        press_value = entity_def.enum_values[0].edt.to_bytes(1, "big")
+        return cls(
+            key=f"{entity_def.epc:02x}",
+            press_value=press_value,
+            **cls._common_kwargs(class_code, entity_def),
         )
-
-    # Use the first enum value's EDT as the press value
-    press_edt = entity_def.enum_values[0].edt
-    press_value = press_edt.to_bytes(1, "big")
-
-    return EchonetLiteButtonEntityDescription(
-        key=f"{entity_def.epc:02x}",
-        translation_key=entity_def.id,
-        class_code=class_code,
-        epc=entity_def.epc,
-        entity_category=infer_entity_category(entity_def),
-        entity_registry_enabled_default=infer_entity_registry_enabled_default(
-            entity_def
-        ),
-        press_value=press_value,
-        manufacturer_code=entity_def.manufacturer_code,
-    )
 
 
 _DESCRIPTIONS: dict[int, list[EchonetLiteButtonEntityDescription]] = (
-    build_platform_descriptions(Platform.BUTTON, _create_button_description)
+    build_platform_descriptions(Platform.BUTTON, EchonetLiteButtonEntityDescription)
 )
 
 

@@ -441,29 +441,3 @@ ENTITY_CATEGORY_BY_EPC: dict[int, EntityCategory] = {
     EPC_CURRENT_DATE: EntityCategory.CONFIG,
     EPC_POWER_LIMIT: EntityCategory.CONFIG,
 }
-
-
-def infer_entity_category(
-    entity_def: EntityDefinition,
-) -> EntityCategory | None:
-    """Return the :class:`EntityCategory` for ``entity_def`` or ``None``.
-
-    Classification is driven solely by :data:`ENTITY_CATEGORY_BY_EPC`, which
-    covers the standardized common EPCs (0x80-0x9F). Any other EPC returns
-    ``None`` (primary user-facing entity).
-    """
-    return ENTITY_CATEGORY_BY_EPC.get(entity_def.epc)
-
-
-def infer_entity_registry_enabled_default(
-    entity_def: EntityDefinition,
-) -> bool:
-    """Return the default enabled state for ``entity_def`` in the registry.
-
-    Diagnostic entities (fault codes, fault status, cumulative operating time,
-    ...) are disabled by default so they do not clutter the UI and do not
-    grow the recorder database. Users can opt in via the entity registry when
-    the value is needed. This mirrors the convention used by other Home
-    Assistant integrations for diagnostic entities.
-    """
-    return infer_entity_category(entity_def) is not EntityCategory.DIAGNOSTIC

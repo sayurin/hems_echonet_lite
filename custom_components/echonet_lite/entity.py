@@ -4,10 +4,11 @@ from collections.abc import Callable
 from dataclasses import dataclass
 import logging
 import time
+from typing import Self
 
 from pyhems import REGISTRY, EntityDefinition, NodeState, Property
 
-from homeassistant.const import Platform
+from homeassistant.const import EntityCategory, Platform
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -19,6 +20,7 @@ from .const import (
     ATTR_EPC,
     DEDICATED_PLATFORM_EPCS,
     DOMAIN,
+    ENTITY_CATEGORY_BY_EPC,
     RUNTIME_MONITOR_MAX_SILENCE,
 )
 from .coordinator import EchonetLiteCoordinator
@@ -278,6 +280,41 @@ class EchonetLiteEntityDescription(EntityDescription):
             return node.manufacturer_code == self.manufacturer_code
         return True
 
+    @classmethod
+    def _common_kwargs(cls, class_code: int, entity_def: EntityDefinition) -> dict:
+        """Return the common kwargs shared by every platform description.
+
+        Use as ``**cls._common_kwargs(class_code, entity_def)`` inside a
+        subclass :meth:`build_from_entity_def` override to inject the
+        six fields that are identical across all platforms, while spelling
+        out the platform-specific fields as named arguments for type-checker
+        visibility.
+        """
+        entity_category = ENTITY_CATEGORY_BY_EPC.get(entity_def.epc)
+        return {
+            "translation_key": entity_def.id,
+            "class_code": class_code,
+            "epc": entity_def.epc,
+            "entity_category": entity_category,
+            "entity_registry_enabled_default": entity_category
+            is not EntityCategory.DIAGNOSTIC,
+            "manufacturer_code": entity_def.manufacturer_code,
+        }
+
+    @classmethod
+    def build_from_entity_def(
+        cls, class_code: int, entity_def: EntityDefinition
+    ) -> Self:
+        """Construct an instance from a pyhems EntityDefinition.
+
+        Subclasses must override this classmethod.  The override should call
+        ``cls(key=…, prop=…, **cls._common_kwargs(class_code, entity_def))``
+        so that platform-specific fields are spelled out as named arguments
+        (enabling type-checker validation) while the six common fields are
+        injected from :meth:`_common_kwargs`.
+        """
+        raise NotImplementedError  # pragma: no cover
+
 
 class EchonetLiteDescribedEntity[DescriptionT: EchonetLiteEntityDescription](
     EchonetLiteEntity
@@ -343,7 +380,7 @@ class EchonetLiteDescribedEntity[DescriptionT: EchonetLiteEntityDescription](
 
 def build_platform_descriptions[DescriptionT: EchonetLiteEntityDescription](
     platform_type: Platform,
-    description_factory: Callable[[int, EntityDefinition], DescriptionT],
+    description_cls: type[DescriptionT],
 ) -> dict[int, list[DescriptionT]]:
     """Build a class-code-keyed description dict for a platform at module load time.
 
@@ -351,10 +388,14 @@ def build_platform_descriptions[DescriptionT: EchonetLiteEntityDescription](
     from the pyhems REGISTRY, avoiding repeated construction on every config
     entry setup.
 
+    Each ``description_cls`` must override :meth:`EchonetLiteEntityDescription.
+    build_from_entity_def` to construct an instance with named platform-specific
+    arguments plus ``**cls._common_kwargs(class_code, entity_def)``.
+
     Args:
         platform_type: Target platform (e.g. Platform.SENSOR).
-        description_factory: Factory that turns (class_code, entity_def) into a
-            platform-specific entity description.
+        description_cls: The description dataclass to instantiate; must override
+            :meth:`EchonetLiteEntityDescription.build_from_entity_def`.
 
     Returns:
         Dict mapping class_code → list of entity descriptions for that platform.
@@ -363,7 +404,7 @@ def build_platform_descriptions[DescriptionT: EchonetLiteEntityDescription](
     for class_code, entity_defs in REGISTRY.entities.items():
         excluded = DEDICATED_PLATFORM_EPCS.get(class_code, frozenset())
         descriptions[class_code] = [
-            description_factory(class_code, entity_def)
+            description_cls.build_from_entity_def(class_code, entity_def)
             for entity_def in entity_defs
             if infer_platform(entity_def) == platform_type
             and entity_def.epc not in excluded

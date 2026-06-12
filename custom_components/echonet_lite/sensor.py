@@ -14,12 +14,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import (
-    infer_device_classes,
-    infer_entity_category,
-    infer_entity_registry_enabled_default,
-    infer_ha_unit,
-)
+from .const import infer_device_classes, infer_ha_unit
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
@@ -62,52 +57,37 @@ class EchonetLiteSensorEntityDescription(
 
     prop: EnumProp | NumericProp
 
+    @classmethod
+    def build_from_entity_def(
+        cls, class_code: int, entity_def: EntityDefinition
+    ) -> EchonetLiteSensorEntityDescription:
+        """Construct a sensor description from an EntityDefinition."""
+        codec = get_codec(entity_def)
 
-def _create_sensor_description(
-    class_code: int,
-    entity_def: EntityDefinition,
-) -> EchonetLiteSensorEntityDescription:
-    """Create a sensor entity description from an EntityDefinition."""
-    codec = get_codec(entity_def)
+        # Read-only multi-value enum → ENUM sensor
+        if isinstance(codec, EnumCodec):
+            enum_prop = EnumProp.from_entity_def(entity_def)
+            return cls(
+                key=f"{entity_def.epc:02x}",
+                device_class=SensorDeviceClass.ENUM,
+                options=enum_prop.options,
+                prop=enum_prop,
+                **cls._common_kwargs(class_code, entity_def),
+            )
 
-    # Read-only multi-value enum → ENUM sensor
-    if isinstance(codec, EnumCodec):
-        enum_prop = EnumProp.from_entity_def(entity_def)
-        return EchonetLiteSensorEntityDescription(
-            key=f"{entity_def.epc:02x}",
-            translation_key=entity_def.id,
-            class_code=class_code,
-            epc=entity_def.epc,
-            device_class=SensorDeviceClass.ENUM,
-            entity_category=infer_entity_category(entity_def),
-            entity_registry_enabled_default=infer_entity_registry_enabled_default(
-                entity_def
-            ),
-            options=enum_prop.options,
-            prop=enum_prop,
-            manufacturer_code=entity_def.manufacturer_code,
+        # Numeric sensor
+        return cls(
+            key=f"{entity_def.epc:02x}_{entity_def.byte_offset}",
+            device_class=_infer_device_class(entity_def),
+            native_unit_of_measurement=infer_ha_unit(entity_def),
+            state_class=_infer_state_class(entity_def),
+            prop=NumericProp.from_entity_def(entity_def),
+            **cls._common_kwargs(class_code, entity_def),
         )
-
-    # Numeric sensor
-    return EchonetLiteSensorEntityDescription(
-        key=f"{entity_def.epc:02x}_{entity_def.byte_offset}",
-        translation_key=entity_def.id,
-        class_code=class_code,
-        epc=entity_def.epc,
-        device_class=_infer_device_class(entity_def),
-        entity_category=infer_entity_category(entity_def),
-        entity_registry_enabled_default=infer_entity_registry_enabled_default(
-            entity_def
-        ),
-        native_unit_of_measurement=infer_ha_unit(entity_def),
-        state_class=_infer_state_class(entity_def),
-        prop=NumericProp.from_entity_def(entity_def),
-        manufacturer_code=entity_def.manufacturer_code,
-    )
 
 
 _DESCRIPTIONS: dict[int, list[EchonetLiteSensorEntityDescription]] = (
-    build_platform_descriptions(Platform.SENSOR, _create_sensor_description)
+    build_platform_descriptions(Platform.SENSOR, EchonetLiteSensorEntityDescription)
 )
 
 
