@@ -32,13 +32,13 @@ class EchonetLiteSwitchEntityDescription(
 
     @classmethod
     def build_from_entity_def(
-        cls, class_code: int, entity_def: EntityDefinition
+        cls, entity_def: EntityDefinition
     ) -> EchonetLiteSwitchEntityDescription:
         """Construct a switch description from an EntityDefinition."""
         return cls(
             key=f"{entity_def.epc:02x}",
             prop=BinaryProp.from_entity_def(entity_def),
-            **cls._common_kwargs(class_code, entity_def),
+            **cls._common_kwargs(entity_def),
         )
 
 

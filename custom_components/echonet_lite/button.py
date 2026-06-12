@@ -30,7 +30,7 @@ class EchonetLiteButtonEntityDescription(
 
     @classmethod
     def build_from_entity_def(
-        cls, class_code: int, entity_def: EntityDefinition
+        cls, entity_def: EntityDefinition
     ) -> EchonetLiteButtonEntityDescription:
         """Construct a button description from an EntityDefinition.
 
@@ -46,7 +46,7 @@ class EchonetLiteButtonEntityDescription(
         return cls(
             key=f"{entity_def.epc:02x}",
             press_value=press_value,
-            **cls._common_kwargs(class_code, entity_def),
+            **cls._common_kwargs(entity_def),
         )
 
 

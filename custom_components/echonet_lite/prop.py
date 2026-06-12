@@ -171,6 +171,10 @@ class EnumProp:
     @classmethod
     def from_mapping(cls, epc: int, mapping: dict[str, int]) -> EnumProp:
         """Build from an explicit key→EDT mapping (e.g. HA mode names → raw bytes)."""
+        if not mapping:
+            raise ValueError(
+                f"EnumProp.from_mapping called with empty mapping for EPC 0x{epc:02X}"
+            )
         return cls(epc, EnumCodec.from_mapping(mapping))
 
     @property

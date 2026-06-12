@@ -256,8 +256,6 @@ class EchonetLiteEntityDescription(EntityDescription):
     Python's MRO resolves the inheritance properly with kw_only=True.
     """
 
-    class_code: int
-    """ECHONET Lite class code (class group + class code)."""
     epc: int
     """ECHONET Property Code."""
     manufacturer_code: int | None = None
@@ -281,19 +279,18 @@ class EchonetLiteEntityDescription(EntityDescription):
         return True
 
     @classmethod
-    def _common_kwargs(cls, class_code: int, entity_def: EntityDefinition) -> dict:
+    def _common_kwargs(cls, entity_def: EntityDefinition) -> dict:
         """Return the common kwargs shared by every platform description.
 
-        Use as ``**cls._common_kwargs(class_code, entity_def)`` inside a
+        Use as ``**cls._common_kwargs(entity_def)`` inside a
         subclass :meth:`build_from_entity_def` override to inject the
-        six fields that are identical across all platforms, while spelling
+        five fields that are identical across all platforms, while spelling
         out the platform-specific fields as named arguments for type-checker
         visibility.
         """
         entity_category = ENTITY_CATEGORY_BY_EPC.get(entity_def.epc)
         return {
             "translation_key": entity_def.id,
-            "class_code": class_code,
             "epc": entity_def.epc,
             "entity_category": entity_category,
             "entity_registry_enabled_default": entity_category
@@ -302,15 +299,13 @@ class EchonetLiteEntityDescription(EntityDescription):
         }
 
     @classmethod
-    def build_from_entity_def(
-        cls, class_code: int, entity_def: EntityDefinition
-    ) -> Self:
+    def build_from_entity_def(cls, entity_def: EntityDefinition) -> Self:
         """Construct an instance from a pyhems EntityDefinition.
 
         Subclasses must override this classmethod.  The override should call
-        ``cls(key=…, prop=…, **cls._common_kwargs(class_code, entity_def))``
+        ``cls(key=…, prop=…, **cls._common_kwargs(entity_def))``
         so that platform-specific fields are spelled out as named arguments
-        (enabling type-checker validation) while the six common fields are
+        (enabling type-checker validation) while the five common fields are
         injected from :meth:`_common_kwargs`.
         """
         raise NotImplementedError  # pragma: no cover
@@ -390,7 +385,7 @@ def build_platform_descriptions[DescriptionT: EchonetLiteEntityDescription](
 
     Each ``description_cls`` must override :meth:`EchonetLiteEntityDescription.
     build_from_entity_def` to construct an instance with named platform-specific
-    arguments plus ``**cls._common_kwargs(class_code, entity_def)``.
+    arguments plus ``**cls._common_kwargs(entity_def)``.
 
     Args:
         platform_type: Target platform (e.g. Platform.SENSOR).
@@ -404,7 +399,7 @@ def build_platform_descriptions[DescriptionT: EchonetLiteEntityDescription](
     for class_code, entity_defs in REGISTRY.entities.items():
         excluded = DEDICATED_PLATFORM_EPCS.get(class_code, frozenset())
         descriptions[class_code] = [
-            description_cls.build_from_entity_def(class_code, entity_def)
+            description_cls.build_from_entity_def(entity_def)
             for entity_def in entity_defs
             if infer_platform(entity_def) == platform_type
             and entity_def.epc not in excluded

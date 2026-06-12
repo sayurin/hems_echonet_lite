@@ -141,7 +141,6 @@ class EchonetLiteClimateEntityDescription(ClimateEntityDescription):
     regenerating codecs inside each entity's ``__init__``.
     """
 
-    class_code: int
     op_status: BinaryProp
     op_mode_prop: EnumProp
     special_state_prop: EnumProp
@@ -170,7 +169,6 @@ def _create_climate_description(
     scale = target_temp_prop.codec.scale
     return EchonetLiteClimateEntityDescription(
         key="climate",
-        class_code=class_code,
         op_status=BinaryProp.from_registry(class_code, EPC_OPERATION_STATUS),
         op_mode_prop=EnumProp.from_registry(class_code, EPC_OPERATION_MODE),
         special_state_prop=EnumProp.from_registry(class_code, EPC_SPECIAL_STATE),

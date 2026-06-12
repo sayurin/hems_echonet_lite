@@ -49,21 +49,13 @@ class EchonetLiteSelectEntityDescription(
 
     @classmethod
     def build_from_entity_def(
-        cls, class_code: int, entity_def: EntityDefinition
+        cls, entity_def: EntityDefinition
     ) -> EchonetLiteSelectEntityDescription:
         """Construct a select description from an EntityDefinition."""
-        prop = EnumProp.from_entity_def(entity_def)
-        if (
-            not prop.options
-        ):  # pragma: no cover - validated upstream in pyhems._validate_entity
-            raise ValueError(
-                f"Select entity EPC 0x{entity_def.epc:02X} for class 0x{class_code:04X} "
-                "has no valid enum values - this should be caught during generation"
-            )
         return cls(
             key=f"{entity_def.epc:02x}",
-            prop=prop,
-            **cls._common_kwargs(class_code, entity_def),
+            prop=EnumProp.from_entity_def(entity_def),
+            **cls._common_kwargs(entity_def),
         )
 
 

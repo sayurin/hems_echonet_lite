@@ -59,7 +59,7 @@ class EchonetLiteSensorEntityDescription(
 
     @classmethod
     def build_from_entity_def(
-        cls, class_code: int, entity_def: EntityDefinition
+        cls, entity_def: EntityDefinition
     ) -> EchonetLiteSensorEntityDescription:
         """Construct a sensor description from an EntityDefinition."""
         codec = get_codec(entity_def)
@@ -72,7 +72,7 @@ class EchonetLiteSensorEntityDescription(
                 device_class=SensorDeviceClass.ENUM,
                 options=enum_prop.options,
                 prop=enum_prop,
-                **cls._common_kwargs(class_code, entity_def),
+                **cls._common_kwargs(entity_def),
             )
 
         # Numeric sensor
@@ -82,7 +82,7 @@ class EchonetLiteSensorEntityDescription(
             native_unit_of_measurement=infer_ha_unit(entity_def),
             state_class=_infer_state_class(entity_def),
             prop=NumericProp.from_entity_def(entity_def),
-            **cls._common_kwargs(class_code, entity_def),
+            **cls._common_kwargs(entity_def),
         )
 
 
