@@ -13,11 +13,11 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import infer_entity_category, infer_entity_registry_enabled_default
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
-    setup_echonet_lite_platform,
+    build_platform_descriptions,
+    setup_common_platform,
 )
 from .prop import BinaryProp
 from .runtime import EchonetLiteConfigEntry
@@ -87,25 +87,24 @@ class EchonetLiteBinarySensorEntityDescription(
 
     prop: BinaryProp
 
+    @classmethod
+    def build_from_entity_def(
+        cls, entity_def: EntityDefinition
+    ) -> EchonetLiteBinarySensorEntityDescription:
+        """Construct a binary sensor description from an EntityDefinition."""
+        return cls(
+            key=f"{entity_def.epc:02x}",
+            device_class=_infer_binary_device_class(entity_def),
+            prop=BinaryProp.from_entity_def(entity_def),
+            **cls._common_kwargs(entity_def),
+        )
 
-def _create_binary_sensor_description(
-    class_code: int,
-    entity_def: EntityDefinition,
-) -> EchonetLiteBinarySensorEntityDescription:
-    """Create a binary sensor entity description from an EntityDefinition."""
-    return EchonetLiteBinarySensorEntityDescription(
-        key=f"{entity_def.epc:02x}",
-        translation_key=entity_def.id,
-        class_code=class_code,
-        epc=entity_def.epc,
-        device_class=_infer_binary_device_class(entity_def),
-        entity_category=infer_entity_category(entity_def),
-        entity_registry_enabled_default=infer_entity_registry_enabled_default(
-            entity_def
-        ),
-        prop=BinaryProp.from_entity_def(entity_def),
-        manufacturer_code=entity_def.manufacturer_code,
+
+_DESCRIPTIONS: dict[int, list[EchonetLiteBinarySensorEntityDescription]] = (
+    build_platform_descriptions(
+        Platform.BINARY_SENSOR, EchonetLiteBinarySensorEntityDescription
     )
+)
 
 
 async def async_setup_entry(
@@ -114,12 +113,8 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite binary sensors from a config entry."""
-    setup_echonet_lite_platform(
-        entry,
-        async_add_entities,
-        Platform.BINARY_SENSOR,
-        _create_binary_sensor_description,
-        EchonetLiteBinarySensor,
+    setup_common_platform(
+        entry, async_add_entities, _DESCRIPTIONS, EchonetLiteBinarySensor
     )
 
 

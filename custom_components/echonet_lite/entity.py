@@ -4,10 +4,11 @@ from collections.abc import Callable
 from dataclasses import dataclass
 import logging
 import time
+from typing import Self
 
-from pyhems import EntityDefinition, NodeState, Property
+from pyhems import REGISTRY, EntityDefinition, NodeState, Property
 
-from homeassistant.const import Platform
+from homeassistant.const import EntityCategory, Platform
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -19,6 +20,7 @@ from .const import (
     ATTR_EPC,
     DEDICATED_PLATFORM_EPCS,
     DOMAIN,
+    ENTITY_CATEGORY_BY_EPC,
     RUNTIME_MONITOR_MAX_SILENCE,
 )
 from .coordinator import EchonetLiteCoordinator
@@ -254,8 +256,6 @@ class EchonetLiteEntityDescription(EntityDescription):
     Python's MRO resolves the inheritance properly with kw_only=True.
     """
 
-    class_code: int
-    """ECHONET Lite class code (class group + class code)."""
     epc: int
     """ECHONET Property Code."""
     manufacturer_code: int | None = None
@@ -277,6 +277,38 @@ class EchonetLiteEntityDescription(EntityDescription):
         if self.manufacturer_code is not None:
             return node.manufacturer_code == self.manufacturer_code
         return True
+
+    @classmethod
+    def _common_kwargs(cls, entity_def: EntityDefinition) -> dict:
+        """Return the common kwargs shared by every platform description.
+
+        Use as ``**cls._common_kwargs(entity_def)`` inside a
+        subclass :meth:`build_from_entity_def` override to inject the
+        five fields that are identical across all platforms, while spelling
+        out the platform-specific fields as named arguments for type-checker
+        visibility.
+        """
+        entity_category = ENTITY_CATEGORY_BY_EPC.get(entity_def.epc)
+        return {
+            "translation_key": entity_def.id,
+            "epc": entity_def.epc,
+            "entity_category": entity_category,
+            "entity_registry_enabled_default": entity_category
+            is not EntityCategory.DIAGNOSTIC,
+            "manufacturer_code": entity_def.manufacturer_code,
+        }
+
+    @classmethod
+    def build_from_entity_def(cls, entity_def: EntityDefinition) -> Self:
+        """Construct an instance from a pyhems EntityDefinition.
+
+        Subclasses must override this classmethod.  The override should call
+        ``cls(key=…, prop=…, **cls._common_kwargs(entity_def))``
+        so that platform-specific fields are spelled out as named arguments
+        (enabling type-checker validation) while the five common fields are
+        injected from :meth:`_common_kwargs`.
+        """
+        raise NotImplementedError  # pragma: no cover
 
 
 class EchonetLiteDescribedEntity[DescriptionT: EchonetLiteEntityDescription](
@@ -341,41 +373,33 @@ class EchonetLiteDescribedEntity[DescriptionT: EchonetLiteEntityDescription](
         return {ATTR_EPC: f"0x{self._epc:02X}"}
 
 
-def setup_echonet_lite_platform[DescriptionT: EchonetLiteEntityDescription](
-    entry: EchonetLiteConfigEntry,
-    async_add_entities: AddConfigEntryEntitiesCallback,
+def build_platform_descriptions[DescriptionT: EchonetLiteEntityDescription](
     platform_type: Platform,
-    description_factory: Callable[[int, EntityDefinition], DescriptionT],
-    entity_factory: Callable[[EchonetLiteCoordinator, NodeState, DescriptionT], Entity],
-) -> None:
-    """Set up common entity platform setup pattern for ECHONET Lite.
+    description_cls: type[DescriptionT],
+) -> dict[int, list[DescriptionT]]:
+    """Build a class-code-keyed description dict for a platform at module load time.
 
-    This helper handles:
-    - Retrieving entity definitions from the definitions registry
-    - Building entity descriptions from definitions (filtered by platform_type)
-    - Filtering out dedicated platform EPCs (from DEDICATED_PLATFORM_EPCS)
-    - Creating entities for existing devices
-    - Subscribing to device-added notifications for new device discovery
-    - Logging skipped entities for debugging
+    This is called once per platform at import time to produce static constants
+    from the pyhems REGISTRY, avoiding repeated construction on every config
+    entry setup.
+
+    Each ``description_cls`` must override :meth:`EchonetLiteEntityDescription.
+    build_from_entity_def` to construct an instance with named platform-specific
+    arguments plus ``**cls._common_kwargs(entity_def)``.
 
     Args:
-        entry: The config entry
-        async_add_entities: Callback to add entities
-        platform_type: Type of platform (e.g. Platform.SENSOR, Platform.SWITCH)
-        description_factory: Factory function to create descriptions from definitions.
-            Args: (class_code, entity_def)
-        entity_factory: Factory function to create entity instances
+        platform_type: Target platform (e.g. Platform.SENSOR).
+        description_cls: The description dataclass to instantiate; must override
+            :meth:`EchonetLiteEntityDescription.build_from_entity_def`.
 
+    Returns:
+        Dict mapping class_code → list of entity descriptions for that platform.
     """
-    runtime_data = entry.runtime_data
-    definitions = runtime_data.definitions
-
-    # Build descriptions from entity definitions, filtering by platform and dedicated platform EPCs
-    descriptions_by_class_code: dict[int, list[DescriptionT]] = {}
-    for class_code, entity_defs in definitions.entities.items():
+    descriptions: dict[int, list[DescriptionT]] = {}
+    for class_code, entity_defs in REGISTRY.entities.items():
         excluded = DEDICATED_PLATFORM_EPCS.get(class_code, frozenset())
-        descriptions_by_class_code[class_code] = [
-            description_factory(class_code, entity_def)
+        descriptions[class_code] = [
+            description_cls.build_from_entity_def(entity_def)
             for entity_def in entity_defs
             if infer_platform(entity_def) == platform_type
             and entity_def.epc not in excluded
@@ -387,6 +411,34 @@ def setup_echonet_lite_platform[DescriptionT: EchonetLiteEntityDescription](
             # sibling bits since pyhems writes the full EPC value at once.
             and not (entity_def.set != "notApplicable" and entity_def.byte_offset > 0)
         ]
+    return descriptions
+
+
+def setup_common_platform[DescriptionT: EchonetLiteEntityDescription](
+    entry: EchonetLiteConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
+    descriptions_by_class_code: dict[int, list[DescriptionT]],
+    entity_factory: Callable[[EchonetLiteCoordinator, NodeState, DescriptionT], Entity],
+) -> None:
+    """Set up common entity platform setup pattern for ECHONET Lite.
+
+    This helper handles:
+    - Creating entities for existing devices
+    - Subscribing to device-added notifications for new device discovery
+    - Logging skipped entities for debugging
+
+    The ``descriptions_by_class_code`` dict should be built at module load time
+    using :func:`build_platform_descriptions` so that description construction
+    happens only once rather than on every config entry setup.
+
+    Args:
+        entry: The config entry
+        async_add_entities: Callback to add entities
+        descriptions_by_class_code: Pre-built mapping of class_code → descriptions,
+            typically a module-level constant produced by build_platform_descriptions.
+        entity_factory: Factory function to create entity instances
+
+    """
 
     @callback
     def _entity_factory(
@@ -396,8 +448,7 @@ def setup_echonet_lite_platform[DescriptionT: EchonetLiteEntityDescription](
         for description in descriptions_by_class_code.get(node.eoj.class_code, []):
             if not description.should_create(node):
                 _LOGGER.debug(
-                    "Skipping %s %s for %s: EPC 0x%02X not meeting criteria",
-                    platform_type,
+                    "Skipping %s for %s: EPC 0x%02X not meeting criteria",
                     description.key,
                     node.device_key,
                     description.epc,
@@ -405,6 +456,43 @@ def setup_echonet_lite_platform[DescriptionT: EchonetLiteEntityDescription](
                 continue
             entities.append(entity_factory(coordinator, node, description))
         return entities
+
+    setup_echonet_lite_device_platform(
+        entry,
+        async_add_entities,
+        entity_factory=_entity_factory,
+    )
+
+
+def setup_dedicated_platform[DescriptionT](
+    entry: EchonetLiteConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
+    descriptions: dict[int, DescriptionT],
+    entity_factory: Callable[[EchonetLiteCoordinator, NodeState, DescriptionT], Entity],
+) -> None:
+    """Set up a dedicated entity platform with one entity per matching class code.
+
+    This is the counterpart of :func:`setup_echonet_lite_platform` for platforms
+    that maintain a static ``dict[int, DescriptionT]`` constant (one description
+    per class code) rather than a list of descriptions per class code.
+
+    The pattern is used by platforms whose entities are not driven by the MRA
+    definitions registry (climate, cover, fan, light, lock, water_heater).
+
+    Args:
+        entry: The config entry.
+        async_add_entities: Callback to add entities.
+        descriptions: Module-level constant mapping class_code → single description.
+        entity_factory: Called with (coordinator, node, description) to create one entity.
+    """
+
+    @callback
+    def _entity_factory(
+        coordinator: EchonetLiteCoordinator, node: NodeState
+    ) -> list[Entity]:
+        if (description := descriptions.get(node.eoj.class_code)) is None:
+            return []
+        return [entity_factory(coordinator, node, description)]
 
     setup_echonet_lite_device_platform(
         entry,

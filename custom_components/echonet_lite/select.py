@@ -23,16 +23,15 @@ from .const import (
     EPC_INSTALLATION_LOCATION,
     INSTALLATION_LOCATION_NUMBER_OPTIONS,
     INSTALLATION_LOCATION_UNSET,
-    infer_entity_category,
-    infer_entity_registry_enabled_default,
 )
 from .coordinator import EchonetLiteCoordinator
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntity,
     EchonetLiteEntityDescription,
+    build_platform_descriptions,
+    setup_common_platform,
     setup_echonet_lite_device_platform,
-    setup_echonet_lite_platform,
 )
 from .prop import EnumProp
 from .runtime import EchonetLiteConfigEntry
@@ -48,38 +47,21 @@ class EchonetLiteSelectEntityDescription(
 
     prop: EnumProp
 
-
-def _create_select_description(
-    class_code: int,
-    entity_def: EntityDefinition,
-) -> EchonetLiteSelectEntityDescription:
-    """Create a select entity description from an EntityDefinition.
-
-    All select entities in definitions.json are validated to have enum_values,
-    so this function always returns a valid description.
-    """
-    prop = EnumProp.from_entity_def(entity_def)
-
-    if (
-        not prop.options
-    ):  # pragma: no cover - validated upstream in pyhems._validate_entity
-        raise ValueError(
-            f"Select entity EPC 0x{entity_def.epc:02X} for class 0x{class_code:04X} "
-            "has no valid enum values - this should be caught during generation"
+    @classmethod
+    def build_from_entity_def(
+        cls, entity_def: EntityDefinition
+    ) -> EchonetLiteSelectEntityDescription:
+        """Construct a select description from an EntityDefinition."""
+        return cls(
+            key=f"{entity_def.epc:02x}",
+            prop=EnumProp.from_entity_def(entity_def),
+            **cls._common_kwargs(entity_def),
         )
 
-    return EchonetLiteSelectEntityDescription(
-        key=f"{entity_def.epc:02x}",
-        translation_key=entity_def.id,
-        class_code=class_code,
-        epc=entity_def.epc,
-        entity_category=infer_entity_category(entity_def),
-        entity_registry_enabled_default=infer_entity_registry_enabled_default(
-            entity_def
-        ),
-        prop=prop,
-        manufacturer_code=entity_def.manufacturer_code,
-    )
+
+_DESCRIPTIONS: dict[int, list[EchonetLiteSelectEntityDescription]] = (
+    build_platform_descriptions(Platform.SELECT, EchonetLiteSelectEntityDescription)
+)
 
 
 async def async_setup_entry(
@@ -88,13 +70,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite select entities from a config entry."""
-    setup_echonet_lite_platform(
-        entry,
-        async_add_entities,
-        Platform.SELECT,
-        _create_select_description,
-        EchonetLiteSelect,
-    )
+    setup_common_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteSelect)
     setup_echonet_lite_device_platform(
         entry,
         async_add_entities,

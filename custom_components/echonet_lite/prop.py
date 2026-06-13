@@ -5,7 +5,6 @@ from typing import Protocol
 
 from pyhems import (
     BinaryCodec,
-    DefinitionsRegistry,
     EntityDefinition,
     EnumCodec,
     NodeState,
@@ -14,6 +13,8 @@ from pyhems import (
     get_codec,
     get_codec_for_epc,
 )
+
+from homeassistant.const import PRECISION_HALVES, PRECISION_TENTHS, PRECISION_WHOLE
 
 from .const import camel_to_snake
 
@@ -47,12 +48,11 @@ class BinaryProp:
     @classmethod
     def from_registry(
         cls,
-        definitions: DefinitionsRegistry,
         class_code: int,
         epc: int,
     ) -> BinaryProp:
         """Build from pyhems definitions by EPC lookup, raising TypeError on type mismatch."""
-        codec = get_codec_for_epc(definitions, class_code, epc)
+        codec = get_codec_for_epc(class_code, epc)
         if not isinstance(codec, BinaryCodec):
             raise TypeError(
                 f"EPC 0x{epc:02X} on class 0x{class_code:04X} "
@@ -91,15 +91,46 @@ class NumericProp:
         """Create a Property instance for this EPC with the encoded value."""
         return Property(epc=self.epc, edt=self.codec.encode(value))
 
+    @property
+    def min_value(self) -> float | None:
+        """Return minimum scaled value, or None if unbounded."""
+        return (
+            None
+            if self.codec.minimum is None
+            else self.codec.minimum * self.codec.scale
+        )
+
+    @property
+    def max_value(self) -> float | None:
+        """Return maximum scaled value, or None if unbounded."""
+        return (
+            None
+            if self.codec.maximum is None
+            else self.codec.maximum * self.codec.scale
+        )
+
+    @property
+    def step(self) -> float:
+        """Return the codec scale as the step size."""
+        return self.codec.scale
+
+    @property
+    def precision(self) -> float:
+        """Return the HA precision constant closest to the codec scale."""
+        if self.codec.scale <= PRECISION_TENTHS:
+            return PRECISION_TENTHS
+        if self.codec.scale <= PRECISION_HALVES:
+            return PRECISION_HALVES
+        return PRECISION_WHOLE
+
     @classmethod
     def from_registry(
         cls,
-        definitions: DefinitionsRegistry,
         class_code: int,
         epc: int,
     ) -> NumericProp:
         """Build from pyhems definitions by EPC lookup, raising TypeError on type mismatch."""
-        codec = get_codec_for_epc(definitions, class_code, epc)
+        codec = get_codec_for_epc(class_code, epc)
         if not isinstance(codec, NumericCodec):
             raise TypeError(
                 f"EPC 0x{epc:02X} on class 0x{class_code:04X} "
@@ -141,12 +172,11 @@ class EnumProp:
     @classmethod
     def from_registry(
         cls,
-        definitions: DefinitionsRegistry,
         class_code: int,
         epc: int,
     ) -> EnumProp:
         """Build from pyhems definitions by EPC lookup, raising TypeError on type mismatch."""
-        codec = get_codec_for_epc(definitions, class_code, epc)
+        codec = get_codec_for_epc(class_code, epc)
         if not isinstance(codec, EnumCodec):
             raise TypeError(
                 f"EPC 0x{epc:02X} on class 0x{class_code:04X} "
@@ -175,6 +205,10 @@ class EnumProp:
     @classmethod
     def from_mapping(cls, epc: int, mapping: dict[str, int]) -> EnumProp:
         """Build from an explicit key→EDT mapping (e.g. HA mode names → raw bytes)."""
+        if not mapping:
+            raise ValueError(
+                f"EnumProp.from_mapping called with empty mapping for EPC 0x{epc:02X}"
+            )
         return cls(epc, EnumCodec.from_mapping(mapping))
 
     @property

@@ -3,21 +3,20 @@
 from dataclasses import dataclass
 from typing import Any
 
-from pyhems import DefinitionsRegistry, NodeState
+from pyhems import NodeState
 
 from homeassistant.components.lock import LockEntity, LockEntityDescription
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity import Entity
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
-    CLASS_CODE_ELECTRIC_LOCK,
+    CLASS_CODE_ELECTRIC_LOCK as CC_LOCK,
     EPC_LOCK_ALARM_STATUS,
     EPC_LOCK_SETTING_1,
     EPC_LOCK_SETTING_2,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .entity import EchonetLiteEntity, setup_dedicated_platform
 from .prop import BinaryProp, EnumProp
 from .runtime import EchonetLiteConfigEntry
 
@@ -33,22 +32,14 @@ class EchonetLiteLockEntityDescription(LockEntityDescription):
     alarm_prop: EnumProp
 
 
-def _create_lock_description(
-    definitions: DefinitionsRegistry,
-) -> EchonetLiteLockEntityDescription:
-    """Build a lock description from pyhems definitions."""
-    return EchonetLiteLockEntityDescription(
+_DESCRIPTIONS: dict[int, EchonetLiteLockEntityDescription] = {
+    CC_LOCK: EchonetLiteLockEntityDescription(
         key="lock",
-        lock_prop=BinaryProp.from_registry(
-            definitions, CLASS_CODE_ELECTRIC_LOCK, EPC_LOCK_SETTING_1
-        ),
-        sub_lock_prop=BinaryProp.from_registry(
-            definitions, CLASS_CODE_ELECTRIC_LOCK, EPC_LOCK_SETTING_2
-        ),
-        alarm_prop=EnumProp.from_registry(
-            definitions, CLASS_CODE_ELECTRIC_LOCK, EPC_LOCK_ALARM_STATUS
-        ),
+        lock_prop=BinaryProp.from_registry(CC_LOCK, EPC_LOCK_SETTING_1),
+        sub_lock_prop=BinaryProp.from_registry(CC_LOCK, EPC_LOCK_SETTING_2),
+        alarm_prop=EnumProp.from_registry(CC_LOCK, EPC_LOCK_ALARM_STATUS),
     )
+}
 
 
 async def async_setup_entry(
@@ -57,21 +48,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite lock entities from a config entry."""
-    description = _create_lock_description(entry.runtime_data.definitions)
-
-    @callback
-    def _entity_factory(
-        coordinator: EchonetLiteCoordinator, node: NodeState
-    ) -> list[Entity]:
-        if node.eoj.class_code != CLASS_CODE_ELECTRIC_LOCK:
-            return []
-        return [EchonetLiteLock(coordinator, node, description)]
-
-    setup_echonet_lite_device_platform(
-        entry,
-        async_add_entities,
-        entity_factory=_entity_factory,
-    )
+    setup_dedicated_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteLock)
 
 
 class EchonetLiteLock(EchonetLiteEntity, LockEntity):

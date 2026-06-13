@@ -10,11 +10,11 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import infer_entity_category, infer_entity_registry_enabled_default
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
-    setup_echonet_lite_platform,
+    build_platform_descriptions,
+    setup_common_platform,
 )
 from .prop import BinaryProp
 from .runtime import EchonetLiteConfigEntry
@@ -30,24 +30,21 @@ class EchonetLiteSwitchEntityDescription(
 
     prop: BinaryProp
 
+    @classmethod
+    def build_from_entity_def(
+        cls, entity_def: EntityDefinition
+    ) -> EchonetLiteSwitchEntityDescription:
+        """Construct a switch description from an EntityDefinition."""
+        return cls(
+            key=f"{entity_def.epc:02x}",
+            prop=BinaryProp.from_entity_def(entity_def),
+            **cls._common_kwargs(entity_def),
+        )
 
-def _create_switch_description(
-    class_code: int,
-    entity_def: EntityDefinition,
-) -> EchonetLiteSwitchEntityDescription:
-    """Create a switch entity description from an EntityDefinition."""
-    return EchonetLiteSwitchEntityDescription(
-        key=f"{entity_def.epc:02x}",
-        translation_key=entity_def.id,
-        class_code=class_code,
-        epc=entity_def.epc,
-        entity_category=infer_entity_category(entity_def),
-        entity_registry_enabled_default=infer_entity_registry_enabled_default(
-            entity_def
-        ),
-        prop=BinaryProp.from_entity_def(entity_def),
-        manufacturer_code=entity_def.manufacturer_code,
-    )
+
+_DESCRIPTIONS: dict[int, list[EchonetLiteSwitchEntityDescription]] = (
+    build_platform_descriptions(Platform.SWITCH, EchonetLiteSwitchEntityDescription)
+)
 
 
 async def async_setup_entry(
@@ -56,13 +53,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite switches from a config entry."""
-    setup_echonet_lite_platform(
-        entry,
-        async_add_entities,
-        Platform.SWITCH,
-        _create_switch_description,
-        EchonetLiteSwitch,
-    )
+    setup_common_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteSwitch)
 
 
 class EchonetLiteSwitch(

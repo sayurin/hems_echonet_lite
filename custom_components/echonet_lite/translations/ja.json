@@ -3514,9 +3514,6 @@
     }
   },
   "exceptions": {
-    "definitions_load_error": {
-      "message": "デバイス定義ファイルを読み込めませんでした。"
-    },
     "epc_not_writable": {
       "message": "EPC {epc_list} はデバイスによって書き込みできません。"
     },

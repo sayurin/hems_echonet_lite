@@ -13,17 +13,13 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import (
-    infer_device_classes,
-    infer_entity_category,
-    infer_entity_registry_enabled_default,
-    infer_ha_unit,
-)
+from .const import infer_device_classes, infer_ha_unit
 from .coordinator import EchonetLiteCoordinator
 from .entity import (
     EchonetLiteDescribedEntity,
     EchonetLiteEntityDescription,
-    setup_echonet_lite_platform,
+    build_platform_descriptions,
+    setup_common_platform,
 )
 from .prop import NumericProp
 from .runtime import EchonetLiteConfigEntry
@@ -46,37 +42,36 @@ class EchonetLiteNumberEntityDescription(
 
     prop: NumericProp
 
+    @classmethod
+    def build_from_entity_def(
+        cls, entity_def: EntityDefinition
+    ) -> EchonetLiteNumberEntityDescription:
+        """Construct a number description from an EntityDefinition."""
+        return cls(
+            key=f"{entity_def.epc:02x}_{entity_def.byte_offset}",
+            device_class=_infer_device_class(entity_def),
+            native_unit_of_measurement=infer_ha_unit(entity_def),
+            native_min_value=(
+                entity_def.minimum * entity_def.multiple_of
+                if entity_def.minimum is not None
+                else None
+            ),
+            native_max_value=(
+                entity_def.maximum * entity_def.multiple_of
+                if entity_def.maximum is not None
+                else None
+            ),
+            native_step=entity_def.multiple_of
+            if entity_def.multiple_of != 1.0
+            else None,
+            prop=NumericProp.from_entity_def(entity_def),
+            **cls._common_kwargs(entity_def),
+        )
 
-def _create_number_description(
-    class_code: int,
-    entity_def: EntityDefinition,
-) -> EchonetLiteNumberEntityDescription:
-    """Create a number entity description from an EntityDefinition."""
-    return EchonetLiteNumberEntityDescription(
-        key=f"{entity_def.epc:02x}_{entity_def.byte_offset}",
-        translation_key=entity_def.id,
-        class_code=class_code,
-        epc=entity_def.epc,
-        device_class=_infer_device_class(entity_def),
-        entity_category=infer_entity_category(entity_def),
-        entity_registry_enabled_default=infer_entity_registry_enabled_default(
-            entity_def
-        ),
-        native_unit_of_measurement=infer_ha_unit(entity_def),
-        native_min_value=(
-            entity_def.minimum * entity_def.multiple_of
-            if entity_def.minimum is not None
-            else None
-        ),
-        native_max_value=(
-            entity_def.maximum * entity_def.multiple_of
-            if entity_def.maximum is not None
-            else None
-        ),
-        native_step=entity_def.multiple_of if entity_def.multiple_of != 1.0 else None,
-        prop=NumericProp.from_entity_def(entity_def),
-        manufacturer_code=entity_def.manufacturer_code,
-    )
+
+_DESCRIPTIONS: dict[int, list[EchonetLiteNumberEntityDescription]] = (
+    build_platform_descriptions(Platform.NUMBER, EchonetLiteNumberEntityDescription)
+)
 
 
 async def async_setup_entry(
@@ -85,13 +80,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite number entities from a config entry."""
-    setup_echonet_lite_platform(
-        entry,
-        async_add_entities,
-        Platform.NUMBER,
-        _create_number_description,
-        EchonetLiteNumber,
-    )
+    setup_common_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteNumber)
 
 
 class EchonetLiteNumber(

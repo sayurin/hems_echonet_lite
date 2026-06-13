@@ -3685,9 +3685,6 @@
     }
   },
   "exceptions": {
-    "definitions_load_error": {
-      "message": "Device definitions file could not be loaded."
-    },
     "epc_not_writable": {
       "message": "EPC {epc_list} is not writable by the device."
     },

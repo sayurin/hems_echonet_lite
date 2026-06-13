@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from pyhems import DefinitionsRegistry, NodeState
+from pyhems import NodeState
 
 from homeassistant.components.water_heater import (
     STATE_OFF,
@@ -12,13 +12,12 @@ from homeassistant.components.water_heater import (
     WaterHeaterEntityFeature,
 )
 from homeassistant.const import ATTR_TEMPERATURE, PRECISION_WHOLE, UnitOfTemperature
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
-from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
-    CLASS_CODE_ELECTRIC_WATER_HEATER,
+    CLASS_CODE_ELECTRIC_WATER_HEATER as CC_WATER_HEATER,
     DOMAIN,
     EPC_MEASURED_WATER_TEMPERATURE,
     EPC_OPERATION_MODE,
@@ -26,7 +25,7 @@ from .const import (
     EPC_TARGET_TEMPERATURE,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .entity import EchonetLiteEntity, setup_dedicated_platform
 from .prop import BinaryProp, EnumProp, NumericProp
 from .runtime import EchonetLiteConfigEntry
 
@@ -49,49 +48,21 @@ class EchonetLiteWaterHeaterEntityDescription(WaterHeaterEntityDescription):
     current_temp_prop: NumericProp
     op_status: BinaryProp
     op_mode: EnumProp
-    target_temp_min: float | None = None
-    target_temp_max: float | None = None
-    target_temp_step: float | None = None
 
 
-def _create_water_heater_description(
-    definitions: DefinitionsRegistry,
-) -> EchonetLiteWaterHeaterEntityDescription:
-    """Build the entity description from pyhems definitions.
-
-    get_codec_for_epc is guaranteed by pyhems test_platform_epc_codec_type
-    to return NumericCodec for EPC 0xB3 and 0xC1 on class 0x026B.
-    """
-    target_prop = NumericProp.from_registry(
-        definitions, CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_TARGET_TEMPERATURE
-    )
-    current_prop = NumericProp.from_registry(
-        definitions, CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_MEASURED_WATER_TEMPERATURE
-    )
-
-    scale = target_prop.codec.scale
-    return EchonetLiteWaterHeaterEntityDescription(
+_DESCRIPTIONS: dict[int, EchonetLiteWaterHeaterEntityDescription] = {
+    CC_WATER_HEATER: EchonetLiteWaterHeaterEntityDescription(
         key="water_heater",
-        target_temp_prop=target_prop,
-        current_temp_prop=current_prop,
-        op_status=BinaryProp.from_registry(
-            definitions, CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_OPERATION_STATUS
+        target_temp_prop=NumericProp.from_registry(
+            CC_WATER_HEATER, EPC_TARGET_TEMPERATURE
         ),
-        op_mode=EnumProp.from_registry(
-            definitions, CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_OPERATION_MODE
+        current_temp_prop=NumericProp.from_registry(
+            CC_WATER_HEATER, EPC_MEASURED_WATER_TEMPERATURE
         ),
-        target_temp_min=(
-            target_prop.codec.minimum * scale
-            if target_prop.codec.minimum is not None
-            else None
-        ),
-        target_temp_max=(
-            target_prop.codec.maximum * scale
-            if target_prop.codec.maximum is not None
-            else None
-        ),
-        target_temp_step=scale,
+        op_status=BinaryProp.from_registry(CC_WATER_HEATER, EPC_OPERATION_STATUS),
+        op_mode=EnumProp.from_registry(CC_WATER_HEATER, EPC_OPERATION_MODE),
     )
+}
 
 
 async def async_setup_entry(
@@ -100,20 +71,8 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite water heater entities from a config entry."""
-    description = _create_water_heater_description(entry.runtime_data.definitions)
-
-    @callback
-    def _entity_factory(
-        coordinator: EchonetLiteCoordinator, node: NodeState
-    ) -> list[Entity]:
-        if node.eoj.class_code != CLASS_CODE_ELECTRIC_WATER_HEATER:
-            return []
-        return [EchonetLiteWaterHeater(coordinator, node, description)]
-
-    setup_echonet_lite_device_platform(
-        entry,
-        async_add_entities,
-        entity_factory=_entity_factory,
+    setup_dedicated_platform(
+        entry, async_add_entities, _DESCRIPTIONS, EchonetLiteWaterHeater
     )
 
 
@@ -136,12 +95,11 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
         super().__init__(coordinator, node)
         self.entity_description = description
         self._attr_unique_id = f"{node.device_key}-{description.key}"
-        if description.target_temp_min is not None:
-            self._attr_min_temp = description.target_temp_min
-        if description.target_temp_max is not None:
-            self._attr_max_temp = description.target_temp_max
-        if description.target_temp_step is not None:
-            self._attr_target_temperature_step = description.target_temp_step
+        if description.target_temp_prop.min_value is not None:
+            self._attr_min_temp = description.target_temp_prop.min_value
+        if description.target_temp_prop.max_value is not None:
+            self._attr_max_temp = description.target_temp_prop.max_value
+        self._attr_target_temperature_step = description.target_temp_prop.step
 
         features = WaterHeaterEntityFeature(0)
         if EPC_TARGET_TEMPERATURE in node.set_epcs:
@@ -187,11 +145,9 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
         """
         if (status_on := self.entity_description.op_status.get(self._node)) is None:
             return None
-        return (
-            STATE_OFF
-            if not status_on
-            else self.entity_description.op_mode.get(self._node)
-        )
+        if not status_on:
+            return STATE_OFF
+        return self.entity_description.op_mode.get(self._node)
 
     @property
     def current_temperature(self) -> float | None:
@@ -242,19 +198,10 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
                 translation_key="epc_not_writable",
                 translation_placeholders={"epc_list": f"0x{EPC_OPERATION_MODE:02X}"},
             )
-        if EPC_OPERATION_STATUS not in self._node.set_epcs:
-            # Always-on devices do not allow writing 0x80; send only the
-            # operation mode and let 0x80 stay at its current value.
-            await self._async_send_prop(self.entity_description.op_mode, operation_mode)
-            return
-        # Send mode + ON together so flipping the operation mode from
-        # the "Off" state in the UI also turns the device on.
-        await self._async_send_properties(
-            [
-                self.entity_description.op_mode.make_property(operation_mode),
-                self.entity_description.op_status.make_property(True),
-            ]
-        )
+        properties = [self.entity_description.op_mode.make_property(operation_mode)]
+        if EPC_OPERATION_STATUS in self._node.set_epcs:
+            properties.append(self.entity_description.op_status.make_property(True))
+        await self._async_send_properties(properties)
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set a new target water temperature."""

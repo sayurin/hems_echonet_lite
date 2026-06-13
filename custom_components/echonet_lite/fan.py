@@ -2,18 +2,17 @@
 
 from dataclasses import dataclass
 import logging
-from typing import Any, Final
+from typing import Any
 
-from pyhems import DefinitionsRegistry, NodeState, Property
+from pyhems import NodeState, Property
 
 from homeassistant.components.fan import (
     FanEntity,
     FanEntityDescription,
     FanEntityFeature,
 )
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util.percentage import (
     ordered_list_item_to_percentage,
@@ -21,30 +20,21 @@ from homeassistant.util.percentage import (
 )
 
 from .const import (
-    CLASS_CODE_AIR_CLEANER,
-    CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN,
-    CLASS_CODE_VENTILATION_FAN,
+    CLASS_CODE_AIR_CLEANER as CC_AIR_CLEANER,
+    CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN as CC_AIR_CONDITIONER_VENTILATION_FAN,
+    CLASS_CODE_VENTILATION_FAN as CC_VENTILATION_FAN,
     DOMAIN,
     EPC_AIR_FLOW_LEVEL,
     EPC_OPERATION_STATUS,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .entity import EchonetLiteEntity, setup_dedicated_platform
 from .prop import BinaryProp, EnumProp
 from .runtime import EchonetLiteConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
 PARALLEL_UPDATES = 1
-
-# Class codes handled by this platform
-FAN_CLASS_CODES: frozenset[int] = frozenset(
-    {
-        CLASS_CODE_VENTILATION_FAN,
-        CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN,
-        CLASS_CODE_AIR_CLEANER,
-    }
-)
 
 # Ordered list of pyhems speed level keys (level_1 = slowest, level_8 = fastest)
 _SPEED_LEVELS = [
@@ -62,13 +52,6 @@ _SPEED_LEVELS = [
 PRESET_MODE_AUTO = "auto"
 PRESET_MODE_MANUAL = "manual"
 
-# Translation keys per class code
-_FAN_CLASS_CODE_TO_TRANSLATION_KEY: Final[dict[int, str]] = {
-    CLASS_CODE_VENTILATION_FAN: "fan",
-    CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN: "fan",
-    CLASS_CODE_AIR_CLEANER: "air_cleaner",
-}
-
 
 @dataclass(frozen=True, kw_only=True)
 class EchonetLiteFanEntityDescription(FanEntityDescription):
@@ -80,19 +63,24 @@ class EchonetLiteFanEntityDescription(FanEntityDescription):
 
 def _create_fan_description(
     class_code: int,
-    definitions: DefinitionsRegistry,
+    translation_key: str = "fan",
 ) -> EchonetLiteFanEntityDescription:
     """Build a fan description from pyhems definitions."""
     return EchonetLiteFanEntityDescription(
         key="fan",
-        translation_key=_FAN_CLASS_CODE_TO_TRANSLATION_KEY[class_code],
-        op_status=BinaryProp.from_registry(
-            definitions, class_code, EPC_OPERATION_STATUS
-        ),
-        air_flow_prop=EnumProp.from_registry(
-            definitions, class_code, EPC_AIR_FLOW_LEVEL
-        ),
+        translation_key=translation_key,
+        op_status=BinaryProp.from_registry(class_code, EPC_OPERATION_STATUS),
+        air_flow_prop=EnumProp.from_registry(class_code, EPC_AIR_FLOW_LEVEL),
     )
+
+
+_DESCRIPTIONS: dict[int, EchonetLiteFanEntityDescription] = {
+    CC_VENTILATION_FAN: _create_fan_description(CC_VENTILATION_FAN),
+    CC_AIR_CONDITIONER_VENTILATION_FAN: _create_fan_description(
+        CC_AIR_CONDITIONER_VENTILATION_FAN
+    ),
+    CC_AIR_CLEANER: _create_fan_description(CC_AIR_CLEANER, "air_cleaner"),
+}
 
 
 async def async_setup_entry(
@@ -101,25 +89,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite fan entities from a config entry."""
-    definitions = entry.runtime_data.definitions
-    descriptions: dict[int, EchonetLiteFanEntityDescription] = {
-        class_code: _create_fan_description(class_code, definitions)
-        for class_code in FAN_CLASS_CODES
-    }
-
-    @callback
-    def _entity_factory(
-        coordinator: EchonetLiteCoordinator, node: NodeState
-    ) -> list[Entity]:
-        if (description := descriptions.get(node.eoj.class_code)) is None:
-            return []
-        return [EchonetLiteFan(coordinator, node, description)]
-
-    setup_echonet_lite_device_platform(
-        entry,
-        async_add_entities,
-        entity_factory=_entity_factory,
-    )
+    setup_dedicated_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteFan)
 
 
 class EchonetLiteFan(EchonetLiteEntity, FanEntity):

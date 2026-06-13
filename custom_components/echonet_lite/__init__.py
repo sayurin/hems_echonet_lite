@@ -5,17 +5,10 @@ from contextlib import suppress
 import logging
 from typing import Final
 
-from pyhems import (
-    DefinitionsLoadError,
-    DeviceManager,
-    HemsClient,
-    PropertyPoller,
-    load_definitions_registry,
-)
+from pyhems import REGISTRY, DeviceManager, HemsClient, PropertyPoller
 
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryError
 from homeassistant.helpers import config_validation as cv, device_registry as dr
 
 from .const import (
@@ -63,6 +56,31 @@ PLATFORMS: Final = [
 ]
 
 
+# EPCs to monitor (poll/notify) per device class code, built once at import time.
+#
+# Three layers are merged:
+#  1. Definition-driven EPCs from the pyhems REGISTRY (sensor/switch/select …)
+#  2. Dedicated-platform EPCs from DEDICATED_PLATFORM_EPCS (climate/fan/cover …)
+#  3. EPC 0x81 (Installation Location) — mandatory super-class property that
+#     must be monitored for every known class even if absent from the registry.
+def _build_monitored_epcs() -> dict[int, frozenset[int]]:
+    result: dict[int, frozenset[int]] = {
+        class_code: frozenset(entity_def.epc for entity_def in entity_defs)
+        for class_code, entity_defs in REGISTRY.entities.items()
+    }
+    for class_code, epcs in DEDICATED_PLATFORM_EPCS.items():
+        result[class_code] = result.get(class_code, frozenset()) | epcs
+    for class_code in list(result):
+        result[class_code] = result[class_code] | {EPC_INSTALLATION_LOCATION}
+    return result
+
+
+_MONITORED_EPCS: Final[dict[int, frozenset[int]]] = _build_monitored_epcs()
+
+# EPCs to request during node discovery (in addition to identification and instance list)
+_DISCOVERY_EPCS: Final = [EPC_MANUFACTURER_CODE, EPC_PRODUCT_CODE, EPC_SERIAL_NUMBER]
+
+
 async def async_migrate_entry(
     hass: HomeAssistant, entry: EchonetLiteConfigEntry
 ) -> bool:
@@ -88,60 +106,28 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
 
     _LOGGER.debug("Setting up ECHONET Lite with interface %s", interface)
 
-    # Load device definitions from pyhems
-    try:
-        definitions = await hass.async_add_executor_job(load_definitions_registry)
-    except DefinitionsLoadError as err:
-        raise ConfigEntryError(
-            translation_domain=DOMAIN,
-            translation_key="definitions_load_error",
-        ) from err
-
-    # Build device-specific EPC sets for polling/notification
-    # Start with definitions-based EPCs (MRA + vendor)
-    monitored_epcs: dict[int, frozenset[int]] = {
-        class_code: frozenset(entity_def.epc for entity_def in entity_defs)
-        for class_code, entity_defs in definitions.entities.items()
-    }
-
-    # Add dedicated platform EPCs (used for both exclusion and polling)
-    for class_code, epcs in DEDICATED_PLATFORM_EPCS.items():
-        monitored_epcs[class_code] = monitored_epcs.get(class_code, frozenset()) | epcs
-
-    # EPC 0x81 (Installation Location) is a mandatory super-class property.
-    # Ensure it is monitored for every known device class so the entity is
-    # always populated regardless of whether the definitions include it.
-    for class_code in list(monitored_epcs):
-        monitored_epcs[class_code] = monitored_epcs[class_code] | {
-            EPC_INSTALLATION_LOCATION
-        }
-
     _LOGGER.debug(
         "Monitored EPCs (polling/notification) per device class: %s",
         {
             hex(class_code): " ".join(f"{epc:02x}" for epc in epcs)
-            for class_code, epcs in monitored_epcs.items()
+            for class_code, epcs in _MONITORED_EPCS.items()
         },
     )
-
-    # EPCs to request during node discovery (in addition to identification and instance list)
-    discovery_epcs = [EPC_MANUFACTURER_CODE, EPC_PRODUCT_CODE, EPC_SERIAL_NUMBER]
 
     client = HemsClient(
         interface=interface,
         poll_interval=DISCOVERY_INTERVAL,
-        extra_epcs=discovery_epcs,
+        extra_epcs=_DISCOVERY_EPCS,
     )
 
     # Determine which device class codes to accept
-    class_code_filter: frozenset[int] | None = None
-    if not enable_experimental:
-        class_code_filter = STABLE_CLASS_CODES
+    class_code_filter: frozenset[int] | None = (
+        None if enable_experimental else STABLE_CLASS_CODES
+    )
 
     device_manager = DeviceManager(
         client=client,
-        monitored_epcs=monitored_epcs,
-        definitions=definitions,
+        monitored_epcs=_MONITORED_EPCS,
         class_code_filter=class_code_filter,
     )
     coordinator = EchonetLiteCoordinator(
@@ -177,7 +163,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     property_poller.start()
 
     entry.runtime_data = EchonetLiteRuntimeData(
-        definitions=definitions,
         controller=controller,
         property_poller=property_poller,
         device_info_cache={},

@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from pyhems import DefinitionsRegistry, NodeState
+from pyhems import NodeState
 
 from homeassistant.components.cover import (
     ATTR_POSITION,
@@ -13,20 +13,19 @@ from homeassistant.components.cover import (
     CoverEntityDescription,
     CoverEntityFeature,
 )
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity import Entity
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
-    CLASS_CODE_ELECTRICALLY_OPERATED_BLIND,
-    CLASS_CODE_ELECTRICALLY_OPERATED_SHUTTER,
+    CLASS_CODE_ELECTRICALLY_OPERATED_BLIND as CC_BLIND,
+    CLASS_CODE_ELECTRICALLY_OPERATED_SHUTTER as CC_SHUTTER,
     EPC_COVER_ANGLE,
     EPC_COVER_OPEN_CLOSE,
     EPC_COVER_OPEN_CLOSED_STATUS,
     EPC_COVER_POSITION,
 )
 from .coordinator import EchonetLiteCoordinator
-from .entity import EchonetLiteEntity, setup_echonet_lite_device_platform
+from .entity import EchonetLiteEntity, setup_dedicated_platform
 from .prop import EnumProp, NumericProp
 from .runtime import EchonetLiteConfigEntry
 
@@ -45,24 +44,23 @@ class EchonetLiteCoverEntityDescription(CoverEntityDescription):
 
 def _create_cover_description(
     class_code: int,
-    definitions: DefinitionsRegistry,
     device_class: CoverDeviceClass,
 ) -> EchonetLiteCoverEntityDescription:
     """Build a cover description from pyhems definitions."""
     return EchonetLiteCoverEntityDescription(
         key="cover",
         device_class=device_class,
-        open_close_prop=EnumProp.from_registry(
-            definitions, class_code, EPC_COVER_OPEN_CLOSE
-        ),
-        position_prop=NumericProp.from_registry(
-            definitions, class_code, EPC_COVER_POSITION
-        ),
-        angle_prop=NumericProp.from_registry(definitions, class_code, EPC_COVER_ANGLE),
-        status_prop=EnumProp.from_registry(
-            definitions, class_code, EPC_COVER_OPEN_CLOSED_STATUS
-        ),
+        open_close_prop=EnumProp.from_registry(class_code, EPC_COVER_OPEN_CLOSE),
+        position_prop=NumericProp.from_registry(class_code, EPC_COVER_POSITION),
+        angle_prop=NumericProp.from_registry(class_code, EPC_COVER_ANGLE),
+        status_prop=EnumProp.from_registry(class_code, EPC_COVER_OPEN_CLOSED_STATUS),
     )
+
+
+_DESCRIPTIONS: dict[int, EchonetLiteCoverEntityDescription] = {
+    CC_BLIND: _create_cover_description(CC_BLIND, CoverDeviceClass.BLIND),
+    CC_SHUTTER: _create_cover_description(CC_SHUTTER, CoverDeviceClass.SHUTTER),
+}
 
 
 async def async_setup_entry(
@@ -71,31 +69,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite cover entities from a config entry."""
-    definitions = entry.runtime_data.definitions
-    descriptions: dict[int, EchonetLiteCoverEntityDescription] = {
-        CLASS_CODE_ELECTRICALLY_OPERATED_BLIND: _create_cover_description(
-            CLASS_CODE_ELECTRICALLY_OPERATED_BLIND, definitions, CoverDeviceClass.BLIND
-        ),
-        CLASS_CODE_ELECTRICALLY_OPERATED_SHUTTER: _create_cover_description(
-            CLASS_CODE_ELECTRICALLY_OPERATED_SHUTTER,
-            definitions,
-            CoverDeviceClass.SHUTTER,
-        ),
-    }
-
-    @callback
-    def _entity_factory(
-        coordinator: EchonetLiteCoordinator, node: NodeState
-    ) -> list[Entity]:
-        if (description := descriptions.get(node.eoj.class_code)) is None:
-            return []
-        return [EchonetLiteCover(coordinator, node, description)]
-
-    setup_echonet_lite_device_platform(
-        entry,
-        async_add_entities,
-        entity_factory=_entity_factory,
-    )
+    setup_dedicated_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteCover)
 
 
 def _tilt_deg_to_ha(deg: int) -> int:
