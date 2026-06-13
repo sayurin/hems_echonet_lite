@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
-    CLASS_CODE_ELECTRIC_LOCK,
+    CLASS_CODE_ELECTRIC_LOCK as CC_LOCK,
     EPC_LOCK_ALARM_STATUS,
     EPC_LOCK_SETTING_1,
     EPC_LOCK_SETTING_2,
@@ -33,17 +33,11 @@ class EchonetLiteLockEntityDescription(LockEntityDescription):
 
 
 _DESCRIPTIONS: dict[int, EchonetLiteLockEntityDescription] = {
-    CLASS_CODE_ELECTRIC_LOCK: EchonetLiteLockEntityDescription(
+    CC_LOCK: EchonetLiteLockEntityDescription(
         key="lock",
-        lock_prop=BinaryProp.from_registry(
-            CLASS_CODE_ELECTRIC_LOCK, EPC_LOCK_SETTING_1
-        ),
-        sub_lock_prop=BinaryProp.from_registry(
-            CLASS_CODE_ELECTRIC_LOCK, EPC_LOCK_SETTING_2
-        ),
-        alarm_prop=EnumProp.from_registry(
-            CLASS_CODE_ELECTRIC_LOCK, EPC_LOCK_ALARM_STATUS
-        ),
+        lock_prop=BinaryProp.from_registry(CC_LOCK, EPC_LOCK_SETTING_1),
+        sub_lock_prop=BinaryProp.from_registry(CC_LOCK, EPC_LOCK_SETTING_2),
+        alarm_prop=EnumProp.from_registry(CC_LOCK, EPC_LOCK_ALARM_STATUS),
     )
 }
 

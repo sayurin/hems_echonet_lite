@@ -24,7 +24,7 @@ from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
-    CLASS_CODE_HOME_AIR_CONDITIONER,
+    CLASS_CODE_HOME_AIR_CONDITIONER as CC_AC,
     DOMAIN,
     EPC_FAN_SPEED,
     EPC_OPERATION_MODE,
@@ -43,9 +43,6 @@ from .runtime import EchonetLiteConfigEntry
 _LOGGER = logging.getLogger(__name__)
 
 PARALLEL_UPDATES = 1
-
-# Class codes handled by this platform
-CLIMATE_CLASS_CODES: frozenset[int] = frozenset({CLASS_CODE_HOME_AIR_CONDITIONER})
 
 _SUPPORTED_HVAC_MODES: list[HVACMode] = [
     HVACMode.OFF,
@@ -137,32 +134,20 @@ class EchonetLiteClimateEntityDescription(ClimateEntityDescription):
     swing_mode_prop: EnumProp
 
 
-def _create_climate_description(
-    class_code: int,
-) -> EchonetLiteClimateEntityDescription:
-    """Build a climate description from pyhems definitions.
-
-    get_codec_for_epc is guaranteed by pyhems test_platform_epc_codec_type
-    to return NumericCodec for the EPCs used here (0xB3, 0xBB, 0xBA on class 0x0130).
-    """
-    return EchonetLiteClimateEntityDescription(
+_DESCRIPTIONS: dict[int, EchonetLiteClimateEntityDescription] = {
+    CC_AC: EchonetLiteClimateEntityDescription(
         key="climate",
-        op_status=BinaryProp.from_registry(class_code, EPC_OPERATION_STATUS),
-        op_mode_prop=EnumProp.from_registry(class_code, EPC_OPERATION_MODE),
-        special_state_prop=EnumProp.from_registry(class_code, EPC_SPECIAL_STATE),
-        target_temp_prop=NumericProp.from_registry(class_code, EPC_TARGET_TEMPERATURE),
-        room_temp_prop=NumericProp.from_registry(class_code, EPC_ROOM_TEMPERATURE),
-        humidity_prop=NumericProp.from_registry(class_code, EPC_ROOM_HUMIDITY),
-        fan_mode_prop=EnumProp.from_registry(class_code, EPC_FAN_SPEED),
+        op_status=BinaryProp.from_registry(CC_AC, EPC_OPERATION_STATUS),
+        op_mode_prop=EnumProp.from_registry(CC_AC, EPC_OPERATION_MODE),
+        special_state_prop=EnumProp.from_registry(CC_AC, EPC_SPECIAL_STATE),
+        target_temp_prop=NumericProp.from_registry(CC_AC, EPC_TARGET_TEMPERATURE),
+        room_temp_prop=NumericProp.from_registry(CC_AC, EPC_ROOM_TEMPERATURE),
+        humidity_prop=NumericProp.from_registry(CC_AC, EPC_ROOM_HUMIDITY),
+        fan_mode_prop=EnumProp.from_registry(CC_AC, EPC_FAN_SPEED),
         swing_mode_prop=EnumProp.from_mapping(
             EPC_SWING_AIR_FLOW, dict(_HA_TO_ECHONET_SWING)
         ),
     )
-
-
-_DESCRIPTIONS: dict[int, EchonetLiteClimateEntityDescription] = {
-    class_code: _create_climate_description(class_code)
-    for class_code in CLIMATE_CLASS_CODES
 }
 
 

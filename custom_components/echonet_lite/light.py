@@ -18,10 +18,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
-    CLASS_CODE_EXTENDED_LIGHTING_SYSTEM,
-    CLASS_CODE_GENERAL_LIGHTING,
-    CLASS_CODE_LIGHTING_SYSTEM,
-    CLASS_CODE_MONO_FUNCTIONAL_LIGHTING,
+    CLASS_CODE_EXTENDED_LIGHTING_SYSTEM as CC_EXTENDED_LIGHTING_SYSTEM,
+    CLASS_CODE_GENERAL_LIGHTING as CC_GENERAL_LIGHTING,
+    CLASS_CODE_LIGHTING_SYSTEM as CC_LIGHTING_SYSTEM,
+    CLASS_CODE_MONO_FUNCTIONAL_LIGHTING as CC_MONO_FUNCTIONAL_LIGHTING,
     EPC_LIGHT_COLOR,
     EPC_LIGHT_LEVEL,
     EPC_LIGHTING_MODE,
@@ -33,16 +33,6 @@ from .prop import BinaryProp, EnumProp, NumericProp
 from .runtime import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 1
-
-# Class codes handled by this platform.
-_LIGHT_CLASS_CODES: Final[frozenset[int]] = frozenset(
-    {
-        CLASS_CODE_GENERAL_LIGHTING,
-        CLASS_CODE_MONO_FUNCTIONAL_LIGHTING,
-        CLASS_CODE_LIGHTING_SYSTEM,
-        CLASS_CODE_EXTENDED_LIGHTING_SYSTEM,
-    }
-)
 
 # Mapping between EPC 0xB1 (Light color setting) snake_case enum keys and the
 # kelvin presets exposed to Home Assistant.
@@ -123,20 +113,17 @@ def _create_light_description(
 
 
 _DESCRIPTIONS: dict[int, EchonetLiteLightEntityDescription] = {
-    CLASS_CODE_GENERAL_LIGHTING: _create_light_description(
-        CLASS_CODE_GENERAL_LIGHTING,
-        "general_lighting",
-        build_color=True,
-        build_mode=True,
+    CC_GENERAL_LIGHTING: _create_light_description(
+        CC_GENERAL_LIGHTING, "general_lighting", build_color=True, build_mode=True
     ),
-    CLASS_CODE_MONO_FUNCTIONAL_LIGHTING: _create_light_description(
-        CLASS_CODE_MONO_FUNCTIONAL_LIGHTING, "mono_functional_lighting"
+    CC_MONO_FUNCTIONAL_LIGHTING: _create_light_description(
+        CC_MONO_FUNCTIONAL_LIGHTING, "mono_functional_lighting"
     ),
-    CLASS_CODE_LIGHTING_SYSTEM: _create_light_description(
-        CLASS_CODE_LIGHTING_SYSTEM, "lighting_system"
+    CC_LIGHTING_SYSTEM: _create_light_description(
+        CC_LIGHTING_SYSTEM, "lighting_system"
     ),
-    CLASS_CODE_EXTENDED_LIGHTING_SYSTEM: _create_light_description(
-        CLASS_CODE_EXTENDED_LIGHTING_SYSTEM, "extended_lighting_system"
+    CC_EXTENDED_LIGHTING_SYSTEM: _create_light_description(
+        CC_EXTENDED_LIGHTING_SYSTEM, "extended_lighting_system"
     ),
 }
 

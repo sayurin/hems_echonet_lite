@@ -17,8 +17,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
-    CLASS_CODE_ELECTRICALLY_OPERATED_BLIND,
-    CLASS_CODE_ELECTRICALLY_OPERATED_SHUTTER,
+    CLASS_CODE_ELECTRICALLY_OPERATED_BLIND as CC_BLIND,
+    CLASS_CODE_ELECTRICALLY_OPERATED_SHUTTER as CC_SHUTTER,
     EPC_COVER_ANGLE,
     EPC_COVER_OPEN_CLOSE,
     EPC_COVER_OPEN_CLOSED_STATUS,
@@ -58,12 +58,8 @@ def _create_cover_description(
 
 
 _DESCRIPTIONS: dict[int, EchonetLiteCoverEntityDescription] = {
-    CLASS_CODE_ELECTRICALLY_OPERATED_BLIND: _create_cover_description(
-        CLASS_CODE_ELECTRICALLY_OPERATED_BLIND, CoverDeviceClass.BLIND
-    ),
-    CLASS_CODE_ELECTRICALLY_OPERATED_SHUTTER: _create_cover_description(
-        CLASS_CODE_ELECTRICALLY_OPERATED_SHUTTER, CoverDeviceClass.SHUTTER
-    ),
+    CC_BLIND: _create_cover_description(CC_BLIND, CoverDeviceClass.BLIND),
+    CC_SHUTTER: _create_cover_description(CC_SHUTTER, CoverDeviceClass.SHUTTER),
 }
 
 

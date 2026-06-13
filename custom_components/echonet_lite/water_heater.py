@@ -17,7 +17,7 @@ from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
-    CLASS_CODE_ELECTRIC_WATER_HEATER,
+    CLASS_CODE_ELECTRIC_WATER_HEATER as CC_WATER_HEATER,
     DOMAIN,
     EPC_MEASURED_WATER_TEMPERATURE,
     EPC_OPERATION_MODE,
@@ -50,31 +50,18 @@ class EchonetLiteWaterHeaterEntityDescription(WaterHeaterEntityDescription):
     op_mode: EnumProp
 
 
-def _create_water_heater_description() -> EchonetLiteWaterHeaterEntityDescription:
-    """Build the entity description from pyhems definitions.
-
-    get_codec_for_epc is guaranteed by pyhems test_platform_epc_codec_type
-    to return NumericCodec for EPC 0xB3 and 0xC1 on class 0x026B.
-    """
-    return EchonetLiteWaterHeaterEntityDescription(
+_DESCRIPTIONS: dict[int, EchonetLiteWaterHeaterEntityDescription] = {
+    CC_WATER_HEATER: EchonetLiteWaterHeaterEntityDescription(
         key="water_heater",
         target_temp_prop=NumericProp.from_registry(
-            CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_TARGET_TEMPERATURE
+            CC_WATER_HEATER, EPC_TARGET_TEMPERATURE
         ),
         current_temp_prop=NumericProp.from_registry(
-            CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_MEASURED_WATER_TEMPERATURE
+            CC_WATER_HEATER, EPC_MEASURED_WATER_TEMPERATURE
         ),
-        op_status=BinaryProp.from_registry(
-            CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_OPERATION_STATUS
-        ),
-        op_mode=EnumProp.from_registry(
-            CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_OPERATION_MODE
-        ),
+        op_status=BinaryProp.from_registry(CC_WATER_HEATER, EPC_OPERATION_STATUS),
+        op_mode=EnumProp.from_registry(CC_WATER_HEATER, EPC_OPERATION_MODE),
     )
-
-
-_DESCRIPTIONS: dict[int, EchonetLiteWaterHeaterEntityDescription] = {
-    CLASS_CODE_ELECTRIC_WATER_HEATER: _create_water_heater_description()
 }
 
 
