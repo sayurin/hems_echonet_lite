@@ -14,6 +14,8 @@ from pyhems import (
     get_codec_for_epc,
 )
 
+from homeassistant.const import PRECISION_HALVES, PRECISION_TENTHS, PRECISION_WHOLE
+
 from .const import camel_to_snake
 
 
@@ -88,6 +90,38 @@ class NumericProp:
     def make_property(self, value: float) -> Property:
         """Create a Property instance for this EPC with the encoded value."""
         return Property(epc=self.epc, edt=self.codec.encode(value))
+
+    @property
+    def min_value(self) -> float | None:
+        """Return minimum scaled value, or None if unbounded."""
+        return (
+            None
+            if self.codec.minimum is None
+            else self.codec.minimum * self.codec.scale
+        )
+
+    @property
+    def max_value(self) -> float | None:
+        """Return maximum scaled value, or None if unbounded."""
+        return (
+            None
+            if self.codec.maximum is None
+            else self.codec.maximum * self.codec.scale
+        )
+
+    @property
+    def step(self) -> float:
+        """Return the codec scale as the step size."""
+        return self.codec.scale
+
+    @property
+    def precision(self) -> float:
+        """Return the HA precision constant closest to the codec scale."""
+        if self.codec.scale <= PRECISION_TENTHS:
+            return PRECISION_TENTHS
+        if self.codec.scale <= PRECISION_HALVES:
+            return PRECISION_HALVES
+        return PRECISION_WHOLE
 
     @classmethod
     def from_registry(

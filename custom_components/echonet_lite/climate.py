@@ -18,12 +18,7 @@ from homeassistant.components.climate import (
     HVACAction,
     HVACMode,
 )
-from homeassistant.const import (
-    PRECISION_HALVES,
-    PRECISION_TENTHS,
-    PRECISION_WHOLE,
-    UnitOfTemperature,
-)
+from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
@@ -120,15 +115,6 @@ _HA_TO_ECHONET_SWING: dict[str, int] = {
 }
 
 
-def _precision_from_scale(scale: float) -> float:
-    """Return the closest HA precision constant for a definition scale."""
-    if scale <= PRECISION_TENTHS:
-        return PRECISION_TENTHS
-    if scale <= PRECISION_HALVES:
-        return PRECISION_HALVES
-    return PRECISION_WHOLE
-
-
 @dataclass(frozen=True, kw_only=True)
 class EchonetLiteClimateEntityDescription(ClimateEntityDescription):
     """Climate description scoped to an ECHONET Lite class code.
@@ -149,10 +135,6 @@ class EchonetLiteClimateEntityDescription(ClimateEntityDescription):
     humidity_prop: NumericProp
     fan_mode_prop: EnumProp
     swing_mode_prop: EnumProp
-    target_temp_min: float | None = None
-    target_temp_max: float | None = None
-    target_temp_step: float | None = None
-    target_temp_precision: float = PRECISION_WHOLE
 
 
 def _create_climate_description(
@@ -163,26 +145,18 @@ def _create_climate_description(
     get_codec_for_epc is guaranteed by pyhems test_platform_epc_codec_type
     to return NumericCodec for the EPCs used here (0xB3, 0xBB, 0xBA on class 0x0130).
     """
-    target_temp_prop = NumericProp.from_registry(class_code, EPC_TARGET_TEMPERATURE)
-    minimum = target_temp_prop.codec.minimum
-    maximum = target_temp_prop.codec.maximum
-    scale = target_temp_prop.codec.scale
     return EchonetLiteClimateEntityDescription(
         key="climate",
         op_status=BinaryProp.from_registry(class_code, EPC_OPERATION_STATUS),
         op_mode_prop=EnumProp.from_registry(class_code, EPC_OPERATION_MODE),
         special_state_prop=EnumProp.from_registry(class_code, EPC_SPECIAL_STATE),
-        target_temp_prop=target_temp_prop,
+        target_temp_prop=NumericProp.from_registry(class_code, EPC_TARGET_TEMPERATURE),
         room_temp_prop=NumericProp.from_registry(class_code, EPC_ROOM_TEMPERATURE),
         humidity_prop=NumericProp.from_registry(class_code, EPC_ROOM_HUMIDITY),
         fan_mode_prop=EnumProp.from_registry(class_code, EPC_FAN_SPEED),
         swing_mode_prop=EnumProp.from_mapping(
             EPC_SWING_AIR_FLOW, dict(_HA_TO_ECHONET_SWING)
         ),
-        target_temp_min=None if minimum is None else minimum * scale,
-        target_temp_max=None if maximum is None else maximum * scale,
-        target_temp_step=scale,
-        target_temp_precision=_precision_from_scale(scale),
     )
 
 
@@ -222,7 +196,6 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
     _attr_name = None
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_translation_key = "climate"
-    _attr_precision: float = PRECISION_WHOLE
     _attr_hvac_modes = _SUPPORTED_HVAC_MODES
 
     def __init__(
@@ -235,13 +208,12 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
         super().__init__(coordinator, node)
         self.entity_description = description
         self._attr_unique_id = f"{node.device_key}-{description.key}"
-        if description.target_temp_min is not None:
-            self._attr_min_temp = description.target_temp_min
-        if description.target_temp_max is not None:
-            self._attr_max_temp = description.target_temp_max
-        if description.target_temp_step is not None:
-            self._attr_target_temperature_step = description.target_temp_step
-        self._attr_precision = description.target_temp_precision
+        if description.target_temp_prop.min_value is not None:
+            self._attr_min_temp = description.target_temp_prop.min_value
+        if description.target_temp_prop.max_value is not None:
+            self._attr_max_temp = description.target_temp_prop.max_value
+        self._attr_target_temperature_step = description.target_temp_prop.step
+        self._attr_precision = description.target_temp_prop.precision
         features = ClimateEntityFeature(0)
         swing_modes: list[str] | None = None
         if EPC_TARGET_TEMPERATURE in node.set_epcs:

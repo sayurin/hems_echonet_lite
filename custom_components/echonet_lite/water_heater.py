@@ -48,9 +48,6 @@ class EchonetLiteWaterHeaterEntityDescription(WaterHeaterEntityDescription):
     current_temp_prop: NumericProp
     op_status: BinaryProp
     op_mode: EnumProp
-    target_temp_min: float | None = None
-    target_temp_max: float | None = None
-    target_temp_step: float | None = None
 
 
 def _create_water_heater_description() -> EchonetLiteWaterHeaterEntityDescription:
@@ -59,28 +56,20 @@ def _create_water_heater_description() -> EchonetLiteWaterHeaterEntityDescriptio
     get_codec_for_epc is guaranteed by pyhems test_platform_epc_codec_type
     to return NumericCodec for EPC 0xB3 and 0xC1 on class 0x026B.
     """
-    target_prop = NumericProp.from_registry(
-        CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_TARGET_TEMPERATURE
-    )
-    current_prop = NumericProp.from_registry(
-        CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_MEASURED_WATER_TEMPERATURE
-    )
-    minimum = target_prop.codec.minimum
-    maximum = target_prop.codec.maximum
-    scale = target_prop.codec.scale
     return EchonetLiteWaterHeaterEntityDescription(
         key="water_heater",
-        target_temp_prop=target_prop,
-        current_temp_prop=current_prop,
+        target_temp_prop=NumericProp.from_registry(
+            CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_TARGET_TEMPERATURE
+        ),
+        current_temp_prop=NumericProp.from_registry(
+            CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_MEASURED_WATER_TEMPERATURE
+        ),
         op_status=BinaryProp.from_registry(
             CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_OPERATION_STATUS
         ),
         op_mode=EnumProp.from_registry(
             CLASS_CODE_ELECTRIC_WATER_HEATER, EPC_OPERATION_MODE
         ),
-        target_temp_min=None if minimum is None else minimum * scale,
-        target_temp_max=None if maximum is None else maximum * scale,
-        target_temp_step=scale,
     )
 
 
@@ -119,12 +108,11 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
         super().__init__(coordinator, node)
         self.entity_description = description
         self._attr_unique_id = f"{node.device_key}-{description.key}"
-        if description.target_temp_min is not None:
-            self._attr_min_temp = description.target_temp_min
-        if description.target_temp_max is not None:
-            self._attr_max_temp = description.target_temp_max
-        if description.target_temp_step is not None:
-            self._attr_target_temperature_step = description.target_temp_step
+        if description.target_temp_prop.min_value is not None:
+            self._attr_min_temp = description.target_temp_prop.min_value
+        if description.target_temp_prop.max_value is not None:
+            self._attr_max_temp = description.target_temp_prop.max_value
+        self._attr_target_temperature_step = description.target_temp_prop.step
 
         features = WaterHeaterEntityFeature(0)
         if EPC_TARGET_TEMPERATURE in node.set_epcs:
