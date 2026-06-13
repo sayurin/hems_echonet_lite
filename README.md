@@ -127,6 +127,41 @@ All remaining properties are automatically mapped based on the ECHONET Lite prop
 | 1-value enum | Button | — |
 | Numeric | Number | Sensor |
 
+## Manufacturer-Specific Extensions
+
+Beyond the standard ECHONET Lite specification, the integration includes additional property definitions for specific manufacturers. These are applied automatically when the matching manufacturer code is detected on a device.
+
+### Sharp — Air Cleaner (0x0135)
+
+Sharp air cleaners expose extra environmental data via manufacturer-specific EPC 0xF1. The following sensor entities are added when a Sharp device is detected:
+
+| Entity | Unit | Notes |
+|--------|------|-------|
+| Temperature | °C | Room temperature measured inside the unit |
+| Humidity | %RH | Relative humidity measured inside the unit |
+| PM2.5 | µg/m³ | Particulate matter concentration |
+
+### Sharp — Residential Solar Power Generation (0x0279)
+
+Sharp solar power systems expose per-string input data via manufacturer-specific EPCs. The following sensor entities are added when a Sharp device is detected:
+
+| Entity | Unit | EPC |
+|--------|------|-----|
+| Input Voltage 1–4 | V | 0xF2 |
+| Input Current 1–4 | A | 0xF3 |
+| Input Power 1–4 | W | 0xF4 |
+
+### Sharp — Controller (0x05FF)
+
+Sharp home energy controllers expose grid buy/sell data via manufacturer-specific EPCs. The following sensor entities are added when a Sharp device is detected:
+
+| Entity | Unit | EPC |
+|--------|------|-----|
+| Instantaneous Electric Power Sold | W | 0xF2 |
+| Instantaneous Electric Power Bought | W | 0xF3 |
+| Cumulative Electric Energy Sold | Wh | 0xF4 |
+| Cumulative Electric Energy Bought | Wh | 0xF5 |
+
 ## Data Updates
 
 The integration uses both polling and event-driven updates:
