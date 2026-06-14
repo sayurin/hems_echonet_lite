@@ -18,10 +18,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
-    CLASS_CODE_EXTENDED_LIGHTING_SYSTEM as CC_EXTENDED_LIGHTING_SYSTEM,
-    CLASS_CODE_GENERAL_LIGHTING as CC_GENERAL_LIGHTING,
-    CLASS_CODE_LIGHTING_SYSTEM as CC_LIGHTING_SYSTEM,
-    CLASS_CODE_MONO_FUNCTIONAL_LIGHTING as CC_MONO_FUNCTIONAL_LIGHTING,
+    CLASS_CODE_GENERAL_LIGHTING as CC_GENERAL,
+    CLASS_CODE_MONO_FUNCTIONAL_LIGHTING as CC_MONO,
     EPC_LIGHT_COLOR,
     EPC_LIGHT_LEVEL,
     EPC_LIGHTING_MODE,
@@ -113,18 +111,10 @@ def _create_light_description(
 
 
 _DESCRIPTIONS: dict[int, EchonetLiteLightEntityDescription] = {
-    CC_GENERAL_LIGHTING: _create_light_description(
-        CC_GENERAL_LIGHTING, "general_lighting", build_color=True, build_mode=True
+    CC_GENERAL: _create_light_description(
+        CC_GENERAL, "general_lighting", build_color=True, build_mode=True
     ),
-    CC_MONO_FUNCTIONAL_LIGHTING: _create_light_description(
-        CC_MONO_FUNCTIONAL_LIGHTING, "mono_functional_lighting"
-    ),
-    CC_LIGHTING_SYSTEM: _create_light_description(
-        CC_LIGHTING_SYSTEM, "lighting_system"
-    ),
-    CC_EXTENDED_LIGHTING_SYSTEM: _create_light_description(
-        CC_EXTENDED_LIGHTING_SYSTEM, "extended_lighting_system"
-    ),
+    CC_MONO: _create_light_description(CC_MONO, "mono_functional_lighting"),
 }
 
 

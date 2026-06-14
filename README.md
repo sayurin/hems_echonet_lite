@@ -63,8 +63,6 @@ The following classes require **Enable experimental device classes** to be turne
 | 0x0263 | Electrically Operated Shutter | Cover + generic entities |
 | 0x0290 | General Lighting | Light + generic entities |
 | 0x0291 | Mono-Functional Lighting | Light + generic entities |
-| 0x02A3 | Lighting System | Light + generic entities |
-| 0x02A4 | Extended Lighting System | Light + generic entities |
 
 **Via generic entities only** (50+ additional classes including sensors, meters, EV chargers, cookware, and more — see the full list in the integration options UI).
 
