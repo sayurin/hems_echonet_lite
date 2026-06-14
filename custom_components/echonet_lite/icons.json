@@ -50,20 +50,6 @@
         }
       }
     },
-    "light": {
-      "extended_lighting_system": {
-        "default": "mdi:lightbulb-multiple-off",
-        "state": {
-          "on": "mdi:lightbulb-multiple"
-        }
-      },
-      "lighting_system": {
-        "default": "mdi:lightbulb-multiple-off",
-        "state": {
-          "on": "mdi:lightbulb-multiple"
-        }
-      }
-    },
     "select": {
       "installation_location_code": {
         "default": "mdi:map-marker",

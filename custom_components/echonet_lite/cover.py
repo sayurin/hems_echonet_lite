@@ -102,9 +102,13 @@ class EchonetLiteCover(EchonetLiteEntity, CoverEntity):
         # Build supported_features dynamically from the device's advertised
         # property map so devices that omit optional EPCs (position, tilt)
         # don't expose unsupported controls in the UI.
-        features = (
-            CoverEntityFeature.OPEN | CoverEntityFeature.CLOSE | CoverEntityFeature.STOP
-        )
+        features = CoverEntityFeature(0)
+        if EPC_COVER_OPEN_CLOSE in node.set_epcs:
+            features |= (
+                CoverEntityFeature.OPEN
+                | CoverEntityFeature.CLOSE
+                | CoverEntityFeature.STOP
+            )
         if EPC_COVER_POSITION in node.set_epcs:
             features |= CoverEntityFeature.SET_POSITION
         if EPC_COVER_ANGLE in node.set_epcs:
