@@ -289,6 +289,13 @@
           "on": "フィルタ交換時期通知有"
         }
       },
+      "class_0135_epc_f1_custom_000005_01": {
+        "name": "照度",
+        "state": {
+          "off": "暗い",
+          "on": "明るい"
+        }
+      },
       "class_0156_epc_ac": {
         "name": "サーモ状態",
         "state": {
@@ -2123,13 +2130,13 @@
       "class_0134_epc_d5": {
         "name": "排気相対湿度計測値"
       },
-      "class_0135_custom_000005_epc_f1_1": {
+      "class_0135_epc_f1_custom_000005_03": {
         "name": "温度"
       },
-      "class_0135_custom_000005_epc_f1_2": {
+      "class_0135_epc_f1_custom_000005_04": {
         "name": "湿度"
       },
-      "class_0135_custom_000005_epc_f1_3": {
+      "class_0135_epc_f1_custom_000005_1c": {
         "name": "PM2.5"
       },
       "class_0156_epc_ae": {
@@ -2241,42 +2248,6 @@
       "class_0273_epc_bb": {
         "name": "浴室内温度計測値"
       },
-      "class_0279_custom_000005_epc_f2_1": {
-        "name": "入力電圧1"
-      },
-      "class_0279_custom_000005_epc_f2_2": {
-        "name": "入力電圧2"
-      },
-      "class_0279_custom_000005_epc_f2_3": {
-        "name": "入力電圧3"
-      },
-      "class_0279_custom_000005_epc_f2_4": {
-        "name": "入力電圧4"
-      },
-      "class_0279_custom_000005_epc_f3_1": {
-        "name": "入力電流1"
-      },
-      "class_0279_custom_000005_epc_f3_2": {
-        "name": "入力電流2"
-      },
-      "class_0279_custom_000005_epc_f3_3": {
-        "name": "入力電流3"
-      },
-      "class_0279_custom_000005_epc_f3_4": {
-        "name": "入力電流4"
-      },
-      "class_0279_custom_000005_epc_f4_1": {
-        "name": "入力電力1"
-      },
-      "class_0279_custom_000005_epc_f4_2": {
-        "name": "入力電力2"
-      },
-      "class_0279_custom_000005_epc_f4_3": {
-        "name": "入力電力3"
-      },
-      "class_0279_custom_000005_epc_f4_4": {
-        "name": "入力電力4"
-      },
       "class_0279_epc_b3": {
         "name": "出力変化時間設定値"
       },
@@ -2327,6 +2298,42 @@
       },
       "class_0279_epc_e3": {
         "name": "積算売電電力量計測値"
+      },
+      "class_0279_epc_f2_custom_000005_00": {
+        "name": "入力電圧1"
+      },
+      "class_0279_epc_f2_custom_000005_02": {
+        "name": "入力電圧2"
+      },
+      "class_0279_epc_f2_custom_000005_04": {
+        "name": "入力電圧3"
+      },
+      "class_0279_epc_f2_custom_000005_06": {
+        "name": "入力電圧4"
+      },
+      "class_0279_epc_f3_custom_000005_00": {
+        "name": "入力電流1"
+      },
+      "class_0279_epc_f3_custom_000005_01": {
+        "name": "入力電流2"
+      },
+      "class_0279_epc_f3_custom_000005_02": {
+        "name": "入力電流3"
+      },
+      "class_0279_epc_f3_custom_000005_03": {
+        "name": "入力電流4"
+      },
+      "class_0279_epc_f4_custom_000005_00": {
+        "name": "入力電力1"
+      },
+      "class_0279_epc_f4_custom_000005_02": {
+        "name": "入力電力2"
+      },
+      "class_0279_epc_f4_custom_000005_04": {
+        "name": "入力電力3"
+      },
+      "class_0279_epc_f4_custom_000005_06": {
+        "name": "入力電力4"
       },
       "class_027a_epc_e3": {
         "name": "往き水温計測値(出口水温)"
@@ -2949,18 +2956,6 @@
       "class_03d4_epc_be": {
         "name": "外気温度計測値"
       },
-      "class_05ff_custom_000005_epc_f2_1": {
-        "name": "瞬時売電電力"
-      },
-      "class_05ff_custom_000005_epc_f3_1": {
-        "name": "瞬時買電電力"
-      },
-      "class_05ff_custom_000005_epc_f4_1": {
-        "name": "積算売電電力量"
-      },
-      "class_05ff_custom_000005_epc_f5_1": {
-        "name": "積算買電電力量"
-      },
       "class_05ff_epc_c6": {
         "name": "接続状態",
         "state": {
@@ -2969,6 +2964,18 @@
           "disconnected": "離脱中",
           "not_registered": "未登録"
         }
+      },
+      "class_05ff_epc_f2_custom_000005_00": {
+        "name": "瞬時売電電力"
+      },
+      "class_05ff_epc_f3_custom_000005_00": {
+        "name": "瞬時買電電力"
+      },
+      "class_05ff_epc_f4_custom_000005_00": {
+        "name": "積算売電電力量"
+      },
+      "class_05ff_epc_f5_custom_000005_00": {
+        "name": "積算買電電力量"
       }
     },
     "switch": {

@@ -460,6 +460,13 @@
           "on": "Found"
         }
       },
+      "class_0135_epc_f1_custom_000005_01": {
+        "name": "Illuminance",
+        "state": {
+          "off": "Dark",
+          "on": "Bright"
+        }
+      },
       "class_0156_epc_ac": {
         "name": "Thermostat state",
         "state": {
@@ -2294,13 +2301,13 @@
       "class_0134_epc_d5": {
         "name": "Measured value of discharging air relative humidity"
       },
-      "class_0135_custom_000005_epc_f1_1": {
+      "class_0135_epc_f1_custom_000005_03": {
         "name": "Temperature"
       },
-      "class_0135_custom_000005_epc_f1_2": {
+      "class_0135_epc_f1_custom_000005_04": {
         "name": "Humidity"
       },
-      "class_0135_custom_000005_epc_f1_3": {
+      "class_0135_epc_f1_custom_000005_1c": {
         "name": "PM2.5"
       },
       "class_0156_epc_ae": {
@@ -2412,42 +2419,6 @@
       "class_0273_epc_bb": {
         "name": "Measured value of bathroom temperature"
       },
-      "class_0279_custom_000005_epc_f2_1": {
-        "name": "Input Voltage 1"
-      },
-      "class_0279_custom_000005_epc_f2_2": {
-        "name": "Input Voltage 2"
-      },
-      "class_0279_custom_000005_epc_f2_3": {
-        "name": "Input Voltage 3"
-      },
-      "class_0279_custom_000005_epc_f2_4": {
-        "name": "Input Voltage 4"
-      },
-      "class_0279_custom_000005_epc_f3_1": {
-        "name": "Input Current 1"
-      },
-      "class_0279_custom_000005_epc_f3_2": {
-        "name": "Input Current 2"
-      },
-      "class_0279_custom_000005_epc_f3_3": {
-        "name": "Input Current 3"
-      },
-      "class_0279_custom_000005_epc_f3_4": {
-        "name": "Input Current 4"
-      },
-      "class_0279_custom_000005_epc_f4_1": {
-        "name": "Input Power 1"
-      },
-      "class_0279_custom_000005_epc_f4_2": {
-        "name": "Input Power 2"
-      },
-      "class_0279_custom_000005_epc_f4_3": {
-        "name": "Input Power 3"
-      },
-      "class_0279_custom_000005_epc_f4_4": {
-        "name": "Input Power 4"
-      },
       "class_0279_epc_b3": {
         "name": "Output power change time setting value"
       },
@@ -2498,6 +2469,42 @@
       },
       "class_0279_epc_e3": {
         "name": "Measured cumulative amount of electric energy sold"
+      },
+      "class_0279_epc_f2_custom_000005_00": {
+        "name": "Input Voltage 1"
+      },
+      "class_0279_epc_f2_custom_000005_02": {
+        "name": "Input Voltage 2"
+      },
+      "class_0279_epc_f2_custom_000005_04": {
+        "name": "Input Voltage 3"
+      },
+      "class_0279_epc_f2_custom_000005_06": {
+        "name": "Input Voltage 4"
+      },
+      "class_0279_epc_f3_custom_000005_00": {
+        "name": "Input Current 1"
+      },
+      "class_0279_epc_f3_custom_000005_01": {
+        "name": "Input Current 2"
+      },
+      "class_0279_epc_f3_custom_000005_02": {
+        "name": "Input Current 3"
+      },
+      "class_0279_epc_f3_custom_000005_03": {
+        "name": "Input Current 4"
+      },
+      "class_0279_epc_f4_custom_000005_00": {
+        "name": "Input Power 1"
+      },
+      "class_0279_epc_f4_custom_000005_02": {
+        "name": "Input Power 2"
+      },
+      "class_0279_epc_f4_custom_000005_04": {
+        "name": "Input Power 3"
+      },
+      "class_0279_epc_f4_custom_000005_06": {
+        "name": "Input Power 4"
       },
       "class_027a_epc_e3": {
         "name": "Measured temperature of outward water (Exit water Temperature)"
@@ -3120,18 +3127,6 @@
       "class_03d4_epc_be": {
         "name": "Used to acquire measurements of outdoor air temperature."
       },
-      "class_05ff_custom_000005_epc_f2_1": {
-        "name": "Instantaneous Electric Power Sold"
-      },
-      "class_05ff_custom_000005_epc_f3_1": {
-        "name": "Instantaneous Electric Power Bought"
-      },
-      "class_05ff_custom_000005_epc_f4_1": {
-        "name": "Cumulative Electric Energy Sold"
-      },
-      "class_05ff_custom_000005_epc_f5_1": {
-        "name": "Cumulative Electric Energy Bought"
-      },
       "class_05ff_epc_c6": {
         "name": "Connection status",
         "state": {
@@ -3140,6 +3135,18 @@
           "disconnected": "[%key:common::state::disconnected%]",
           "not_registered": "Not registered"
         }
+      },
+      "class_05ff_epc_f2_custom_000005_00": {
+        "name": "Instantaneous Electric Power Sold"
+      },
+      "class_05ff_epc_f3_custom_000005_00": {
+        "name": "Instantaneous Electric Power Bought"
+      },
+      "class_05ff_epc_f4_custom_000005_00": {
+        "name": "Cumulative Electric Energy Sold"
+      },
+      "class_05ff_epc_f5_custom_000005_00": {
+        "name": "Cumulative Electric Energy Bought"
       }
     },
     "switch": {

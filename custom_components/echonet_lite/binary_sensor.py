@@ -49,6 +49,7 @@ _BINARY_DEVICE_CLASS_KEYWORDS: tuple[tuple[str, BinarySensorDeviceClass], ...] =
     ("occupant", BinarySensorDeviceClass.OCCUPANCY),
     ("human", BinarySensorDeviceClass.OCCUPANCY),
     # LIGHT
+    ("illuminance", BinarySensorDeviceClass.LIGHT),
     ("sunlight", BinarySensorDeviceClass.LIGHT),
     # Common HA device_classes matched directly by name
     ("door", BinarySensorDeviceClass.DOOR),
