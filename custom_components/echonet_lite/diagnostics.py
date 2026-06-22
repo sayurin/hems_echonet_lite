@@ -10,7 +10,7 @@ from homeassistant.const import CONF_UNIQUE_ID
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntry
 
-from .const import CONF_INTERFACE, DOMAIN
+from .const import CONF_INTERFACE, DEFAULT_INTERFACE, DOMAIN
 from .runtime import EchonetLiteConfigEntry
 
 TO_REDACT = {
@@ -80,9 +80,13 @@ async def async_get_config_entry_diagnostics(
     controller = entry.runtime_data.controller
     coordinator = controller.coordinator
     health = controller.health
+    interface = entry.data.get(CONF_INTERFACE, DEFAULT_INTERFACE)
 
     data = {
         "config_entry": entry.as_dict(),
+        "configuration": {
+            "interface_auto": interface == DEFAULT_INTERFACE,
+        },
         "runtime": {
             "device_count": len(coordinator.data),
             "last_runtime_activity_seen": coordinator.last_runtime_activity_at
