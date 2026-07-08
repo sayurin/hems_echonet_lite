@@ -1,6 +1,7 @@
 """Button platform for the HEMS Echonet Lite integration."""
 
 from dataclasses import dataclass
+from typing import override
 
 from pyhems import EntityDefinition
 
@@ -29,6 +30,7 @@ class EchonetLiteButtonEntityDescription(
     press_value: bytes  # Byte value to send when button is pressed
 
     @classmethod
+    @override
     def build_from_entity_def(
         cls, entity_def: EntityDefinition
     ) -> EchonetLiteButtonEntityDescription:
@@ -61,7 +63,13 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite buttons from a config entry."""
-    setup_common_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteButton)
+    setup_common_platform(
+        entry,
+        async_add_entities,
+        Platform.BUTTON.value,
+        _DESCRIPTIONS,
+        EchonetLiteButton,
+    )
 
 
 class EchonetLiteButton(
@@ -74,6 +82,7 @@ class EchonetLiteButton(
     value via ECHONET Lite SetC command.
     """
 
+    @override
     async def async_press(self) -> None:
         """Send the button press command via the pyhems runtime client."""
         await self._async_send_property(self._epc, self.description.press_value)

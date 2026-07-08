@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 import logging
-from typing import Any
+from typing import Any, override
 
 from pyhems import NodeState
 
@@ -18,13 +18,14 @@ from homeassistant.components.climate import (
     HVACAction,
     HVACMode,
 )
-from homeassistant.const import UnitOfTemperature
+from homeassistant.const import Platform, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
     CLASS_CODE_HOME_AIR_CONDITIONER as CC_AC,
+    DEDICATED_PLATFORM_EPCS,
     DOMAIN,
     EPC_FAN_SPEED,
     EPC_OPERATION_MODE,
@@ -158,7 +159,11 @@ async def async_setup_entry(
 ) -> None:
     """Set up ECHONET Lite climate entities from a config entry."""
     setup_dedicated_platform(
-        entry, async_add_entities, _DESCRIPTIONS, EchonetLiteClimate
+        entry,
+        async_add_entities,
+        Platform.CLIMATE.value,
+        _DESCRIPTIONS,
+        EchonetLiteClimate,
     )
 
 
@@ -193,6 +198,9 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
         super().__init__(coordinator, node)
         self.entity_description = description
         self._attr_unique_id = f"{node.device_key}-{description.key}"
+        self._subscribed_epcs = DEDICATED_PLATFORM_EPCS.get(
+            node.eoj.class_code, frozenset()
+        )
         if description.target_temp_prop.min_value is not None:
             self._attr_min_temp = description.target_temp_prop.min_value
         if description.target_temp_prop.max_value is not None:
@@ -216,6 +224,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
         self._attr_swing_modes = swing_modes
 
     @property
+    @override
     def hvac_mode(self) -> HVACMode | None:
         """Return the current HVAC mode."""
         if (status := self._operation_status()) is None:
@@ -230,6 +239,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
         return self.entity_description.op_status.get(self._node)
 
     @property
+    @override
     def hvac_action(self) -> HVACAction | None:
         """Return the current HVAC action."""
         special_key = self.entity_description.special_state_prop.get(self._node)
@@ -248,33 +258,39 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
         return action if action is not None else self._infer_auto_action()
 
     @property
+    @override
     def fan_mode(self) -> str | None:
         """Return the current fan mode."""
         return self.entity_description.fan_mode_prop.get(self._node)
 
     @property
+    @override
     def swing_mode(self) -> str | None:
         """Return the current swing mode based on vertical/horizontal settings."""
         return self.entity_description.swing_mode_prop.get(self._node)
 
     @property
+    @override
     def current_temperature(self) -> float | None:
         """Return the measured indoor temperature."""
         value = self.entity_description.room_temp_prop.get(self._node)
         return float(value) if value is not None else None
 
     @property
+    @override
     def current_humidity(self) -> float | None:
         """Return the measured indoor relative humidity."""
         value = self.entity_description.humidity_prop.get(self._node)
         return float(value) if value is not None else None
 
     @property
+    @override
     def target_temperature(self) -> float | None:
         """Return the currently configured setpoint."""
         value = self.entity_description.target_temp_prop.get(self._node)
         return float(value) if value is not None else None
 
+    @override
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set the requested HVAC mode."""
         _LOGGER.debug(
@@ -312,6 +328,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
             ]
         )
 
+    @override
     async def async_turn_on(self) -> None:
         """Turn on the climate device."""
         if EPC_OPERATION_STATUS not in self._node.set_epcs:
@@ -322,6 +339,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
             )
         await self._async_send_prop(self.entity_description.op_status, True)
 
+    @override
     async def async_turn_off(self) -> None:
         """Turn off the climate device."""
         if EPC_OPERATION_STATUS not in self._node.set_epcs:
@@ -332,6 +350,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
             )
         await self._async_send_prop(self.entity_description.op_status, False)
 
+    @override
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set the target temperature for the current mode."""
         if ATTR_TEMPERATURE not in kwargs or kwargs[ATTR_TEMPERATURE] is None:
@@ -351,6 +370,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
         clamped = min(max(temperature, self._attr_min_temp), self._attr_max_temp)
         await self._async_send_prop(self.entity_description.target_temp_prop, clamped)
 
+    @override
     async def async_set_fan_mode(self, fan_mode: str) -> None:
         """Set the fan mode."""
         if fan_mode not in self.entity_description.fan_mode_prop.options:
@@ -361,6 +381,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
             )
         await self._async_send_prop(self.entity_description.fan_mode_prop, fan_mode)
 
+    @override
     async def async_set_swing_mode(self, swing_mode: str) -> None:
         """Set the swing mode."""
         if swing_mode not in _HA_TO_ECHONET_SWING:

@@ -4,13 +4,14 @@ from collections.abc import Callable
 from dataclasses import dataclass
 import logging
 import time
-from typing import Self
+from typing import Self, override
 
 from pyhems import REGISTRY, EntityDefinition, NodeState, Property
 
 from homeassistant.const import EntityCategory, Platform
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
@@ -163,8 +164,35 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
         self._attr_device_info = _get_or_build_device_info(
             coordinator.config_entry.runtime_data, node
         )
+        # EPCs this entity is interested in, used to (un)subscribe with
+        # DeviceManager so that a disabled entity's EPCs stop being polled.
+        # Subclasses that manage more than one EPC (dedicated-platform
+        # entities: climate/fan/cover/light/lock/water_heater, and the
+        # Installation Location select entities) must set this explicitly
+        # after calling super().__init__(); ``EchonetLiteDescribedEntity``
+        # sets it automatically from its single ``description.epc``.
+        self._subscribed_epcs: frozenset[int] = frozenset()
+        self._unsub_epc_subscription: Callable[[], None] | None = None
+
+    @override
+    async def async_added_to_hass(self) -> None:
+        """Subscribe this entity's EPCs for polling once added to hass."""
+        await super().async_added_to_hass()
+        runtime = self.coordinator.config_entry.runtime_data
+        self._unsub_epc_subscription = runtime.device_manager.subscribe_epcs(
+            self._node.device_key, self._subscribed_epcs
+        )
+
+    @override
+    async def async_will_remove_from_hass(self) -> None:
+        """Unsubscribe this entity's EPCs so they stop being polled."""
+        if self._unsub_epc_subscription is not None:
+            self._unsub_epc_subscription()
+            self._unsub_epc_subscription = None
+        await super().async_will_remove_from_hass()
 
     @property
+    @override
     def available(self) -> bool:
         """Return True if the underlying runtime is still receiving activity.
 
@@ -366,8 +394,10 @@ class EchonetLiteDescribedEntity[DescriptionT: EchonetLiteEntityDescription](
         # ::TestDefinitionsStringsConsistency`` for the regression guard.
         self._attr_translation_key = description.translation_key
         self._epc = description.epc
+        self._subscribed_epcs = frozenset({description.epc})
 
     @property
+    @override
     def extra_state_attributes(self) -> dict[str, str]:
         """Return extra state attributes exposing the ECHONET Property Code."""
         return {ATTR_EPC: f"0x{self._epc:02X}"}
@@ -417,6 +447,7 @@ def build_platform_descriptions[DescriptionT: EchonetLiteEntityDescription](
 def setup_common_platform[DescriptionT: EchonetLiteEntityDescription](
     entry: EchonetLiteConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
+    platform_domain: str,
     descriptions_by_class_code: dict[int, list[DescriptionT]],
     entity_factory: Callable[[EchonetLiteCoordinator, NodeState, DescriptionT], Entity],
 ) -> None:
@@ -460,6 +491,7 @@ def setup_common_platform[DescriptionT: EchonetLiteEntityDescription](
     setup_echonet_lite_device_platform(
         entry,
         async_add_entities,
+        platform_domain=platform_domain,
         entity_factory=_entity_factory,
     )
 
@@ -467,6 +499,7 @@ def setup_common_platform[DescriptionT: EchonetLiteEntityDescription](
 def setup_dedicated_platform[DescriptionT](
     entry: EchonetLiteConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
+    platform_domain: str,
     descriptions: dict[int, DescriptionT],
     entity_factory: Callable[[EchonetLiteCoordinator, NodeState, DescriptionT], Entity],
 ) -> None:
@@ -497,14 +530,39 @@ def setup_dedicated_platform[DescriptionT](
     setup_echonet_lite_device_platform(
         entry,
         async_add_entities,
+        platform_domain=platform_domain,
         entity_factory=_entity_factory,
     )
+
+
+def _has_enabled_entity_candidate(
+    hass: HomeAssistant,
+    platform_domain: str,
+    entities: list[Entity],
+) -> bool:
+    """Return True if any entity is enabled or not yet represented in the registry."""
+    entity_registry = er.async_get(hass)
+    for entity in entities:
+        if (unique_id := entity.unique_id) is None:
+            return True
+        if (
+            entity_id := entity_registry.async_get_entity_id(
+                platform_domain, DOMAIN, unique_id
+            )
+        ) is None:
+            return True
+        if (entry := entity_registry.async_get(entity_id)) is None:
+            return True
+        if entry.disabled_by is None:
+            return True
+    return False
 
 
 def setup_echonet_lite_device_platform(
     entry: EchonetLiteConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
     *,
+    platform_domain: str,
     entity_factory: Callable[[EchonetLiteCoordinator, NodeState], list[Entity]],
 ) -> None:
     """Set up a platform that emits zero or more entities per discovered device.
@@ -541,7 +599,14 @@ def setup_echonet_lite_device_platform(
             node = coordinator.data.get(device_key)
             if node is None:
                 continue
-            new_entities.extend(entity_factory(coordinator, node))
+            device_entities = entity_factory(coordinator, node)
+            if not device_entities or not _has_enabled_entity_candidate(
+                coordinator.hass, platform_domain, device_entities
+            ):
+                coordinator.config_entry.runtime_data.device_manager.subscribe_epcs(
+                    device_key, frozenset()
+                )
+            new_entities.extend(device_entities)
         if new_entities:
             async_add_entities(new_entities)
 

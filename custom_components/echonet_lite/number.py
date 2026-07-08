@@ -1,6 +1,7 @@
 """Number platform for the HEMS Echonet Lite integration."""
 
 from dataclasses import dataclass
+from typing import override
 
 from pyhems import EntityDefinition, NodeState
 
@@ -43,6 +44,7 @@ class EchonetLiteNumberEntityDescription(
     prop: NumericProp
 
     @classmethod
+    @override
     def build_from_entity_def(
         cls, entity_def: EntityDefinition
     ) -> EchonetLiteNumberEntityDescription:
@@ -80,7 +82,13 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite number entities from a config entry."""
-    setup_common_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteNumber)
+    setup_common_platform(
+        entry,
+        async_add_entities,
+        Platform.NUMBER.value,
+        _DESCRIPTIONS,
+        EchonetLiteNumber,
+    )
 
 
 class EchonetLiteNumber(
@@ -98,10 +106,12 @@ class EchonetLiteNumber(
         super().__init__(coordinator, node, description)
 
     @property
+    @override
     def native_value(self) -> float | int | None:
         """Return the current value."""
         return self.description.prop.get(self._node)
 
+    @override
     async def async_set_native_value(self, value: float) -> None:
         """Set the value by sending an ECHONET Lite command."""
         await self._async_send_prop(self.description.prop, value)

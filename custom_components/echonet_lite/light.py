@@ -1,7 +1,7 @@
 """Light platform for the HEMS Echonet Lite integration."""
 
 from dataclasses import dataclass
-from typing import Any, Final
+from typing import Any, Final, override
 
 from pyhems import NodeState
 
@@ -14,12 +14,14 @@ from homeassistant.components.light import (
     LightEntityDescription,
     LightEntityFeature,
 )
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
     CLASS_CODE_GENERAL_LIGHTING as CC_GENERAL,
     CLASS_CODE_MONO_FUNCTIONAL_LIGHTING as CC_MONO,
+    DEDICATED_PLATFORM_EPCS,
     EPC_LIGHT_COLOR,
     EPC_LIGHT_LEVEL,
     EPC_LIGHTING_MODE,
@@ -124,7 +126,13 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite light entities from a config entry."""
-    setup_dedicated_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteLight)
+    setup_dedicated_platform(
+        entry,
+        async_add_entities,
+        Platform.LIGHT.value,
+        _DESCRIPTIONS,
+        EchonetLiteLight,
+    )
 
 
 class EchonetLiteLight(EchonetLiteEntity, LightEntity):
@@ -143,6 +151,9 @@ class EchonetLiteLight(EchonetLiteEntity, LightEntity):
         super().__init__(coordinator, node)
         self.entity_description = description
         self._attr_unique_id = f"{node.device_key}-{description.key}"
+        self._subscribed_epcs = DEDICATED_PLATFORM_EPCS.get(
+            node.eoj.class_code, frozenset()
+        )
 
         # Determine supported color modes from the writable property map.
         # 0xB1 (color) implies brightness via 0xB0; if 0xB1 is missing but
@@ -177,11 +188,13 @@ class EchonetLiteLight(EchonetLiteEntity, LightEntity):
             self._attr_effect_list = description.mode_prop.options  # type: ignore[union-attr]
 
     @property
+    @override
     def is_on(self) -> bool | None:
         """Return True if the device is reporting Operation status = ON."""
         return self.entity_description.op_status.get(self._node)
 
     @property
+    @override
     def brightness(self) -> int | None:
         """Return brightness on HA's 0-255 scale, derived from EPC 0xB0 (%)."""
         if not self._supports_brightness:
@@ -190,6 +203,7 @@ class EchonetLiteLight(EchonetLiteEntity, LightEntity):
         return None if pct is None else _brightness_pct_to_ha(int(pct))
 
     @property
+    @override
     def color_temp_kelvin(self) -> int | None:
         """Return the currently active color temperature preset in kelvin."""
         if not self._supports_color_temp:
@@ -198,12 +212,14 @@ class EchonetLiteLight(EchonetLiteEntity, LightEntity):
         return None if key is None else _COLOR_KEY_TO_KELVIN.get(key)
 
     @property
+    @override
     def effect(self) -> str | None:
         """Return the active lighting mode as the effect name."""
         if not self._supports_effect:
             return None
         return self.entity_description.mode_prop.get(self._node)  # type: ignore[union-attr]
 
+    @override
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the light on, applying any brightness/color/effect overrides."""
         # Always send the power-on command first so subsequent setters apply
@@ -235,6 +251,7 @@ class EchonetLiteLight(EchonetLiteEntity, LightEntity):
                 effect,
             )
 
+    @override
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the light off via the operation status codec."""
         await self._async_send_prop(self.entity_description.op_status, False)

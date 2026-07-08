@@ -2,7 +2,7 @@
 
 from collections.abc import Mapping
 import logging
-from typing import Any
+from typing import Any, override
 
 from pyhems import create_multicast_socket
 import voluptuous as vol
@@ -34,12 +34,14 @@ class EchonetLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     MINOR_VERSION = 1
 
     @staticmethod
+    @override
     def async_get_options_flow(
         config_entry: EchonetLiteConfigEntry,
     ) -> EchonetLiteOptionsFlow:
         """Get the options flow for this handler."""
         return EchonetLiteOptionsFlow()
 
+    @override
     async def async_step_user(
         self, user_input: Mapping[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:

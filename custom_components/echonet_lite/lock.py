@@ -1,16 +1,18 @@
 """Lock platform for the HEMS Echonet Lite integration."""
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, override
 
 from pyhems import NodeState
 
 from homeassistant.components.lock import LockEntity, LockEntityDescription
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
     CLASS_CODE_ELECTRIC_LOCK as CC_LOCK,
+    DEDICATED_PLATFORM_EPCS,
     EPC_LOCK_ALARM_STATUS,
     EPC_LOCK_SETTING_1,
     EPC_LOCK_SETTING_2,
@@ -48,7 +50,13 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite lock entities from a config entry."""
-    setup_dedicated_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteLock)
+    setup_dedicated_platform(
+        entry,
+        async_add_entities,
+        Platform.LOCK.value,
+        _DESCRIPTIONS,
+        EchonetLiteLock,
+    )
 
 
 class EchonetLiteLock(EchonetLiteEntity, LockEntity):
@@ -67,10 +75,14 @@ class EchonetLiteLock(EchonetLiteEntity, LockEntity):
         super().__init__(coordinator, node)
         self.entity_description = description
         self._attr_unique_id = f"{node.device_key}-{description.key}"
+        self._subscribed_epcs = DEDICATED_PLATFORM_EPCS.get(
+            node.eoj.class_code, frozenset()
+        )
         self._has_sub_lock = EPC_LOCK_SETTING_2 in node.get_epcs
         self._has_alarm = EPC_LOCK_ALARM_STATUS in node.get_epcs
 
     @property
+    @override
     def is_locked(self) -> bool | None:
         """Return True only when every advertised lock is in the locked state.
 
@@ -89,6 +101,7 @@ class EchonetLiteLock(EchonetLiteEntity, LockEntity):
         return None if sub is None else main and sub
 
     @property
+    @override
     def is_jammed(self) -> bool | None:
         """Return True when the device reports an alarm condition.
 
@@ -102,6 +115,7 @@ class EchonetLiteLock(EchonetLiteEntity, LockEntity):
         key = self.entity_description.alarm_prop.get(self._node)
         return None if key is None else key != "normal"
 
+    @override
     async def async_lock(self, **kwargs: Any) -> None:
         """Lock the device by writing the primary lock EPC only.
 
@@ -113,6 +127,7 @@ class EchonetLiteLock(EchonetLiteEntity, LockEntity):
         """
         await self._async_send_prop(self.entity_description.lock_prop, True)
 
+    @override
     async def async_unlock(self, **kwargs: Any) -> None:
         """Unlock the device by writing the primary lock EPC only."""
         await self._async_send_prop(self.entity_description.lock_prop, False)

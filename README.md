@@ -165,7 +165,10 @@ Sharp home energy controllers expose grid buy/sell data via manufacturer-specifi
 The integration uses both polling and event-driven updates:
 
 - **Event-driven**: Devices that support property change notifications (INF frames) push state changes immediately upon receipt.
-- **Property polling**: Every 60 seconds for devices that do not send notifications.
+- **Adaptive property polling**: Starts from a 60-second base interval and adjusts per device using response latency and failure backoff.
+- **High-frequency lane**: Instantaneous-value EPCs are sampled on a separate fast-poll loop when applicable.
+- **Adaptive batch size**: When a device truncates responses, request EPCs are chunked using learned capacity.
+- **Effective poll set**: Disabled entities are excluded from the runtime poll target set.
 - **Device re-discovery**: Every hour via multicast, so newly joined devices are detected automatically.
 - **Health monitoring**: If no ECHONET Lite frames are received for 5 minutes, a repair issue is created.
 
