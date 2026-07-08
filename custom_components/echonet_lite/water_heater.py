@@ -1,7 +1,7 @@
 """Water heater platform for the HEMS Echonet Lite integration."""
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, override
 
 from pyhems import NodeState
 
@@ -11,13 +11,19 @@ from homeassistant.components.water_heater import (
     WaterHeaterEntityDescription,
     WaterHeaterEntityFeature,
 )
-from homeassistant.const import ATTR_TEMPERATURE, PRECISION_WHOLE, UnitOfTemperature
+from homeassistant.const import (
+    ATTR_TEMPERATURE,
+    PRECISION_WHOLE,
+    Platform,
+    UnitOfTemperature,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
     CLASS_CODE_ELECTRIC_WATER_HEATER as CC_WATER_HEATER,
+    DEDICATED_PLATFORM_EPCS,
     DOMAIN,
     EPC_MEASURED_WATER_TEMPERATURE,
     EPC_OPERATION_MODE,
@@ -72,7 +78,11 @@ async def async_setup_entry(
 ) -> None:
     """Set up ECHONET Lite water heater entities from a config entry."""
     setup_dedicated_platform(
-        entry, async_add_entities, _DESCRIPTIONS, EchonetLiteWaterHeater
+        entry,
+        async_add_entities,
+        Platform.WATER_HEATER.value,
+        _DESCRIPTIONS,
+        EchonetLiteWaterHeater,
     )
 
 
@@ -95,6 +105,9 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
         super().__init__(coordinator, node)
         self.entity_description = description
         self._attr_unique_id = f"{node.device_key}-{description.key}"
+        self._subscribed_epcs = DEDICATED_PLATFORM_EPCS.get(
+            node.eoj.class_code, frozenset()
+        )
         if description.target_temp_prop.min_value is not None:
             self._attr_min_temp = description.target_temp_prop.min_value
         if description.target_temp_prop.max_value is not None:
@@ -124,6 +137,7 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
         self._attr_operation_list = operation_list
 
     @property
+    @override
     def is_away_mode_on(self) -> bool | None:
         """Return True when the heater is in away mode (EPC 0xB0 = 0x43).
 
@@ -136,6 +150,7 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
         return None if key is None else key == "manual_no_heating"
 
     @property
+    @override
     def current_operation(self) -> str | None:
         """Return the current operation mode.
 
@@ -150,17 +165,20 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
         return self.entity_description.op_mode.get(self._node)
 
     @property
+    @override
     def current_temperature(self) -> float | None:
         """Return the measured water temperature."""
         value = self.entity_description.current_temp_prop.get(self._node)
         return float(value) if value is not None else None
 
     @property
+    @override
     def target_temperature(self) -> float | None:
         """Return the configured target water temperature."""
         value = self.entity_description.target_temp_prop.get(self._node)
         return float(value) if value is not None else None
 
+    @override
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the water heater."""
         if EPC_OPERATION_STATUS not in self._node.set_epcs:
@@ -171,6 +189,7 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
             )
         await self._async_send_prop(self.entity_description.op_status, True)
 
+    @override
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the water heater."""
         if EPC_OPERATION_STATUS not in self._node.set_epcs:
@@ -181,6 +200,7 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
             )
         await self._async_send_prop(self.entity_description.op_status, False)
 
+    @override
     async def async_set_operation_mode(self, operation_mode: str) -> None:
         """Set the operation mode (HA service handler)."""
         if operation_mode == STATE_OFF:
@@ -203,6 +223,7 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
             properties.append(self.entity_description.op_status.make_property(True))
         await self._async_send_properties(properties)
 
+    @override
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set a new target water temperature."""
         if ATTR_TEMPERATURE not in kwargs or kwargs[ATTR_TEMPERATURE] is None:

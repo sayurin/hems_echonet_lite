@@ -15,6 +15,7 @@ from .const import (
     CONF_ENABLE_EXPERIMENTAL,
     CONF_INTERFACE,
     DEDICATED_PLATFORM_EPCS,
+    DEFAULT_FAST_POLL_INTERVAL,
     DEFAULT_INTERFACE,
     DEFAULT_POLL_INTERVAL,
     DISCOVERY_INTERVAL,
@@ -23,6 +24,7 @@ from .const import (
     EPC_MANUFACTURER_CODE,
     EPC_PRODUCT_CODE,
     EPC_SERIAL_NUMBER,
+    FAST_POLL_EXCLUDE_EPCS,
     RUNTIME_MONITOR_INTERVAL,
     RUNTIME_MONITOR_MAX_SILENCE,
     STABLE_CLASS_CODES,
@@ -77,6 +79,36 @@ def _build_monitored_epcs() -> dict[int, frozenset[int]]:
 
 _MONITORED_EPCS: Final[dict[int, frozenset[int]]] = _build_monitored_epcs()
 
+
+# EPCs that should be polled at a higher frequency (e.g. instantaneous power),
+# per device class code, built once at import time.
+#
+# The candidate set is derived automatically: any EPC whose English name
+# contains "instantaneous" is treated as a fast-poll candidate. This mirrors
+# how the MRA data itself is machine-generated, so new device classes/EPCs
+# added upstream are picked up without code changes here. FAST_POLL_EXCLUDE_EPCS
+# provides a manual override for cases where the heuristic is wrong.
+#
+# Only EPCs already present in _MONITORED_EPCS are kept: a fast-poll
+# candidate that isn't monitored/polled at all (e.g. belongs only to a
+# disabled experimental class) should not be introduced by this table alone.
+def _build_fast_poll_epcs() -> dict[int, frozenset[int]]:
+    result: dict[int, frozenset[int]] = {}
+    for class_code, entity_defs in REGISTRY.entities.items():
+        candidates = frozenset(
+            entity_def.epc
+            for entity_def in entity_defs
+            if "instantaneous" in entity_def.name_en.lower()
+        )
+        candidates -= FAST_POLL_EXCLUDE_EPCS.get(class_code, frozenset())
+        candidates &= _MONITORED_EPCS.get(class_code, frozenset())
+        if candidates:
+            result[class_code] = candidates
+    return result
+
+
+_FAST_POLL_EPCS: Final[dict[int, frozenset[int]]] = _build_fast_poll_epcs()
+
 # EPCs to request during node discovery (in addition to identification and instance list)
 _DISCOVERY_EPCS: Final = [EPC_MANUFACTURER_CODE, EPC_PRODUCT_CODE, EPC_SERIAL_NUMBER]
 
@@ -113,6 +145,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
             for class_code, epcs in _MONITORED_EPCS.items()
         },
     )
+    _LOGGER.debug(
+        "Fast-poll EPCs per device class: %s",
+        {
+            hex(class_code): " ".join(f"{epc:02x}" for epc in epcs)
+            for class_code, epcs in _FAST_POLL_EPCS.items()
+        },
+    )
 
     client = HemsClient(
         interface=interface,
@@ -129,6 +168,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
         client=client,
         monitored_epcs=_MONITORED_EPCS,
         class_code_filter=class_code_filter,
+        fast_epcs=_FAST_POLL_EPCS,
     )
     coordinator = EchonetLiteCoordinator(
         hass,
@@ -158,13 +198,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     await controller.async_start()
 
     property_poller = PropertyPoller(
-        device_manager, poll_interval=DEFAULT_POLL_INTERVAL
+        device_manager,
+        poll_interval=DEFAULT_POLL_INTERVAL,
+        fast_poll_interval=DEFAULT_FAST_POLL_INTERVAL,
     )
     property_poller.start()
 
     entry.runtime_data = EchonetLiteRuntimeData(
         controller=controller,
         property_poller=property_poller,
+        device_manager=device_manager,
         device_info_cache={},
     )
 

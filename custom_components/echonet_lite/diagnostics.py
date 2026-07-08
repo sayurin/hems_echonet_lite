@@ -3,7 +3,7 @@
 from collections.abc import Mapping
 from typing import Any
 
-from pyhems import NodeState
+from pyhems import DeviceManager, NodeState
 
 from homeassistant.components.diagnostics import REDACTED, async_redact_data
 from homeassistant.const import CONF_UNIQUE_ID
@@ -41,7 +41,7 @@ def _format_properties(properties: Mapping[int, bytes]) -> dict[str, str]:
     }
 
 
-def _node_to_dict(node: NodeState) -> dict[str, Any]:
+def _node_to_dict(node: NodeState, device_manager: DeviceManager) -> dict[str, Any]:
     """Serialize ``NodeState`` into a diagnostics-friendly dictionary."""
     eoj = node.eoj
 
@@ -60,7 +60,38 @@ def _node_to_dict(node: NodeState) -> dict[str, Any]:
         "set_epcs": _format_epcs(node.set_epcs),
         "inf_epcs": _format_epcs(node.inf_epcs),
         "poll_epcs": _format_epcs(node.poll_epcs),
+        "fast_poll_epcs": _format_epcs(node.fast_poll_epcs),
+        # Narrowed by disabled-entity EPC subscriptions (Step 6). May equal
+        # the corresponding candidate set above if no entity has been
+        # disabled, or if subscriptions haven't been confirmed yet.
+        "effective_poll_epcs": _format_epcs(
+            device_manager.effective_poll_epcs(node.device_key)
+        ),
+        "effective_fast_poll_epcs": _format_epcs(
+            device_manager.effective_fast_poll_epcs(node.device_key)
+        ),
         "properties": _format_properties(node.properties),
+    }
+
+
+def _add_poller_stats(
+    node_dict: dict[str, Any],
+    *,
+    device_key: str,
+    entry: EchonetLiteConfigEntry,
+) -> None:
+    """Attach adaptive poller runtime stats for one device."""
+    stats = entry.runtime_data.property_poller.get_device_stats(device_key)
+    node_dict["poller"] = {
+        "normal_interval": round(stats.normal_interval, 3),
+        "fast_interval": (
+            None if stats.fast_interval is None else round(stats.fast_interval, 3)
+        ),
+        "latency_ewma": (
+            None if stats.latency_ewma is None else round(stats.latency_ewma, 3)
+        ),
+        "consecutive_failures": stats.consecutive_failures,
+        "observed_batch_capacity": stats.observed_batch_capacity,
     }
 
 
@@ -81,6 +112,12 @@ async def async_get_config_entry_diagnostics(
     coordinator = controller.coordinator
     health = controller.health
 
+    devices: list[dict[str, Any]] = []
+    for _, node in sorted(coordinator.data.items()):
+        node_dict = _node_to_dict(node, coordinator.device_manager)
+        _add_poller_stats(node_dict, device_key=node.device_key, entry=entry)
+        devices.append(node_dict)
+
     data = {
         "config_entry": entry.as_dict(),
         "runtime": {
@@ -100,9 +137,7 @@ async def async_get_config_entry_diagnostics(
                 "event_consumer_task_done": controller.event_consumer_task.done(),
             },
         },
-        "devices": [
-            _node_to_dict(node) for _, node in sorted(coordinator.data.items())
-        ],
+        "devices": devices,
     }
     return async_redact_data(data, TO_REDACT)
 
@@ -123,4 +158,7 @@ async def async_get_device_diagnostics(
             {"device_key": device_key, "node_known": False}, TO_REDACT
         )
 
-    return async_redact_data(_node_to_dict(node), TO_REDACT)
+    node_dict = _node_to_dict(node, entry.runtime_data.device_manager)
+    _add_poller_stats(node_dict, device_key=node.device_key, entry=entry)
+
+    return async_redact_data(node_dict, TO_REDACT)

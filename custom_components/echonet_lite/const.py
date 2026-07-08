@@ -33,6 +33,14 @@ CONF_INTERFACE = "interface"
 CONF_ENABLE_EXPERIMENTAL = "enable_experimental"
 DEFAULT_INTERFACE = "0.0.0.0"
 DEFAULT_POLL_INTERVAL = 60
+# Fixed cadence for the high-frequency polling tier (instantaneous values
+# such as power consumption). Not user-configurable: HA integrations should
+# not expose polling intervals as a setting (see developer docs on polling).
+# Kept well below DEFAULT_POLL_INTERVAL so it offers a meaningful
+# improvement, but not so low that it floods slow devices; PropertyPoller
+# separately folds this back into the normal cadence for devices confirmed
+# to be slow (see pyhems.poller).
+DEFAULT_FAST_POLL_INTERVAL = 10
 ISSUE_RUNTIME_CLIENT_ERROR = "runtime_client_error"
 ISSUE_RUNTIME_INACTIVE = "runtime_inactive"
 RUNTIME_MONITOR_INTERVAL = timedelta(minutes=1)
@@ -211,6 +219,18 @@ DEDICATED_PLATFORM_EPCS: dict[int, frozenset[int]] = {
         }
     ),
 }
+
+# High-frequency ("fast poll") EPCs to exclude per device class code, keyed
+# the same way as DEDICATED_PLATFORM_EPCS.
+#
+# The default fast-poll candidate set is derived automatically from the
+# pyhems REGISTRY by matching "instantaneous"/"瞬時" in the entity name (see
+# ``_build_fast_poll_epcs`` in ``__init__.py``). This table lets specific
+# EPCs be excluded from that automatic classification when the heuristic is
+# wrong for a particular device class (e.g. a name containing "instantaneous"
+# that does not actually need high-frequency polling). Empty by default;
+# add entries here as real-world exceptions are identified.
+FAST_POLL_EXCLUDE_EPCS: dict[int, frozenset[int]] = {}
 
 
 def camel_to_snake(name: str) -> str:

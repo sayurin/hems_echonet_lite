@@ -1,6 +1,7 @@
 """Binary sensor platform for the HEMS Echonet Lite integration."""
 
 from dataclasses import dataclass
+from typing import override
 
 from pyhems import EntityDefinition
 
@@ -89,6 +90,7 @@ class EchonetLiteBinarySensorEntityDescription(
     prop: BinaryProp
 
     @classmethod
+    @override
     def build_from_entity_def(
         cls, entity_def: EntityDefinition
     ) -> EchonetLiteBinarySensorEntityDescription:
@@ -115,7 +117,11 @@ async def async_setup_entry(
 ) -> None:
     """Set up ECHONET Lite binary sensors from a config entry."""
     setup_common_platform(
-        entry, async_add_entities, _DESCRIPTIONS, EchonetLiteBinarySensor
+        entry,
+        async_add_entities,
+        Platform.BINARY_SENSOR.value,
+        _DESCRIPTIONS,
+        EchonetLiteBinarySensor,
     )
 
 
@@ -126,6 +132,7 @@ class EchonetLiteBinarySensor(
     """Representation of a boolean ECHONET Lite property."""
 
     @property
+    @override
     def is_on(self) -> bool | None:
         """Return the state of the binary sensor."""
         return self.description.prop.get(self._node)

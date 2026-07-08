@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 import logging
-from typing import Any
+from typing import Any, override
 
 from pyhems import NodeState, Property
 
@@ -11,6 +11,7 @@ from homeassistant.components.fan import (
     FanEntityDescription,
     FanEntityFeature,
 )
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
@@ -23,6 +24,7 @@ from .const import (
     CLASS_CODE_AIR_CLEANER as CC_AIR_CLEANER,
     CLASS_CODE_AIR_CONDITIONER_VENTILATION_FAN as CC_AIR_CONDITIONER_VENTILATION_FAN,
     CLASS_CODE_VENTILATION_FAN as CC_VENTILATION_FAN,
+    DEDICATED_PLATFORM_EPCS,
     DOMAIN,
     EPC_AIR_FLOW_LEVEL,
     EPC_OPERATION_STATUS,
@@ -89,7 +91,13 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite fan entities from a config entry."""
-    setup_dedicated_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteFan)
+    setup_dedicated_platform(
+        entry,
+        async_add_entities,
+        Platform.FAN.value,
+        _DESCRIPTIONS,
+        EchonetLiteFan,
+    )
 
 
 class EchonetLiteFan(EchonetLiteEntity, FanEntity):
@@ -114,6 +122,9 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         super().__init__(coordinator, node)
         self.entity_description = description
         self._attr_unique_id = f"{node.device_key}-{description.key}"
+        self._subscribed_epcs = DEDICATED_PLATFORM_EPCS.get(
+            node.eoj.class_code, frozenset()
+        )
 
         features = FanEntityFeature(0)
         if EPC_OPERATION_STATUS in node.set_epcs:
@@ -125,11 +136,13 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         self._attr_supported_features = features
 
     @property
+    @override
     def is_on(self) -> bool | None:
         """Return true if the fan is on."""
         return self.entity_description.op_status.get(self._node)
 
     @property
+    @override
     def percentage(self) -> int | None:
         """Return the current speed percentage.
 
@@ -141,6 +154,7 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         return ordered_list_item_to_percentage(_SPEED_LEVELS, key)
 
     @property
+    @override
     def preset_mode(self) -> str | None:
         """Return the current preset mode."""
         if (key := self.entity_description.air_flow_prop.get(self._node)) is None:
@@ -149,6 +163,7 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
             return PRESET_MODE_AUTO
         return PRESET_MODE_MANUAL if key in _SPEED_LEVELS else None
 
+    @override
     async def async_turn_on(
         self,
         percentage: int | None = None,
@@ -200,10 +215,12 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
 
         await self._async_send_properties(properties)
 
+    @override
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the fan."""
         await self._async_send_prop(self.entity_description.op_status, False)
 
+    @override
     async def async_set_percentage(self, percentage: int) -> None:
         """Set the speed percentage of the fan.
 
@@ -225,6 +242,7 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         properties.append(self.entity_description.air_flow_prop.make_property(key))
         await self._async_send_properties(properties)
 
+    @override
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set the preset mode of the fan.
 

@@ -1,7 +1,7 @@
 """Switch platform for the HEMS Echonet Lite integration."""
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, override
 
 from pyhems import EntityDefinition
 
@@ -31,6 +31,7 @@ class EchonetLiteSwitchEntityDescription(
     prop: BinaryProp
 
     @classmethod
+    @override
     def build_from_entity_def(
         cls, entity_def: EntityDefinition
     ) -> EchonetLiteSwitchEntityDescription:
@@ -53,7 +54,13 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite switches from a config entry."""
-    setup_common_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteSwitch)
+    setup_common_platform(
+        entry,
+        async_add_entities,
+        Platform.SWITCH.value,
+        _DESCRIPTIONS,
+        EchonetLiteSwitch,
+    )
 
 
 class EchonetLiteSwitch(
@@ -62,14 +69,17 @@ class EchonetLiteSwitch(
     """Representation of a writable ECHONET Lite property."""
 
     @property
+    @override
     def is_on(self) -> bool | None:
         """Return the decoded boolean value stored in the coordinator."""
         return self.description.prop.get(self._node)
 
+    @override
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Send the On command via the pyhems runtime client."""
         await self._async_send_prop(self.description.prop, True)
 
+    @override
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Send the Off command via the pyhems runtime client."""
         await self._async_send_prop(self.description.prop, False)

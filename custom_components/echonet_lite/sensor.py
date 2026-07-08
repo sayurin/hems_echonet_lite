@@ -1,6 +1,7 @@
 """Sensor platform for the HEMS Echonet Lite integration."""
 
 from dataclasses import dataclass
+from typing import override
 
 from pyhems import EntityDefinition, EnumCodec, get_codec
 
@@ -58,6 +59,7 @@ class EchonetLiteSensorEntityDescription(
     prop: EnumProp | NumericProp
 
     @classmethod
+    @override
     def build_from_entity_def(
         cls, entity_def: EntityDefinition
     ) -> EchonetLiteSensorEntityDescription:
@@ -97,7 +99,13 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite sensors from a config entry."""
-    setup_common_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteSensor)
+    setup_common_platform(
+        entry,
+        async_add_entities,
+        Platform.SENSOR.value,
+        _DESCRIPTIONS,
+        EchonetLiteSensor,
+    )
 
 
 class EchonetLiteSensor(
@@ -106,6 +114,7 @@ class EchonetLiteSensor(
     """Representation of an ECHONET Lite sensor property."""
 
     @property
+    @override
     def native_value(self) -> float | int | str | None:
         """Return the state of the sensor."""
         return self.description.prop.get(self._node)

@@ -1,6 +1,7 @@
 """Select platform for the HEMS Echonet Lite integration."""
 
 from dataclasses import dataclass
+from typing import override
 
 from pyhems import (
     INSTALLATION_LOCATIONS,
@@ -48,6 +49,7 @@ class EchonetLiteSelectEntityDescription(
     prop: EnumProp
 
     @classmethod
+    @override
     def build_from_entity_def(
         cls, entity_def: EntityDefinition
     ) -> EchonetLiteSelectEntityDescription:
@@ -70,10 +72,18 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up ECHONET Lite select entities from a config entry."""
-    setup_common_platform(entry, async_add_entities, _DESCRIPTIONS, EchonetLiteSelect)
+    setup_common_platform(
+        entry,
+        async_add_entities,
+        Platform.SELECT.value,
+        _DESCRIPTIONS,
+        EchonetLiteSelect,
+    )
+
     setup_echonet_lite_device_platform(
         entry,
         async_add_entities,
+        platform_domain=Platform.SELECT.value,
         entity_factory=_build_installation_location_entities,
     )
 
@@ -94,6 +104,7 @@ class EchonetLiteSelect(
         self._attr_options = description.prop.options
 
     @property
+    @override
     def current_option(self) -> str | None:
         """Return the currently selected option or None if unset.
 
@@ -101,6 +112,7 @@ class EchonetLiteSelect(
         """
         return self.description.prop.get(self._node)
 
+    @override
     async def async_select_option(self, option: str) -> None:
         """Select the given option by sending the corresponding payload."""
         try:
@@ -179,8 +191,10 @@ class InstallationLocationCodeSelect(EchonetLiteEntity, SelectEntity):
         """Initialize."""
         super().__init__(coordinator, node)
         self._attr_unique_id = f"{node.device_key}_81_code"
+        self._subscribed_epcs = frozenset({EPC_INSTALLATION_LOCATION})
 
     @property
+    @override
     def current_option(self) -> str | None:
         """Return the currently selected location code option."""
         raw = self._node.properties.get(EPC_INSTALLATION_LOCATION)
@@ -192,6 +206,7 @@ class InstallationLocationCodeSelect(EchonetLiteEntity, SelectEntity):
         llll, _ = fields
         return _LOCATION_CODE_TO_KEY.get(llll)
 
+    @override
     async def async_select_option(self, option: str) -> None:
         """Send updated location code while preserving the current NNN."""
         new_llll = _LOCATION_KEY_TO_CODE[option]
@@ -224,8 +239,10 @@ class InstallationLocationNumberSelect(EchonetLiteEntity, SelectEntity):
         """Initialize."""
         super().__init__(coordinator, node)
         self._attr_unique_id = f"{node.device_key}_81_number"
+        self._subscribed_epcs = frozenset({EPC_INSTALLATION_LOCATION})
 
     @property
+    @override
     def available(self) -> bool:
         """Return True only when a location code (LLLL≠0) is set.
 
@@ -238,6 +255,7 @@ class InstallationLocationNumberSelect(EchonetLiteEntity, SelectEntity):
         return fields is not None and fields[0] != 0
 
     @property
+    @override
     def current_option(self) -> str | None:
         """Return the current location number as a string."""
         fields = _decode_location_fields(self._node)
@@ -246,6 +264,7 @@ class InstallationLocationNumberSelect(EchonetLiteEntity, SelectEntity):
         _, nnn = fields
         return str(nnn)
 
+    @override
     async def async_select_option(self, option: str) -> None:
         """Send updated location number while preserving the current LLLL."""
         fields = _decode_location_fields(self._node)

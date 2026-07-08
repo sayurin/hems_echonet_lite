@@ -326,6 +326,7 @@ class EchonetLiteRuntimeData:
 
     controller: RuntimeController
     property_poller: PropertyPoller
+    device_manager: DeviceManager
     # Per-node ``DeviceInfo`` cache keyed by ``node.device_key``. Built once
     # on first entity instantiation for a node and shared by every entity
     # platform bound to that node.
