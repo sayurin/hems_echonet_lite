@@ -11,7 +11,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import Platform
+from homeassistant.const import DEGREE, Platform, UnitOfEnergy, UnitOfVolume
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
@@ -27,26 +27,46 @@ from .runtime import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 0
 
+_NO_STATE_CLASS_NAME_KEYWORDS = ("capacity", "rated", "number of effective digits")
+_MEASUREMENT_NAME_KEYWORDS = ("maximum electric power demand",)
+_TOTAL_STATE_CLASS_UNIT_NAME_KEYWORDS: tuple[tuple[str, str], ...] = (
+    (UnitOfEnergy.WATT_HOUR, "electric energy"),
+    (UnitOfEnergy.KILO_WATT_HOUR, "electric energy"),
+    (UnitOfEnergy.MEGA_JOULE, "electric energy"),
+    (UnitOfEnergy.WATT_HOUR, "heating value"),
+    (UnitOfEnergy.KILO_WATT_HOUR, "heating value"),
+    (UnitOfEnergy.MEGA_JOULE, "heating value"),
+    (UnitOfVolume.CUBIC_METERS, "gas consumption"),
+    (UnitOfVolume.CUBIC_METERS, "water consumption"),
+    (UnitOfVolume.CUBIC_METERS, "flowing water"),
+)
 
-def _infer_device_class(
+
+def _infer_state_class(
     entity_def: EntityDefinition,
-) -> SensorDeviceClass | None:
-    """Infer the sensor device class from MRA unit and entity name."""
-    return infer_device_classes(entity_def)[0]
-
-
-def _infer_state_class(entity_def: EntityDefinition) -> SensorStateClass:
-    """Infer state class from entity name.
+    native_unit_of_measurement: str | None,
+) -> SensorStateClass | None:
+    """Infer sensor state class.
 
     Args:
         entity_def: Entity definition with name.
+        native_unit_of_measurement: Native unit after mapping MRA units to HA units.
 
     Returns:
-        SensorStateClass (measurement or total_increasing).
+        Inferred state class.
     """
     name_lower = entity_def.name_en.lower()
+    if any(keyword in name_lower for keyword in _NO_STATE_CLASS_NAME_KEYWORDS):
+        return None
+    if any(keyword in name_lower for keyword in _MEASUREMENT_NAME_KEYWORDS):
+        return SensorStateClass.MEASUREMENT
+    if native_unit_of_measurement == DEGREE:
+        return SensorStateClass.MEASUREMENT_ANGLE
     if "cumulative" in name_lower:
         return SensorStateClass.TOTAL_INCREASING
+    for unit, keyword in _TOTAL_STATE_CLASS_UNIT_NAME_KEYWORDS:
+        if native_unit_of_measurement == unit and keyword in name_lower:
+            return SensorStateClass.TOTAL
     return SensorStateClass.MEASUREMENT
 
 
@@ -78,11 +98,13 @@ class EchonetLiteSensorEntityDescription(
             )
 
         # Numeric sensor
+        native_unit_of_measurement = infer_ha_unit(entity_def)
+        state_class = _infer_state_class(entity_def, native_unit_of_measurement)
         return cls(
             key=f"{entity_def.epc:02x}_{entity_def.byte_offset}",
-            device_class=_infer_device_class(entity_def),
-            native_unit_of_measurement=infer_ha_unit(entity_def),
-            state_class=_infer_state_class(entity_def),
+            device_class=infer_device_classes(entity_def)[0],
+            native_unit_of_measurement=native_unit_of_measurement,
+            state_class=state_class,
             prop=NumericProp.from_entity_def(entity_def),
             **cls._common_kwargs(entity_def),
         )
