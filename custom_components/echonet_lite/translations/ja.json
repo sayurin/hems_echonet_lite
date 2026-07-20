@@ -2025,13 +2025,13 @@
           "cleaning": "掃除（フィルタ等）",
           "fault": "異常あり",
           "no_fault": "異常なし",
-          "recover_operation_no_reuired": "復帰操作不要",
+          "recover_operation_no_required": "復帰操作不要",
           "repair_location_unkown": "修理箇所不明",
           "reset_button": "リセットボタンを押し再操作",
           "set_incorrectly": "セット不良",
           "supply": "補給",
           "trun_off_or_unplug": "スイッチを切る/コンセントを抜き再操作",
-          "user_definable": "ユーザ定義領域"
+          "user_definable1": "ユーザ定義領域1"
         }
       },
       "class_0011_epc_e0": {
@@ -2827,6 +2827,15 @@
       "class_02a6_epc_e2": {
         "name": "タンク容量値"
       },
+      "class_02a7_epc_ca": {
+        "name": "時刻同期状態",
+        "state": {
+          "fail": "時刻同期失敗",
+          "no_synch": "時刻同期なし",
+          "not_implemented": "時刻同期機能未搭載",
+          "success": "時刻同期成功"
+        }
+      },
       "class_02a7_epc_d0": {
         "name": "送受信可能周期"
       },
@@ -3383,6 +3392,20 @@
         "state": {
           "off": "受電点",
           "on": "機器点"
+        }
+      },
+      "class_02a7_epc_c8": {
+        "name": "周波数制御優先設定",
+        "state": {
+          "off": "OFF",
+          "on": "ON"
+        }
+      },
+      "class_02a7_epc_cc": {
+        "name": "瞬時電力計測値履歴蓄積設定",
+        "state": {
+          "off": "OFF",
+          "on": "ON"
         }
       },
       "class_03b7_epc_a8": {

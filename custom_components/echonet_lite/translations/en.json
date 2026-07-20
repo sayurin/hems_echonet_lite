@@ -89,6 +89,7 @@
         "night_lighting": "Night lighting",
         "no_lighting": "No lighting",
         "no_setting": "No setting",
+        "no_time_synchronization": "No time synchronization",
         "node_unit": "Node unit",
         "non_auto": "Non-auto",
         "non_automatic": "Non-automatic",
@@ -152,6 +153,10 @@
         "tank_capacity": "Tank capacity",
         "test": "Test",
         "time_based_reservation_function_is_on": "Time-based reservation function is ON.",
+        "time_synchronization_failed": "Time synchronization failed",
+        "time_synchronization_function_not_implemented": "Time synchronization function not implemented",
+        "time_synchronization_status": "Time synchronization status",
+        "time_synchronization_successful": "Time synchronization successful",
         "timer_1": "Timer 1",
         "timer_2": "Timer 2",
         "timer_operation_setting": "Timer operation setting",
@@ -2196,13 +2201,13 @@
                     "cleaning": "Cleaning (filters, etc.)",
                     "fault": "Fault",
                     "no_fault": "No fault",
-                    "recover_operation_no_reuired": "Recover operation no required",
+                    "recover_operation_no_required": "Recover operation no required",
                     "repair_location_unkown": "Repair location unknown",
                     "reset_button": "Faults that can be recovered from by pressing the reset button.",
                     "set_incorrectly": "Device set incorrectly",
                     "supply": "Supply",
                     "trun_off_or_unplug": "Faults that can be recovered from by turn off the power or unplug and reoperate.",
-                    "user_definable": "User-definable domain"
+                    "user_definable1": "User-definable domain 1"
                 }
             },
             "class_0011_epc_e0": {
@@ -2878,10 +2883,10 @@
             "class_028e_epc_db": {
                 "name": "Time synchronization status",
                 "state": {
-                    "fail": "time synchronization failed",
-                    "no_sync": "no time synchronization",
-                    "not_implemented": "time synchronization function not implemented",
-                    "success": "time synchronization successful"
+                    "fail": "Time synchronization failed",
+                    "no_sync": "No time synchronization",
+                    "not_implemented": "Time synchronization function not implemented",
+                    "success": "Time synchronization successful"
                 }
             },
             "class_028e_epc_e0": {
@@ -2997,6 +3002,15 @@
             },
             "class_02a6_epc_e2": {
                 "name": "Tank capacity"
+            },
+            "class_02a7_epc_ca": {
+                "name": "Time synchronization status",
+                "state": {
+                    "fail": "Time synchronization failed",
+                    "no_synch": "No time synchronization",
+                    "not_implemented": "Time synchronization function not implemented",
+                    "success": "Time synchronization successful"
+                }
             },
             "class_02a7_epc_d0": {
                 "name": "Transmittable/receivable cycle"
@@ -3554,6 +3568,20 @@
                 "state": {
                     "off": "Power receiving point",
                     "on": "Device point"
+                }
+            },
+            "class_02a7_epc_c8": {
+                "name": "Frequency regulation priority setting",
+                "state": {
+                    "off": "Off",
+                    "on": "On"
+                }
+            },
+            "class_02a7_epc_cc": {
+                "name": "Instantaneous power measurement value history storage setting",
+                "state": {
+                    "off": "Off",
+                    "on": "On"
                 }
             },
             "class_03b7_epc_a8": {
