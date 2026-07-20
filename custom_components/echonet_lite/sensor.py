@@ -1,6 +1,7 @@
 """Sensor platform for the HEMS Echonet Lite integration."""
 
 from dataclasses import dataclass
+import re
 from typing import override
 
 from pyhems import EntityDefinition, EnumCodec, get_codec
@@ -42,6 +43,11 @@ _TOTAL_STATE_CLASS_UNIT_NAME_KEYWORDS: tuple[tuple[str, str], ...] = (
 )
 
 
+def _contains_keyword(name_lower: str, keyword: str) -> bool:
+    """Return True if ``keyword`` appears as a whole word/phrase in ``name_lower``."""
+    return re.search(rf"\b{re.escape(keyword)}\b", name_lower) is not None
+
+
 def _infer_state_class(
     entity_def: EntityDefinition,
     native_unit_of_measurement: str | None,
@@ -56,16 +62,23 @@ def _infer_state_class(
         Inferred state class.
     """
     name_lower = entity_def.name_en.lower()
-    if any(keyword in name_lower for keyword in _NO_STATE_CLASS_NAME_KEYWORDS):
+    if any(
+        _contains_keyword(name_lower, keyword)
+        for keyword in _NO_STATE_CLASS_NAME_KEYWORDS
+    ):
         return None
-    if any(keyword in name_lower for keyword in _MEASUREMENT_NAME_KEYWORDS):
+    if any(
+        _contains_keyword(name_lower, keyword) for keyword in _MEASUREMENT_NAME_KEYWORDS
+    ):
         return SensorStateClass.MEASUREMENT
     if native_unit_of_measurement == DEGREE:
         return SensorStateClass.MEASUREMENT_ANGLE
-    if "cumulative" in name_lower:
+    if _contains_keyword(name_lower, "cumulative"):
         return SensorStateClass.TOTAL_INCREASING
     for unit, keyword in _TOTAL_STATE_CLASS_UNIT_NAME_KEYWORDS:
-        if native_unit_of_measurement == unit and keyword in name_lower:
+        if native_unit_of_measurement == unit and _contains_keyword(
+            name_lower, keyword
+        ):
             return SensorStateClass.TOTAL
     return SensorStateClass.MEASUREMENT
 
