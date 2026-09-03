@@ -2262,12 +2262,11 @@
       "class_0f01_epc_b0_000006": {
         "name": "運転モード設定",
         "state": {
-          "auto": "自動",
           "circulation": "送風",
           "cooling": "冷房",
-          "dehumidification": "除湿",
-          "heating": "暖房",
-          "other": "その他"
+          "dehumidification": "除湿強",
+          "dehumidification_low": "除湿弱",
+          "heating": "暖房"
         }
       },
       "class_0f01_epc_c2_000006": {
