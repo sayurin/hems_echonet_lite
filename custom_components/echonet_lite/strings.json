@@ -2458,12 +2458,11 @@
       "class_0f01_epc_b0_000006": {
         "name": "[%key:component::echonet_lite::common::operation_mode_setting%]",
         "state": {
-          "auto": "[%key:common::state::auto%]",
           "circulation": "[%key:component::echonet_lite::common::air_circulation%]",
           "cooling": "[%key:component::echonet_lite::common::cooling%]",
-          "dehumidification": "[%key:component::echonet_lite::common::dehumidification%]",
-          "heating": "[%key:component::echonet_lite::common::heating%]",
-          "other": "[%key:component::echonet_lite::common::other%]"
+          "dehumidification": "Dehumidify (High)",
+          "dehumidification_low": "Dehumidify (Low)",
+          "heating": "[%key:component::echonet_lite::common::heating%]"
         }
       },
       "class_0f01_epc_c2_000006": {
