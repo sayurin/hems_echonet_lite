@@ -7,13 +7,10 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 import logging
 import time
-from typing import Any
 
 from pyhems import (
     HemsClient,
     HemsErrorEvent,
-    HemsFrameEvent,
-    HemsInstanceListEvent,
     PropertyPoller,
     RuntimeEvent,
 )
@@ -28,7 +25,6 @@ from .const import DOMAIN, ISSUE_RUNTIME_CLIENT_ERROR, ISSUE_RUNTIME_INACTIVE
 from .coordinator import EchonetLiteCoordinator
 
 _LOGGER = logging.getLogger(__name__)
-_INITIAL_DISCOVERY_TIMEOUT = 30.0
 
 
 @dataclass(slots=True)
@@ -174,8 +170,7 @@ class RuntimeController:
     ``health``), so a separate wrapper dataclass would only add a level of
     indirection without owning any state of its own.
 
-    Encapsulates the restart lock, event queue, event consumer task,
-    discovery task and the adaptive property poller so that
+    Encapsulates the restart lock and adaptive property poller so that
     ``async_setup_entry``/``async_unload_entry`` can stay focused on
     dependency wiring: :meth:`async_start` and :meth:`async_stop` are the
     single symmetric entry points for starting and tearing down everything
@@ -202,23 +197,21 @@ class RuntimeController:
         self.issue_monitor = issue_monitor
         self.health = health
         self._restart_lock = asyncio.Lock()
-        self._event_queue: asyncio.Queue[RuntimeEvent] = asyncio.Queue()
-        self._initial_discovery_complete = asyncio.Event()
-        self._periodic_discovery_started = False
+        self._error_tasks: set[asyncio.Task[None]] = set()
         # Populated by ``async_start``; safe to access directly from
         # ``async_setup_entry`` because callers only read these after
         # ``async_start`` has completed without raising.
         self.unsubscribe_runtime: Callable[[], None] = lambda: None
-        self.discovery_task: asyncio.Task[Any]
-        self.event_consumer_task: asyncio.Task[None]
 
     async def async_start(self) -> None:
         """Subscribe, start the client and spawn background tasks."""
+        await self.coordinator.device_manager.async_start()
         unsubscribe = self.client.subscribe(self._handle_runtime_event)
         try:
             await self.client.start()
         except OSError as err:
             unsubscribe()
+            await self.coordinator.device_manager.async_stop()
             raise ConfigEntryNotReady(
                 translation_domain=DOMAIN,
                 translation_key="runtime_start_failed",
@@ -235,16 +228,6 @@ class RuntimeController:
         # still trips the threshold.
         self.issue_monitor.start()
 
-        self.event_consumer_task = self._entry.async_create_background_task(
-            self._hass,
-            self._consume_runtime_events(),
-            name="echonet_lite_event_consumer",
-        )
-        self.discovery_task = self._entry.async_create_background_task(
-            self._hass,
-            self._run_initial_discovery(),
-            name="echonet_lite_discovery",
-        )
         self.property_poller.start()
 
     async def async_stop(self) -> None:
@@ -258,97 +241,36 @@ class RuntimeController:
         self.unsubscribe_runtime()
         self.issue_monitor.stop()
         self.property_poller.stop()
-        self.discovery_task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await self.discovery_task
-        self.event_consumer_task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await self.event_consumer_task
+        for task in tuple(self._error_tasks):
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
+        self._error_tasks.clear()
+        await self.coordinator.device_manager.async_stop()
         await self.client.stop()
 
-    async def _run_initial_discovery(self) -> None:
-        """Run the initial probe and start recurring discovery."""
-        if not self.client.probe_initial_nodes():
-            _LOGGER.warning("Initial ECHONET Lite node discovery could not be sent")
-            self._start_periodic_discovery()
-            return
-
-        try:
-            await asyncio.wait_for(
-                self._initial_discovery_complete.wait(),
-                timeout=_INITIAL_DISCOVERY_TIMEOUT,
-            )
-        except TimeoutError:
-            _LOGGER.debug(
-                "No ECHONET Lite node registration received during initial discovery"
-            )
-
-        self._start_periodic_discovery()
-
-    def _start_periodic_discovery(self) -> None:
-        """Start recurring discovery once for the current client lifecycle."""
-        if self._periodic_discovery_started:
-            return
-        self._periodic_discovery_started = True
-        self.client.start_periodic_discovery()
-
-    @callback
     def _handle_runtime_event(self, event: RuntimeEvent) -> None:
-        """Enqueue runtime events for the single consumer task.
+        """Schedule handling for runtime errors."""
+        if not isinstance(event, HemsErrorEvent):
+            return
+        task = self._entry.async_create_background_task(
+            self._hass,
+            self._async_handle_runtime_error(event),
+            name="echonet_lite_runtime_error",
+        )
+        self._error_tasks.add(task)
+        task.add_done_callback(self._error_tasks.discard)
 
-        Kept synchronous and non-blocking so that pyhems' receiver loop
-        continues immediately.
-        """
-        self._event_queue.put_nowait(event)
-
-    async def _consume_runtime_events(self) -> None:
-        """Serialize runtime event processing.
-
-        Using a single consumer preserves the arrival order of
-        ``HemsInstanceListEvent`` (device registration) and
-        ``HemsFrameEvent`` (property updates) so that frames for a newly
-        announced device are never applied before the device itself is
-        registered in ``DeviceManager``.
-        """
-        while True:
-            event = await self._event_queue.get()
-            try:
-                if isinstance(event, HemsFrameEvent):
-                    self.coordinator.process_frame_event(event)
-                    self.issue_monitor.record_activity(event.received_at)
-                elif isinstance(event, HemsInstanceListEvent):
-                    _LOGGER.debug(
-                        "Runtime event: HemsInstanceListEvent from %s with %d instances",
-                        event.node_id,
-                        len(event.instances),
-                    )
-                    await self.coordinator.async_process_instance_list_event(event)
-                    self.issue_monitor.record_activity(event.received_at)
-                    self._initial_discovery_complete.set()
-                    self._start_periodic_discovery()
-                elif isinstance(event, HemsErrorEvent):
-                    self.health.last_client_error = str(event.error)
-                    self.health.last_client_error_at = event.received_at
-                    _LOGGER.warning(
-                        "ECHONET Lite runtime client encountered an error: %s",
-                        event.error,
-                    )
-                    self.issue_monitor.record_client_error(str(event.error))
-                    await self._async_restart_runtime()
-            # Python 3.14+ multi-except syntax (PEP 758): a parenthesis-less
-            # tuple of exception classes. Equivalent to ``except (A, B, C):``
-            # on older versions.
-            except OSError, LookupError, TypeError, ValueError:
-                # Narrow to the fault classes realistic for frame parsing
-                # and dispatch (I/O, missing keys, malformed payloads).
-                # Programmer errors (RuntimeError, AssertionError, ...) are
-                # intentionally allowed to propagate so the task fails
-                # loudly instead of silently swallowing bugs.
-                _LOGGER.exception(
-                    "Failed to process ECHONET Lite runtime event: %r", event
-                )
-            finally:
-                self._event_queue.task_done()
+    async def _async_handle_runtime_error(self, event: HemsErrorEvent) -> None:
+        """Handle a runtime error and restart the client."""
+        self.health.last_client_error = str(event.error)
+        self.health.last_client_error_at = event.received_at
+        _LOGGER.warning(
+            "ECHONET Lite runtime client encountered an error: %s",
+            event.error,
+        )
+        self.issue_monitor.record_client_error(str(event.error))
+        await self._async_restart_runtime()
 
     async def _async_restart_runtime(self) -> None:
         """Restart the pyhems runtime client, debouncing concurrent callers."""
@@ -363,7 +285,6 @@ class RuntimeController:
                 RuntimeError,
             ) as err:  # pragma: no cover - best effort cleanup
                 _LOGGER.debug("Failed to stop ECHONET Lite runtime client: %s", err)
-            self._periodic_discovery_started = False
             try:
                 await self.client.start()
             except OSError as err:
@@ -372,10 +293,6 @@ class RuntimeController:
                 self.health.last_client_error_at = time.monotonic()
                 self.issue_monitor.record_client_error(str(err))
                 return
-            if self._initial_discovery_complete.is_set():
-                self._start_periodic_discovery()
-            else:
-                self.client.probe_initial_nodes()
             self.health.last_restart_at = time.monotonic()
             self.issue_monitor.clear_client_error()
             # Treat a successful restart as activity so the inactivity issue
@@ -387,9 +304,8 @@ class RuntimeController:
             # DeviceManager retains its ``data`` across client stop/start,
             # so clearing the coordinator here would make those entities
             # disappear silently until each device is re-announced.
-            # A shallow copy is sufficient: ``NodeState`` values are owned
-            # by ``DeviceManager`` and only mutated from the single event
-            # consumer task, so concurrent readers see a consistent snapshot.
+            # A shallow copy is sufficient because NodeState values are owned
+            # by DeviceManager and only mutated by its event consumer.
             self.coordinator.async_set_updated_data(
                 dict(self.coordinator.device_manager.data)
             )
