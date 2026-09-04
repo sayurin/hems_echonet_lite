@@ -220,6 +220,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
         threshold=RUNTIME_MONITOR_MAX_SILENCE.total_seconds(),
         interval=RUNTIME_MONITOR_INTERVAL,
     )
+    device_manager.on_runtime_activity(issue_monitor.record_activity)
 
     property_poller = PropertyPoller(
         device_manager,

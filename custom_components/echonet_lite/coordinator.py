@@ -3,7 +3,7 @@
 import logging
 from typing import TYPE_CHECKING
 
-from pyhems import DeviceManager, HemsFrameEvent, HemsInstanceListEvent, NodeState
+from pyhems import DeviceManager, NodeState
 
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -91,17 +91,3 @@ class EchonetLiteCoordinator(DataUpdateCoordinator[dict[str, NodeState]]):
     def record_runtime_activity(self, timestamp: float) -> None:
         """Record the timestamp of the latest runtime activity."""
         self._health.last_runtime_activity_at = timestamp
-
-    def process_frame_event(self, event: HemsFrameEvent) -> None:
-        """Process a frame event via DeviceManager and notify listeners if updated."""
-        self.device_manager.process_frame_event(event)
-
-    async def async_process_instance_list_event(
-        self, event: HemsInstanceListEvent
-    ) -> None:
-        """Process an instance list event via DeviceManager.
-
-        New devices are set up by DeviceManager. The on_device_added callback
-        (registered in __init__.py) handles notifying HA listeners.
-        """
-        await self.device_manager.process_instance_list_event(event)

@@ -182,8 +182,9 @@ async def async_get_config_entry_diagnostics(
                 "restart_attempts": health.restart_attempts,
             },
             "tasks": {
-                "discovery_task_done": controller.discovery_task.done(),
-                "event_consumer_task_done": controller.event_consumer_task.done(),
+                "event_consumer_task_done": (
+                    coordinator.device_manager.event_consumer_task_done
+                ),
             },
         },
         "devices": devices,
