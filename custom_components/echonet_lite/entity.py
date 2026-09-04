@@ -214,7 +214,7 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
             return True
         return time.monotonic() - last_activity_at < self._runtime_silence_threshold
 
-    async def _async_send_property(self, epc: int, value: bytes) -> None:
+    def _send_property(self, epc: int, value: bytes) -> None:
         """Send a SetC request for a single EPC/value pair.
 
         Args:
@@ -224,9 +224,9 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
         Raises:
             HomeAssistantError: If the EPC is not writable by the device.
         """
-        await self._async_send_properties(properties=[Property(epc=epc, edt=value)])
+        self._send_properties(properties=[Property(epc=epc, edt=value)])
 
-    async def _async_send_properties(self, properties: list[Property]) -> None:
+    def _send_properties(self, properties: list[Property]) -> None:
         """Send a SetC request for multiple EPC/value pairs.
 
         Args:
@@ -247,7 +247,7 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
                 translation_placeholders={"epc_list": hex_list},
             )
         controller = self.coordinator.config_entry.runtime_data
-        sent = await controller.client.set_properties(
+        sent = controller.client.set_properties(
             node_id=node.node_id,
             deoj=node.eoj,
             properties=properties,
@@ -262,13 +262,13 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
         # updated device state sooner.
         controller.property_poller.schedule_immediate_poll(node.device_key)
 
-    async def _async_send_prop[ValueT](self, prop: Prop[ValueT], value: ValueT) -> None:
+    def _send_prop[ValueT](self, prop: Prop[ValueT], value: ValueT) -> None:
         """Encode value via prop and send as a SetC request for this EPC.
 
         Raises:
             HomeAssistantError: If the EPC is not writable by the device.
         """
-        await self._async_send_properties([prop.make_property(value)])
+        self._send_properties([prop.make_property(value)])
 
 
 @dataclass(frozen=True, kw_only=True)

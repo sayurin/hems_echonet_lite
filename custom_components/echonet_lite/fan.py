@@ -191,7 +191,7 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
 
         # Turn off the fan if percentage is explicitly set to 0
         if percentage == 0:
-            await self._async_send_prop(self.entity_description.op_status, False)
+            self._send_prop(self.entity_description.op_status, False)
             return
 
         properties: list[Property] = [
@@ -212,12 +212,12 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
                     )
                 )
 
-        await self._async_send_properties(properties)
+        self._send_properties(properties)
 
     @override
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the fan."""
-        await self._async_send_prop(self.entity_description.op_status, False)
+        self._send_prop(self.entity_description.op_status, False)
 
     @override
     async def async_set_percentage(self, percentage: int) -> None:
@@ -230,7 +230,7 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         is treated as OFF per HA convention.
         """
         if percentage == 0:
-            await self._async_send_prop(self.entity_description.op_status, False)
+            self._send_prop(self.entity_description.op_status, False)
             return
         if EPC_AIR_FLOW_LEVEL not in self._node.set_epcs:
             return
@@ -239,7 +239,7 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
             properties.append(self.entity_description.op_status.make_property(True))
         key = percentage_to_ordered_list_item(_SPEED_LEVELS, percentage)
         properties.append(self.entity_description.air_flow_prop.make_property(key))
-        await self._async_send_properties(properties)
+        self._send_properties(properties)
 
     @override
     async def async_set_preset_mode(self, preset_mode: str) -> None:
@@ -264,7 +264,7 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
             properties.append(
                 self.entity_description.air_flow_prop.make_property(PRESET_MODE_AUTO)
             )
-            await self._async_send_properties(properties)
+            self._send_properties(properties)
             return
 
         # preset_mode == PRESET_MODE_MANUAL
@@ -276,4 +276,4 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
                 translation_key="epc_not_writable",
                 translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
             )
-        await self._async_send_prop(self.entity_description.op_status, True)
+        self._send_prop(self.entity_description.op_status, True)

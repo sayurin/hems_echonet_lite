@@ -268,7 +268,7 @@ class RuntimeController:
 
     async def _run_initial_discovery(self) -> None:
         """Run the initial probe and start recurring discovery."""
-        if not await self.client.probe_initial_nodes():
+        if not self.client.probe_initial_nodes():
             _LOGGER.warning("Initial ECHONET Lite node discovery could not be sent")
             self._start_periodic_discovery()
             return
@@ -314,7 +314,7 @@ class RuntimeController:
             event = await self._event_queue.get()
             try:
                 if isinstance(event, HemsFrameEvent):
-                    await self.coordinator.async_process_frame_event(event)
+                    self.coordinator.process_frame_event(event)
                     self.issue_monitor.record_activity(event.received_at)
                 elif isinstance(event, HemsInstanceListEvent):
                     _LOGGER.debug(
@@ -375,7 +375,7 @@ class RuntimeController:
             if self._initial_discovery_complete.is_set():
                 self._start_periodic_discovery()
             else:
-                await self.client.probe_initial_nodes()
+                self.client.probe_initial_nodes()
             self.health.last_restart_at = time.monotonic()
             self.issue_monitor.clear_client_error()
             # Treat a successful restart as activity so the inactivity issue

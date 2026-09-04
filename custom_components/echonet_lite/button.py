@@ -87,4 +87,4 @@ class EchonetLiteButton(
     @override
     async def async_press(self) -> None:
         """Send the button press command via the pyhems runtime client."""
-        await self._async_send_prop(self.description.prop, self.description.press_value)
+        self._send_prop(self.description.prop, self.description.press_value)

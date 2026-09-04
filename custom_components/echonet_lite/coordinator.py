@@ -92,7 +92,7 @@ class EchonetLiteCoordinator(DataUpdateCoordinator[dict[str, NodeState]]):
         """Record the timestamp of the latest runtime activity."""
         self._health.last_runtime_activity_at = timestamp
 
-    async def async_process_frame_event(self, event: HemsFrameEvent) -> None:
+    def process_frame_event(self, event: HemsFrameEvent) -> None:
         """Process a frame event via DeviceManager and notify listeners if updated."""
         self.device_manager.process_frame_event(event)
 
