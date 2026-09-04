@@ -190,7 +190,7 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
                 translation_key="epc_not_writable",
                 translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
             )
-        await self._async_send_prop(self.entity_description.op_status, True)
+        self._send_prop(self.entity_description.op_status, True)
 
     @override
     async def async_turn_off(self, **kwargs: Any) -> None:
@@ -201,7 +201,7 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
                 translation_key="epc_not_writable",
                 translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
             )
-        await self._async_send_prop(self.entity_description.op_status, False)
+        self._send_prop(self.entity_description.op_status, False)
 
     @override
     async def async_set_operation_mode(self, operation_mode: str) -> None:
@@ -224,7 +224,7 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
         properties = [self.entity_description.op_mode.make_property(operation_mode)]
         if EPC_OPERATION_STATUS in self._node.set_epcs:
             properties.append(self.entity_description.op_status.make_property(True))
-        await self._async_send_properties(properties)
+        self._send_properties(properties)
 
     @override
     async def async_set_temperature(self, **kwargs: Any) -> None:
@@ -244,4 +244,4 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
             )
         temperature = float(kwargs[ATTR_TEMPERATURE])
         clamped = min(max(temperature, self._attr_min_temp), self._attr_max_temp)
-        await self._async_send_prop(self.entity_description.target_temp_prop, clamped)
+        self._send_prop(self.entity_description.target_temp_prop, clamped)

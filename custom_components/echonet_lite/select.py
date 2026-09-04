@@ -120,7 +120,7 @@ class EchonetLiteSelect(
     async def async_select_option(self, option: str) -> None:
         """Select the given option by sending the corresponding payload."""
         try:
-            await self._async_send_prop(self.description.prop, option)
+            self._send_prop(self.description.prop, option)
         except ValueError as err:
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
@@ -218,14 +218,14 @@ class InstallationLocationCodeSelect(EchonetLiteEntity, SelectEntity):
             if new_llll == 0:
                 # "unset" selected — write 0x00; forcing NNN=0 avoids generating
                 # the prohibited 0x01-0x07 range (17-byte format indicators).
-                await self._async_send_property(EPC_INSTALLATION_LOCATION, b"\x00")
+                self._send_property(EPC_INSTALLATION_LOCATION, b"\x00")
                 return
             fields = _decode_location_fields(self._node)
             nnn = fields[1] if fields is not None else 0
             edt = InstallationLocationCodec().encode(
                 InstallationLocation.from_code(new_llll, nnn)
             )
-            await self._async_send_property(EPC_INSTALLATION_LOCATION, edt)
+            self._send_property(EPC_INSTALLATION_LOCATION, edt)
 
 
 class InstallationLocationNumberSelect(EchonetLiteEntity, SelectEntity):
@@ -284,4 +284,4 @@ class InstallationLocationNumberSelect(EchonetLiteEntity, SelectEntity):
             edt = InstallationLocationCodec().encode(
                 InstallationLocation.from_code(llll, new_nnn)
             )
-            await self._async_send_property(EPC_INSTALLATION_LOCATION, edt)
+            self._send_property(EPC_INSTALLATION_LOCATION, edt)

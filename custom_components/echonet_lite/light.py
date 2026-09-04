@@ -227,20 +227,18 @@ class EchonetLiteLight(EchonetLiteEntity, LightEntity):
         """Turn the light on, applying any brightness/color/effect overrides."""
         # Always send the power-on command first so subsequent setters apply
         # to an already-powered device.
-        await self._async_send_prop(self.entity_description.op_status, True)
+        self._send_prop(self.entity_description.op_status, True)
         if (
             self._supports_brightness
             and (brightness := kwargs.get(ATTR_BRIGHTNESS)) is not None
         ):
             pct = _brightness_ha_to_pct(int(brightness))
-            await self._async_send_prop(
-                self.entity_description.brightness_prop, float(pct)
-            )
+            self._send_prop(self.entity_description.brightness_prop, float(pct))
         if (
             self._supports_color_temp
             and (kelvin := kwargs.get(ATTR_COLOR_TEMP_KELVIN)) is not None
         ):
-            await self._async_send_prop(
+            self._send_prop(
                 self.entity_description.color_prop,  # type: ignore[arg-type]
                 _closest_kelvin_key(int(kelvin)),
             )
@@ -249,7 +247,7 @@ class EchonetLiteLight(EchonetLiteEntity, LightEntity):
             and (effect := kwargs.get(ATTR_EFFECT)) is not None
             and effect in self.entity_description.mode_prop.options  # type: ignore[union-attr]
         ):
-            await self._async_send_prop(
+            self._send_prop(
                 self.entity_description.mode_prop,  # type: ignore[arg-type]
                 effect,
             )
@@ -257,4 +255,4 @@ class EchonetLiteLight(EchonetLiteEntity, LightEntity):
     @override
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the light off via the operation status codec."""
-        await self._async_send_prop(self.entity_description.op_status, False)
+        self._send_prop(self.entity_description.op_status, False)

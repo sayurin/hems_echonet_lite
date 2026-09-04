@@ -183,38 +183,36 @@ class EchonetLiteCover(EchonetLiteEntity, CoverEntity):
     @override
     async def async_open_cover(self, **kwargs: Any) -> None:
         """Send the open command (EPC 0xE0 = 0x41)."""
-        await self._async_send_prop(self.entity_description.open_close_prop, "open")
+        self._send_prop(self.entity_description.open_close_prop, "open")
 
     @override
     async def async_close_cover(self, **kwargs: Any) -> None:
         """Send the close command (EPC 0xE0 = 0x42)."""
-        await self._async_send_prop(self.entity_description.open_close_prop, "close")
+        self._send_prop(self.entity_description.open_close_prop, "close")
 
     @override
     async def async_stop_cover(self, **kwargs: Any) -> None:
         """Send the stop command (EPC 0xE0 = 0x43)."""
-        await self._async_send_prop(self.entity_description.open_close_prop, "stop")
+        self._send_prop(self.entity_description.open_close_prop, "stop")
 
     @override
     async def async_set_cover_position(self, **kwargs: Any) -> None:
         """Set the degree-of-opening as a 0-100 percentage (EPC 0xE1)."""
         position = max(0, min(100, int(kwargs[ATTR_POSITION])))
-        await self._async_send_prop(
-            self.entity_description.position_prop, float(position)
-        )
+        self._send_prop(self.entity_description.position_prop, float(position))
 
     @override
     async def async_open_cover_tilt(self, **kwargs: Any) -> None:
         """Open the slats fully (HA tilt 100 -> 180 deg)."""
-        await self._async_send_prop(self.entity_description.angle_prop, 180.0)
+        self._send_prop(self.entity_description.angle_prop, 180.0)
 
     @override
     async def async_close_cover_tilt(self, **kwargs: Any) -> None:
         """Close the slats fully (HA tilt 0 -> 0 deg)."""
-        await self._async_send_prop(self.entity_description.angle_prop, 0.0)
+        self._send_prop(self.entity_description.angle_prop, 0.0)
 
     @override
     async def async_set_cover_tilt_position(self, **kwargs: Any) -> None:
         """Set the slat angle (EPC 0xE2 0-180 deg) from HA tilt 0-100."""
         deg = _tilt_ha_to_deg(int(kwargs[ATTR_TILT_POSITION]))
-        await self._async_send_prop(self.entity_description.angle_prop, float(deg))
+        self._send_prop(self.entity_description.angle_prop, float(deg))

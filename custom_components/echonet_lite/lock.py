@@ -130,9 +130,9 @@ class EchonetLiteLock(EchonetLiteEntity, LockEntity):
         sub-lock typically engage it themselves via Auto-Lock or via the
         physical mechanism.
         """
-        await self._async_send_prop(self.entity_description.lock_prop, True)
+        self._send_prop(self.entity_description.lock_prop, True)
 
     @override
     async def async_unlock(self, **kwargs: Any) -> None:
         """Unlock the device by writing the primary lock EPC only."""
-        await self._async_send_prop(self.entity_description.lock_prop, False)
+        self._send_prop(self.entity_description.lock_prop, False)
