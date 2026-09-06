@@ -170,7 +170,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
 
     interface = entry.data.get(CONF_INTERFACE, DEFAULT_INTERFACE)
     _LOGGER.debug("Setting up ECHONET Lite with interface %s", interface)
-
     _LOGGER.debug(
         "Monitored EPCs (polling/notification) per device class: %s",
         {
