@@ -23,10 +23,10 @@ ECHONET Lite protocol integration for Home Assistant, powered by [pyhems](https:
 
 ## Supported Devices
 
-Device classes fall into two categories:
+Device classes are processed automatically when they are discovered:
 
-- **Stable** — verified with real hardware; enabled by default, no extra configuration needed.
-- **Experimental** — not verified with real hardware; must be enabled via integration options.
+- **Verified** — tested with real hardware.
+- **Other** — not yet verified with real hardware; support may vary by device.
 
 ### Stable Device Classes
 
@@ -53,10 +53,6 @@ Device classes fall into two categories:
 | 0x03BB | Rice Cooker |
 | 0x05FD | Switch (JEM-A/HA terminals) |
 | 0x05FF | Controller |
-
-### Experimental Device Classes
-
-The other classes require **Enable experimental device classes** to be turned on in the integration options.
 
 ## Supported Functionality
 
@@ -197,14 +193,6 @@ The integration uses both polling and event-driven updates:
 
 > Only one instance is allowed per Home Assistant installation.
 
-### Options
-
-After setup, configure in **Settings → Devices & Services → HEMS Echonet Lite → Configure**:
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| Enable experimental device classes | Include device classes that have not been verified with real hardware. These may not work correctly. | Off |
-
 ### Reconfiguration
 
 The network interface can be changed at any time via **Settings → Devices & Services → HEMS Echonet Lite → Reconfigure**.
@@ -315,7 +303,7 @@ automation:
 - Only IPv4 networks are supported.
 - UDP multicast must be supported and enabled on your network.
 - Some device properties may not be available if the device does not advertise them in its property map.
-- Experimental device classes have not been tested with real hardware and may not function correctly.
+- Device classes that have not been tested with real hardware may not function correctly.
 - Only one integration instance per Home Assistant installation is supported.
 
 ## Troubleshooting
@@ -334,10 +322,9 @@ After setting up the integration, no devices appear at all.
 
 Some ECHONET Lite devices appear, but others do not.
 
-1. If the missing device is an experimental device class, enable **Enable experimental device classes** in the integration options.
-2. Some devices may take longer to respond. Wait a few minutes and check again, as re-discovery runs every hour.
-3. Try reloading the integration from **Settings → Devices & Services → HEMS Echonet Lite → ⋮ → Reload**.
-4. Verify the device supports ECHONET Lite. Some appliances have ECHONET Lite disabled by default and require enabling via the manufacturer's app or settings.
+1. Some devices may take longer to respond. Wait a few minutes and check again, as re-discovery runs every hour.
+2. Try reloading the integration from **Settings → Devices & Services → HEMS Echonet Lite → ⋮ → Reload**.
+3. Verify the device supports ECHONET Lite. Some appliances have ECHONET Lite disabled by default and require enabling via the manufacturer's app or settings.
 
 ### Devices show as unavailable
 
