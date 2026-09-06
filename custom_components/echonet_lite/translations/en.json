@@ -4489,17 +4489,5 @@
             "description": "No frames have been received from ECHONET Lite devices for more than {minutes} minutes. This may indicate that devices are offline or there is a network issue. Check that your ECHONET Lite devices are powered on and connected to the network.",
             "title": "ECHONET Lite devices not responding"
         }
-    },
-    "options": {
-        "step": {
-            "init": {
-                "data": {
-                    "enable_experimental": "Enable experimental device classes"
-                },
-                "data_description": {
-                    "enable_experimental": "When enabled, device classes that have not been verified with real hardware will also be registered. These may not work correctly."
-                }
-            }
-        }
     }
 }

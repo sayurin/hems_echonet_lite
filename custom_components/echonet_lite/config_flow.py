@@ -17,8 +17,7 @@ from homeassistant.helpers.selector import (
     SelectSelectorMode,
 )
 
-from .const import CONF_ENABLE_EXPERIMENTAL, CONF_INTERFACE, DEFAULT_INTERFACE, DOMAIN
-from .runtime import EchonetLiteConfigEntry
+from .const import CONF_INTERFACE, DEFAULT_INTERFACE, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,19 +26,10 @@ class EchonetLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for ECHONET Lite.
 
     ConfigFlow handles network interface selection only.
-    Other options are managed in OptionsFlow.
     """
 
     VERSION = 1
     MINOR_VERSION = 1
-
-    @staticmethod
-    @override
-    def async_get_options_flow(
-        config_entry: EchonetLiteConfigEntry,
-    ) -> EchonetLiteOptionsFlow:
-        """Get the options flow for this handler."""
-        return EchonetLiteOptionsFlow()
 
     @override
     async def async_step_user(
@@ -111,9 +101,7 @@ class EchonetLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Finish interface step with create or update."""
         if entry is None:
             return self.async_create_entry(
-                title="HEMS",
-                data={CONF_INTERFACE: interface},
-                options=_build_default_options(),
+                title="HEMS", data={CONF_INTERFACE: interface}
             )
         # Update interface in data; preserve existing options
         return self.async_update_reload_and_abort(
@@ -130,48 +118,6 @@ class EchonetLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return None
         finally:
             protocol.close()
-
-
-class EchonetLiteOptionsFlow(config_entries.OptionsFlow):
-    """Handle options flow for ECHONET Lite.
-
-    OptionsFlow manages experimental features.
-    Network interface is configured in ConfigFlow/Reconfigure.
-    """
-
-    async def async_step_init(
-        self, user_input: Mapping[str, Any] | None = None
-    ) -> config_entries.ConfigFlowResult:
-        """Manage the options."""
-        if user_input is not None:
-            return self.async_create_entry(
-                title="",
-                data={
-                    CONF_ENABLE_EXPERIMENTAL: user_input.get(
-                        CONF_ENABLE_EXPERIMENTAL, False
-                    ),
-                },
-            )
-
-        current_experimental = self.config_entry.options.get(
-            CONF_ENABLE_EXPERIMENTAL, False
-        )
-
-        schema = vol.Schema(
-            {
-                vol.Optional(
-                    CONF_ENABLE_EXPERIMENTAL, default=current_experimental
-                ): bool,
-            }
-        )
-        return self.async_show_form(step_id="init", data_schema=schema)
-
-
-def _build_default_options() -> dict[str, Any]:
-    """Build default options."""
-    return {
-        CONF_ENABLE_EXPERIMENTAL: False,
-    }
 
 
 async def _async_get_interface_options(hass: HomeAssistant) -> list[SelectOptionDict]:

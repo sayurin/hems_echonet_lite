@@ -4293,17 +4293,5 @@
       "description": "ECHONET Liteデバイスから{minutes}分以上フレームを受信していません。デバイスがオフラインであるか、ネットワークに問題がある可能性があります。ECHONET Liteデバイスの電源が入っており、ネットワークに接続されていることを確認してください。",
       "title": "ECHONET Liteデバイスが応答していません"
     }
-  },
-  "options": {
-    "step": {
-      "init": {
-        "data": {
-          "enable_experimental": "実験的なデバイスクラスを有効にする"
-        },
-        "data_description": {
-          "enable_experimental": "有効にすると、実機での検証が行われていないデバイスクラスも登録されます。正しく動作しない場合があります。"
-        }
-      }
-    }
   }
 }

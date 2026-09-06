@@ -34,7 +34,6 @@ from homeassistant.const import (
 DOMAIN = "echonet_lite"
 ATTR_EPC = "epc"
 CONF_INTERFACE = "interface"
-CONF_ENABLE_EXPERIMENTAL = "enable_experimental"
 DEFAULT_INTERFACE = "0.0.0.0"
 DEFAULT_POLL_INTERVAL = 60
 # Fixed cadence for the high-frequency polling tier (instantaneous values
@@ -101,35 +100,6 @@ EPC_SIMPLEX_INSTANTANEOUS_POWER_LIST = 0xB7
 EPC_DUPLEX_CUMULATIVE_ENERGY_LIST = 0xBA
 EPC_DUPLEX_INSTANTANEOUS_POWER_LIST = 0xBE
 EPC_UNIT_FOR_CUMULATIVE_ELECTRIC_ENERGY = 0xC2
-
-# Stable (non-experimental) device class codes
-# These device classes have been verified with real hardware.
-# Other device classes are considered experimental.
-STABLE_CLASS_CODES: frozenset[int] = frozenset(
-    {
-        DeviceClass.HOME_AIR_CONDITIONER,
-        DeviceClass.AIR_CLEANER,
-        DeviceClass.ELECTRIC_RAIN_DOOR,
-        DeviceClass.ELECTRIC_WATER_HEATER,
-        DeviceClass.ELECTRIC_LOCK,
-        DeviceClass.INSTANTANEOUS_WATER_HEATER,
-        DeviceClass.PV_POWER_GENERATION,
-        DeviceClass.FLOOR_HEATER,
-        DeviceClass.STORAGE_BATTERY,
-        DeviceClass.EV_CHARGER_DISCHARGER,
-        DeviceClass.WATT_HOUR_METER,
-        DeviceClass.WATER_FLOW_METER,
-        DeviceClass.GAS_METER,
-        DeviceClass.POWER_DISTRIBUTION_BOARD_METERING,
-        DeviceClass.MONO_FUNCTIONAL_LIGHTING,
-        DeviceClass.MULTIPLE_INPUT_PCS,
-        DeviceClass.HYBRID_WATER_HEATER,
-        DeviceClass.COMBINATION_MICROWAVE_OVEN,
-        DeviceClass.RICE_COOKER,
-        DeviceClass.SWITCH,
-        DeviceClass.CONTROLLER,
-    }
-)
 
 # EPCs managed by dedicated platform entities (climate, fan)
 # - Excluded from other platforms (sensor/binary_sensor/select/switch) to avoid duplicates
