@@ -18,7 +18,6 @@ from homeassistant.helpers import config_validation as cv, device_registry as dr
 
 from .const import (
     COLLECTION_SENSOR_PROJECTIONS,
-    CONF_ENABLE_EXPERIMENTAL,
     CONF_INTERFACE,
     DEDICATED_PLATFORM_EPCS,
     DEFAULT_FAST_POLL_INTERVAL,
@@ -29,7 +28,6 @@ from .const import (
     EXCLUDED_EPCS_BY_CLASS,
     RUNTIME_MONITOR_INTERVAL,
     RUNTIME_MONITOR_MAX_SILENCE,
-    STABLE_CLASS_CODES,
 )
 from .coordinator import EchonetLiteCoordinator
 from .runtime import (
@@ -159,6 +157,7 @@ async def async_migrate_entry(
         new_options = dict(entry.options)
         if CONF_INTERFACE in new_options:
             new_data[CONF_INTERFACE] = new_options.pop(CONF_INTERFACE)
+        new_options.clear()
         hass.config_entries.async_update_entry(
             entry, data=new_data, options=new_options, minor_version=1
         )
@@ -170,8 +169,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     """Set up HEMS Echonet Lite from a config entry."""
 
     interface = entry.data.get(CONF_INTERFACE, DEFAULT_INTERFACE)
-    enable_experimental = entry.options.get(CONF_ENABLE_EXPERIMENTAL, False)
-
     _LOGGER.debug("Setting up ECHONET Lite with interface %s", interface)
 
     _LOGGER.debug(
@@ -189,19 +186,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
         },
     )
 
-    client = HemsClient(
-        interface=interface,
-    )
-
-    # Determine which device class codes to accept
-    class_code_filter: frozenset[int] | None = (
-        None if enable_experimental else STABLE_CLASS_CODES
-    )
+    client = HemsClient(interface=interface)
 
     device_manager = DeviceManager(
         client=client,
         monitored_epcs=_MONITORED_EPCS,
-        class_code_filter=class_code_filter,
         fast_epcs=_FAST_POLL_EPCS,
     )
 
@@ -259,7 +248,7 @@ async def _async_update_listener(
 async def async_remove_config_entry_device(
     hass: HomeAssistant,
     config_entry: EchonetLiteConfigEntry,
-    device_entry: dr.DeviceEntry,
+    device_entry: dr.AnyDeviceEntry,
 ) -> bool:
     """Remove a config entry from a device.
 
