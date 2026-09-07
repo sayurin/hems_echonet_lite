@@ -8,12 +8,7 @@ from datetime import datetime, timedelta
 import logging
 import time
 
-from pyhems import (
-    HemsClient,
-    HemsErrorEvent,
-    PropertyPoller,
-    RuntimeEvent,
-)
+from pyhems import HemsClient, HemsErrorEvent, PropertyPoller, RuntimeEvent
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -249,6 +244,7 @@ class RuntimeController:
         await self.coordinator.device_manager.async_stop()
         await self.client.stop()
 
+    @callback
     def _handle_runtime_event(self, event: RuntimeEvent) -> None:
         """Schedule handling for runtime errors."""
         if not isinstance(event, HemsErrorEvent):
