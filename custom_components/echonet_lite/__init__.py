@@ -19,7 +19,7 @@ from homeassistant.helpers import config_validation as cv, device_registry as dr
 from .const import (
     COLLECTION_SENSOR_PROJECTIONS,
     CONF_INTERFACE,
-    DEDICATED_PLATFORM_EPCS,
+    DEDICATED_PLATFORM_REQUIRED_EPCS,
     DEFAULT_FAST_POLL_INTERVAL,
     DEFAULT_INTERFACE,
     DEFAULT_POLL_INTERVAL,
@@ -61,7 +61,8 @@ PLATFORMS: Final = [
 #
 # Four layers are merged/removed:
 #  1. Definition-driven EPCs from the pyhems REGISTRY (sensor/switch/select …)
-#  2. Dedicated-platform EPCs from DEDICATED_PLATFORM_EPCS (climate/fan/cover …)
+#  2. Dedicated-platform EPCs from DEDICATED_PLATFORM_REQUIRED_EPCS
+#     (climate/fan/cover …)
 #  3. EPC 0x81 (Installation Location) — mandatory super-class property that
 #     must be monitored for every known class even if absent from the registry.
 #  4. EXCLUDED_EPCS_BY_CLASS EPCs are removed (e.g. class 0x0287's legacy
@@ -88,7 +89,7 @@ def _build_monitored_epcs() -> dict[int, frozenset[int]]:
         class_code: frozenset(entity_def.epc for entity_def in entity_defs)
         for class_code, entity_defs in REGISTRY.entities.items()
     }
-    for class_code, epcs in DEDICATED_PLATFORM_EPCS.items():
+    for class_code, epcs in DEDICATED_PLATFORM_REQUIRED_EPCS.items():
         result[class_code] = result.get(class_code, frozenset()) | epcs
     for class_code in list(result):
         result[class_code] = result[class_code] | {EPC_INSTALLATION_LOCATION}
