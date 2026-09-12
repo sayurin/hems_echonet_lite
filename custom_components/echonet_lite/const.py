@@ -100,9 +100,8 @@ EPC_DUPLEX_CUMULATIVE_ENERGY_LIST = 0xBA
 EPC_DUPLEX_INSTANTANEOUS_POWER_LIST = 0xBE
 EPC_UNIT_FOR_CUMULATIVE_ELECTRIC_ENERGY = 0xC2
 
-# EPCs managed by dedicated platform entities (climate, fan)
-# - Excluded from other platforms (sensor/binary_sensor/select/switch) to avoid duplicates
-# - Used for polling/notification to keep entity state up-to-date
+# EPCs owned by dedicated platform entities and excluded from generic platforms
+# (sensor/binary_sensor/select/switch) to avoid duplicate entities.
 DEDICATED_PLATFORM_EPCS: dict[int, frozenset[int]] = {
     DeviceClass.HOME_AIR_CONDITIONER: frozenset(
         {
@@ -177,6 +176,23 @@ DEDICATED_PLATFORM_EPCS: dict[int, frozenset[int]] = {
         }
     ),
 }
+
+# EPCs required by dedicated platform entities for state updates. This is
+# separate from DEDICATED_PLATFORM_EPCS because some measured values are also
+# intentionally exposed as independent generic sensor entities.
+DEDICATED_PLATFORM_REQUIRED_EPCS: dict[int, frozenset[int]] = (
+    DEDICATED_PLATFORM_EPCS
+    | {
+        DeviceClass.HOME_AIR_CONDITIONER: DEDICATED_PLATFORM_EPCS[
+            DeviceClass.HOME_AIR_CONDITIONER
+        ]
+        | frozenset({EPC_ROOM_HUMIDITY, EPC_ROOM_TEMPERATURE}),
+        DeviceClass.ELECTRIC_WATER_HEATER: DEDICATED_PLATFORM_EPCS[
+            DeviceClass.ELECTRIC_WATER_HEATER
+        ]
+        | frozenset({EPC_MEASURED_WATER_TEMPERATURE}),
+    }
+)
 
 # EPCs permanently excluded from monitored/fast-poll EPC sets and from
 # scalar entity generation, per device class code. Unlike

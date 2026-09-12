@@ -19,7 +19,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
-    DEDICATED_PLATFORM_EPCS,
+    DEDICATED_PLATFORM_REQUIRED_EPCS,
     EPC_LIGHT_COLOR,
     EPC_LIGHT_LEVEL,
     EPC_LIGHTING_MODE,
@@ -154,7 +154,7 @@ class EchonetLiteLight(EchonetLiteEntity, LightEntity):
         super().__init__(coordinator, node)
         self.entity_description = description
         self._attr_unique_id = f"{node.device_key}-{description.key}"
-        self._subscribed_epcs = DEDICATED_PLATFORM_EPCS.get(
+        self._subscribed_epcs = DEDICATED_PLATFORM_REQUIRED_EPCS.get(
             node.eoj.class_code, frozenset()
         )
 

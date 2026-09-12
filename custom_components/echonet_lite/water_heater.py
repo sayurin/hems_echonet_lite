@@ -22,7 +22,7 @@ from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
-    DEDICATED_PLATFORM_EPCS,
+    DEDICATED_PLATFORM_REQUIRED_EPCS,
     DOMAIN,
     EPC_MEASURED_WATER_TEMPERATURE,
     EPC_OPERATION_MODE,
@@ -108,7 +108,7 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
         super().__init__(coordinator, node)
         self.entity_description = description
         self._attr_unique_id = f"{node.device_key}-{description.key}"
-        self._subscribed_epcs = DEDICATED_PLATFORM_EPCS.get(
+        self._subscribed_epcs = DEDICATED_PLATFORM_REQUIRED_EPCS.get(
             node.eoj.class_code, frozenset()
         )
         if description.target_temp_prop.min_value is not None:

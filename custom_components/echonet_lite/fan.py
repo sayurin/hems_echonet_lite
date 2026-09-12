@@ -21,7 +21,7 @@ from homeassistant.util.percentage import (
 )
 
 from .const import (
-    DEDICATED_PLATFORM_EPCS,
+    DEDICATED_PLATFORM_REQUIRED_EPCS,
     DOMAIN,
     EPC_AIR_FLOW_LEVEL,
     EPC_OPERATION_STATUS,
@@ -121,7 +121,7 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         super().__init__(coordinator, node)
         self.entity_description = description
         self._attr_unique_id = f"{node.device_key}-{description.key}"
-        self._subscribed_epcs = DEDICATED_PLATFORM_EPCS.get(
+        self._subscribed_epcs = DEDICATED_PLATFORM_REQUIRED_EPCS.get(
             node.eoj.class_code, frozenset()
         )
 
