@@ -3,7 +3,6 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 import logging
-import time
 from typing import Self, override
 
 from pyhems import REGISTRY, EntityDefinition, NodeState, Property
@@ -22,7 +21,6 @@ from .const import (
     DEDICATED_PLATFORM_EPCS,
     DOMAIN,
     EXCLUDED_EPCS_BY_CLASS,
-    RUNTIME_MONITOR_MAX_SILENCE,
     get_entity_category,
 )
 from .coordinator import EchonetLiteCoordinator
@@ -154,11 +152,6 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
 
     _attr_has_entity_name = True
 
-    # Threshold after which a lack of runtime activity marks the entity
-    # as unavailable. Matches the inactivity repair issue threshold so
-    # UI availability and the repair issue rise/fall together.
-    _runtime_silence_threshold: float = RUNTIME_MONITOR_MAX_SILENCE.total_seconds()
-
     def __init__(
         self,
         coordinator: EchonetLiteCoordinator,
@@ -198,21 +191,21 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
     @property
     @override
     def available(self) -> bool:
-        """Return True if the underlying runtime is still receiving activity.
+        """Return True if the underlying device is responding to polling.
 
         Falls back to ``CoordinatorEntity.available`` first so disabled
-        coordinators still mark entities unavailable. Additionally, if the
-        runtime has been silent for longer than ``RUNTIME_MONITOR_MAX_SILENCE``,
-        the entity is reported as unavailable even while the coordinator
-        itself is considered healthy.
+        coordinators still mark entities unavailable. Devices without a
+        GET-capable liveness EPC remain available because their liveness
+        cannot be determined by the polling client.
         """
         if not super().available:
             return False
-        last_activity_at = self.coordinator.last_runtime_activity_at
-        if last_activity_at is None:
-            # No baseline yet: rely on the coordinator's own availability.
-            return True
-        return time.monotonic() - last_activity_at < self._runtime_silence_threshold
+        return (
+            self.coordinator.device_manager.is_device_polling_available(
+                self._node.device_key
+            )
+            is not False
+        )
 
     def _send_property(self, epc: int, value: bytes) -> None:
         """Send a SetC request for a single EPC/value pair.

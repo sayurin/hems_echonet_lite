@@ -62,6 +62,7 @@ class RuntimeIssueMonitor:
         self._cancel_interval: Callable[[], None] | None = None
         self._inactivity_issue_active = False
         self._client_issue_active = False
+        self._unavailable_device_keys: set[str] = set()
 
     def start(self) -> None:
         """Begin checking for runtime inactivity.
@@ -86,6 +87,7 @@ class RuntimeIssueMonitor:
             self._cancel_interval = None
         self._clear_inactivity_issue_if_needed()
         self.clear_client_error()
+        self._unavailable_device_keys.clear()
 
     @callback
     def record_activity(self, timestamp: float) -> None:
@@ -95,6 +97,16 @@ class RuntimeIssueMonitor:
 
     @callback
     def _async_check_runtime(self, _now: datetime) -> None:
+        unavailable_device_keys = {
+            device_key
+            for device_key in self._coordinator.data
+            if self._coordinator.device_manager.is_device_polling_available(device_key)
+            is False
+        }
+        if unavailable_device_keys != self._unavailable_device_keys:
+            self._unavailable_device_keys = unavailable_device_keys
+            self._coordinator.async_update_listeners()
+
         last_activity_at = self._coordinator.last_runtime_activity_at
         if last_activity_at is None:
             return
