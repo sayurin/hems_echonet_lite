@@ -252,12 +252,21 @@ async def async_remove_config_entry_device(
 ) -> bool:
     """Remove a config entry from a device.
 
-    Removal is permitted only when the device is no longer actively
-    discovered on the local network (i.e. not present in coordinator data).
+    Removal is permitted when the device is unknown or its liveness polling
+    has failed.
     """
     coordinator = config_entry.runtime_data.coordinator
-    return not device_entry.identifiers.intersection(
-        (DOMAIN, device_key) for device_key in coordinator.data
+    device_keys = {
+        identifier
+        for domain, identifier in device_entry.identifiers
+        if domain == DOMAIN
+    }
+    if not device_keys:
+        return True
+    return any(
+        (node := coordinator.data.get(device_key)) is None
+        or node.polling_available is False
+        for device_key in device_keys
     )
 
 
