@@ -219,5 +219,8 @@ class EnumProp:
 
     @property
     def options(self) -> list[str]:
-        """Return available option keys."""
+        """Return option keys in mapping insertion order.
+
+        Registry-built properties use the pyhems definition order.
+        """
         return list(self.codec.by_key)
