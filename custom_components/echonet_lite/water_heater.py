@@ -130,11 +130,8 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
         )
         if EPC_OPERATION_MODE in node.set_epcs:
             features |= WaterHeaterEntityFeature.OPERATION_MODE
-            # Preserve the EDT-byte order so the UI lists modes in the
-            # order defined by the ECHONET Lite specification.
-            operation_list.extend(
-                k for k, _ in sorted(description.op_mode.codec.by_key.items())
-            )
+            # Preserve the order defined by pyhems.
+            operation_list.extend(description.op_mode.options)
 
         self._attr_supported_features = features
         self._attr_operation_list = operation_list
