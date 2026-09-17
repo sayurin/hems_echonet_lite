@@ -180,6 +180,7 @@ The integration uses both polling and event-driven updates:
 - Home Assistant 2026.3 or later
 - ECHONET Lite compatible devices on the same local network as Home Assistant
 - UDP multicast traffic allowed on your network (address 224.0.23.0, port 3610)
+- If Home Assistant is running on a multi-homed machine, configure a route for multicast traffic to 224.0.23.0 (for example, `ip route replace 224.0.23.0/32 dev eth0`)
 - If running Home Assistant in a container or VM, ensure multicast traffic is properly forwarded (for example, `network_mode: host` in Docker)
 
 ## Configuration
