@@ -32,7 +32,6 @@ from homeassistant.const import (
 )
 
 DOMAIN = "echonet_lite"
-ATTR_EPC = "epc"
 CONF_INTERFACE = "interface"
 DEFAULT_INTERFACE = "0.0.0.0"
 DEFAULT_POLL_INTERVAL = 60
