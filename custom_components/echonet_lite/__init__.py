@@ -115,8 +115,8 @@ _MONITORED_EPCS: Final[dict[int, frozenset[int]]] = _build_monitored_epcs()
 # should re-derive from its English name.
 #
 # Only EPCs already present in _MONITORED_EPCS are kept: a fast-poll
-# candidate that isn't monitored/polled at all (e.g. belongs only to a
-# disabled experimental class) should not be introduced by this table alone.
+# candidate that isn't monitored/polled at all should not be introduced by
+# this table alone.
 #
 # COLLECTION_SENSOR_PROJECTIONS entries marked ``fast_poll=True`` (e.g. class
 # 0x0287's instantaneous power lists) are added the same way, since they have
@@ -231,18 +231,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
 
     entry.runtime_data = controller
 
-    # Reload entry when options change
-    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
-
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
-
-
-async def _async_update_listener(
-    hass: HomeAssistant, entry: EchonetLiteConfigEntry
-) -> None:
-    """Handle options update by reloading the entry."""
-    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_remove_config_entry_device(
