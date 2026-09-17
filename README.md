@@ -28,7 +28,7 @@ Device classes are processed automatically when they are discovered:
 - **Verified** — tested with real hardware.
 - **Other** — not yet verified with real hardware; support may vary by device.
 
-### Stable Device Classes
+### Verified Device Classes
 
 | Class Code | Device | HA Platform |
 |------------|--------|-------------|
