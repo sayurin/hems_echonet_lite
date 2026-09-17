@@ -180,6 +180,7 @@ ECHONET Lite 仕様の範囲を超えて、特定のメーカー向けにプロ�
 - Home Assistant 2026.3 以降
 - Home Assistant と同一ローカルネットワーク上に ECHONET Lite 対応機器が存在すること
 - ネットワーク上で UDP マルチキャストトラフィック（アドレス 224.0.23.0、ポート 3610）が許可されていること
+- Home Assistant ホストがマルチホーム構成の場合は、224.0.23.0 へマルチキャストトラフィックを送るルートを設定すること（例: `ip route replace 224.0.23.0/32 dev eth0`）
 - コンテナや VM で Home Assistant を実行している場合は、マルチキャストトラフィックが適切に転送されていること（例: Docker の `network_mode: host`）
 
 ## 設定
