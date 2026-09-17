@@ -17,7 +17,6 @@ from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
-    ATTR_EPC,
     DEDICATED_PLATFORM_EPCS,
     DOMAIN,
     EXCLUDED_EPCS_BY_CLASS,
@@ -368,7 +367,6 @@ class EchonetLiteDescribedEntity[DescriptionT: EchonetLiteEntityDescription](
     """
 
     description: DescriptionT
-    _epc: int
 
     def __init__(
         self,
@@ -402,19 +400,12 @@ class EchonetLiteDescribedEntity[DescriptionT: EchonetLiteEntityDescription](
         # consume. See ``tests/components/echonet_lite/test_generate_strings
         # ::TestDefinitionsStringsConsistency`` for the regression guard.
         self._attr_translation_key = description.translation_key
-        self._epc = description.epc
         # Coefficient EPCs (e.g. EPC 0xC2) are never exposed as their own
         # entity, so this entity must subscribe to them directly or they
         # would never actually be polled; see coefficient_epcs' docstring.
         self._subscribed_epcs = frozenset({description.epc}) | frozenset(
             description.coefficient_epcs
         )
-
-    @property
-    @override
-    def extra_state_attributes(self) -> dict[str, str]:
-        """Return extra state attributes exposing the ECHONET Property Code."""
-        return {ATTR_EPC: f"0x{self._epc:02X}"}
 
 
 def build_platform_descriptions[DescriptionT: EchonetLiteEntityDescription](

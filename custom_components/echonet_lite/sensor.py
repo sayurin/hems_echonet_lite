@@ -25,12 +25,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import (
-    ATTR_EPC,
-    COLLECTION_SENSOR_PROJECTIONS,
-    infer_device_classes,
-    infer_ha_unit,
-)
+from .const import COLLECTION_SENSOR_PROJECTIONS, infer_device_classes, infer_ha_unit
 from .coordinator import EchonetLiteCoordinator
 from .entity import (
     EchonetLiteDescribedEntity,
@@ -239,12 +234,6 @@ class EchonetLiteCollectionSensor(EchonetLiteEntity, SensorEntity):
         self._subscribed_epcs = frozenset({description.result_epc}) | frozenset(
             description.coefficient_epcs
         )
-
-    @property
-    @override
-    def extra_state_attributes(self) -> dict[str, str]:
-        """Return extra state attributes exposing the ECHONET Property Code."""
-        return {ATTR_EPC: f"0x{self.description.result_epc:02X}"}
 
     @property
     @override
