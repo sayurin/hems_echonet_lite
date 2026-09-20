@@ -115,4 +115,4 @@ class EchonetLiteNumber(
     @override
     async def async_set_native_value(self, value: float) -> None:
         """Set the value by sending an ECHONET Lite command."""
-        self._send_prop(self.description.prop, value)
+        await self._send_prop(self.description.prop, value)

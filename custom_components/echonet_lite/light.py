@@ -225,34 +225,37 @@ class EchonetLiteLight(EchonetLiteEntity, LightEntity):
     @override
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the light on, applying any brightness/color/effect overrides."""
-        # Always send the power-on command first so subsequent setters apply
-        # to an already-powered device.
-        self._send_prop(self.entity_description.op_status, True)
+        properties = [self.entity_description.op_status.make_property(True)]
         if (
             self._supports_brightness
             and (brightness := kwargs.get(ATTR_BRIGHTNESS)) is not None
         ):
             pct = _brightness_ha_to_pct(int(brightness))
-            self._send_prop(self.entity_description.brightness_prop, float(pct))
+            properties.append(
+                self.entity_description.brightness_prop.make_property(float(pct))
+            )
         if (
             self._supports_color_temp
             and (kelvin := kwargs.get(ATTR_COLOR_TEMP_KELVIN)) is not None
         ):
-            self._send_prop(
-                self.entity_description.color_prop,  # type: ignore[arg-type]
-                _closest_kelvin_key(int(kelvin)),
+            properties.append(
+                self.entity_description.color_prop.make_property(  # type: ignore[union-attr]
+                    _closest_kelvin_key(int(kelvin))
+                )
             )
         if (
             self._supports_effect
             and (effect := kwargs.get(ATTR_EFFECT)) is not None
             and effect in self.entity_description.mode_prop.options  # type: ignore[union-attr]
         ):
-            self._send_prop(
-                self.entity_description.mode_prop,  # type: ignore[arg-type]
-                effect,
+            properties.append(
+                self.entity_description.mode_prop.make_property(  # type: ignore[union-attr]
+                    effect
+                )
             )
+        await self._send_properties(properties)
 
     @override
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the light off via the operation status codec."""
-        self._send_prop(self.entity_description.op_status, False)
+        await self._send_prop(self.entity_description.op_status, False)

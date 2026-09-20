@@ -206,7 +206,7 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
             is not False
         )
 
-    def _send_property(self, epc: int, value: bytes) -> None:
+    async def _send_property(self, epc: int, value: bytes) -> None:
         """Send a SetC request for a single EPC/value pair.
 
         Args:
@@ -216,9 +216,9 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
         Raises:
             HomeAssistantError: If the EPC is not writable by the device.
         """
-        self._send_properties(properties=[Property(epc=epc, edt=value)])
+        await self._send_properties(properties=[Property(epc=epc, edt=value)])
 
-    def _send_properties(self, properties: list[Property]) -> None:
+    async def _send_properties(self, properties: list[Property]) -> None:
         """Send a SetC request for multiple EPC/value pairs.
 
         Args:
@@ -239,28 +239,45 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
                 translation_placeholders={"epc_list": hex_list},
             )
         controller = self.coordinator.config_entry.runtime_data
-        sent = controller.client.set_properties(
+        result = await controller.client.set_properties(
             node_id=node.node_id,
             deoj=node.eoj,
             properties=properties,
         )
-        if not sent:
+        if not result.sent:
             raise HomeAssistantError(
                 translation_domain=DOMAIN,
                 translation_key="target_node_unknown",
+            )
+        if result.rejected_epcs or result.unanswered_epcs:
+            rejected_epcs = (
+                ", ".join(f"0x{epc:02X}" for epc in sorted(result.rejected_epcs))
+                or "none"
+            )
+            unanswered_epcs = (
+                ", ".join(f"0x{epc:02X}" for epc in sorted(result.unanswered_epcs))
+                or "none"
+            )
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="set_failed",
+                translation_placeholders={
+                    "rejected_epcs": rejected_epcs,
+                    "unanswered_epcs": unanswered_epcs,
+                },
             )
 
         # After a Set operation, schedule an earlier poll so the UI reflects the
         # updated device state sooner.
         controller.property_poller.schedule_immediate_poll(node.device_key)
 
-    def _send_prop[ValueT](self, prop: Prop[ValueT], value: ValueT) -> None:
+    async def _send_prop[ValueT](self, prop: Prop[ValueT], value: ValueT) -> None:
         """Encode value via prop and send as a SetC request for this EPC.
 
         Raises:
             HomeAssistantError: If the EPC is not writable by the device.
         """
-        self._send_properties([prop.make_property(value)])
+        await self._send_properties([prop.make_property(value)])
 
 
 @dataclass(frozen=True, kw_only=True)

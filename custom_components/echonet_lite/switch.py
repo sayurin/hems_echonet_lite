@@ -78,9 +78,9 @@ class EchonetLiteSwitch(
     @override
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Send the On command via the pyhems runtime client."""
-        self._send_prop(self.description.prop, True)
+        await self._send_prop(self.description.prop, True)
 
     @override
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Send the Off command via the pyhems runtime client."""
-        self._send_prop(self.description.prop, False)
+        await self._send_prop(self.description.prop, False)

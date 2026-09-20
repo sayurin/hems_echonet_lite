@@ -4273,6 +4273,9 @@
     "runtime_start_failed": {
       "message": "ランタイムクライアントの起動に失敗しました: {error}"
     },
+    "set_failed": {
+      "message": "対象デバイスは要求された値を受け付けませんでした。拒否されたEPC: {rejected_epcs}、応答がなかったEPC: {unanswered_epcs}。"
+    },
     "target_node_unknown": {
       "message": "対象ノードのアドレスが不明です。"
     },
