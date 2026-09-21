@@ -3596,6 +3596,12 @@
             "class_02a5_epc_e7": {
                 "name": "Measured instantaneous electric power"
             },
+            "class_02a5_epc_f5_00006c": {
+                "name": "Measured instantaneous grid electric power"
+            },
+            "class_02a5_epc_f5_00006c_04": {
+                "name": "Measured instantaneous house consumption"
+            },
             "class_02a6_epc_e1": {
                 "name": "Measured amount of hot water remaining in tank"
             },
