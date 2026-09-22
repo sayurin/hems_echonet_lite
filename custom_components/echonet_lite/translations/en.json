@@ -4475,6 +4475,9 @@
         "runtime_start_failed": {
             "message": "Failed to start runtime client: {error}"
         },
+        "set_failed": {
+            "message": "The target device did not accept the requested values. Rejected EPCs: {rejected_epcs}; no response for EPCs: {unanswered_epcs}."
+        },
         "target_node_unknown": {
             "message": "The target node address is unknown."
         },

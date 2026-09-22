@@ -343,7 +343,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
                 translation_key="unsupported_value",
                 translation_placeholders={"value": str(hvac_mode)},
             )
-        self._send_properties(
+        await self._send_properties(
             [
                 self.entity_description.op_mode_prop.make_property(pyhems_mode),
                 self.entity_description.op_status.make_property(True),
@@ -359,7 +359,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
                 translation_key="epc_not_writable",
                 translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
             )
-        self._send_prop(self.entity_description.op_status, True)
+        await self._send_prop(self.entity_description.op_status, True)
 
     @override
     async def async_turn_off(self) -> None:
@@ -370,7 +370,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
                 translation_key="epc_not_writable",
                 translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
             )
-        self._send_prop(self.entity_description.op_status, False)
+        await self._send_prop(self.entity_description.op_status, False)
 
     @override
     async def async_set_temperature(self, **kwargs: Any) -> None:
@@ -390,7 +390,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
             )
         temperature = float(kwargs[ATTR_TEMPERATURE])
         clamped = min(max(temperature, self._attr_min_temp), self._attr_max_temp)
-        self._send_prop(self.entity_description.target_temp_prop, clamped)
+        await self._send_prop(self.entity_description.target_temp_prop, clamped)
 
     @override
     async def async_set_fan_mode(self, fan_mode: str) -> None:
@@ -401,7 +401,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
                 translation_key="unsupported_value",
                 translation_placeholders={"value": fan_mode},
             )
-        self._send_prop(self.entity_description.fan_mode_prop, fan_mode)
+        await self._send_prop(self.entity_description.fan_mode_prop, fan_mode)
 
     @override
     async def async_set_swing_mode(self, swing_mode: str) -> None:
@@ -413,7 +413,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
                 translation_key="unsupported_value",
                 translation_placeholders={"value": swing_mode},
             )
-        self._send_prop(
+        await self._send_prop(
             self.entity_description.swing_mode_prop,
             pyhems_key,
         )
