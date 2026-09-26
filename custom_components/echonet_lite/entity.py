@@ -218,18 +218,30 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
         """
         self._send_properties(properties=[Property(epc=epc, edt=value)])
 
-    def _send_properties(self, properties: list[Property]) -> None:
+    def _send_properties(
+        self,
+        properties: list[Property],
+        *,
+        allow_unadvertised_epcs: frozenset[int] | None = None,
+    ) -> None:
         """Send a SetC request for multiple EPC/value pairs.
 
         Args:
             properties: List of Property objects to send
+            allow_unadvertised_epcs: EPCs that may travel in the same frame even
+                when absent from ``node.set_epcs``. Used for companion bytes
+                that a device-class write helper always inserts (for example
+                the ceiling-fan buzzer, Wi-Fi control source, and melody).
 
         Raises:
             HomeAssistantError: If any EPC is not writable by the device.
         """
         node = self._node
+        allowed = allow_unadvertised_epcs or frozenset()
         not_writable = [
-            prop.epc for prop in properties if prop.epc not in node.set_epcs
+            prop.epc
+            for prop in properties
+            if prop.epc not in node.set_epcs and prop.epc not in allowed
         ]
         if not_writable:
             hex_list = ", ".join(f"0x{epc:02X}" for epc in not_writable)
@@ -509,6 +521,8 @@ def setup_dedicated_platform[DescriptionT](
     platform_domain: str,
     descriptions: dict[int, DescriptionT],
     entity_factory: Callable[[EchonetLiteCoordinator, NodeState, DescriptionT], Entity],
+    *,
+    should_create: Callable[[NodeState, DescriptionT], bool] | None = None,
 ) -> None:
     """Set up a dedicated entity platform with one entity per matching class code.
 
@@ -524,6 +538,9 @@ def setup_dedicated_platform[DescriptionT](
         async_add_entities: Callback to add entities.
         descriptions: Module-level constant mapping class_code → single description.
         entity_factory: Called with (coordinator, node, description) to create one entity.
+        should_create: Optional predicate. When provided and returns False, no
+            entity is created for that node (used for optional features such as
+            a ceiling-fan lamp that is absent from the property maps).
     """
 
     @callback
@@ -531,6 +548,8 @@ def setup_dedicated_platform[DescriptionT](
         coordinator: EchonetLiteCoordinator, node: NodeState
     ) -> list[Entity]:
         if (description := descriptions.get(node.eoj.class_code)) is None:
+            return []
+        if should_create is not None and not should_create(node, description):
             return []
         return [entity_factory(coordinator, node, description)]
 
