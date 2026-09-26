@@ -78,6 +78,23 @@ EPC_LIGHT_LEVEL = 0xB0
 EPC_LIGHT_COLOR = 0xB1
 EPC_LIGHTING_MODE = 0xB6
 
+# Class-specific EPCs used by the ceiling fan (0x013A) platform.
+# Air flow rate is 0xF0 (not the ventilation-fan 0xA0). The lamp is 0xF3
+# (not the lighting-class 0x80). Companion write bytes 0xFC-0xFE are listed
+# under EXCLUDED_EPCS_BY_CLASS so they are never generic entities.
+EPC_CEILING_FAN_AIR_FLOW_RATE = 0xF0
+EPC_CEILING_FAN_AIR_FLOW_DIRECTION = 0xF1
+EPC_CEILING_FAN_NATURAL_WIND = 0xF2
+EPC_CEILING_FAN_LIGHT = 0xF3
+EPC_CEILING_FAN_LIGHT_MODE = 0xF4
+EPC_CEILING_FAN_BRIGHTNESS = 0xF5
+EPC_CEILING_FAN_COLOR = 0xF6
+EPC_CEILING_FAN_NIGHT_LIGHTING = 0xF7
+EPC_CEILING_FAN_REMOTE_CONTROL = 0x93
+EPC_CEILING_FAN_BUZZER = 0xFC
+EPC_CEILING_FAN_CONTROL_SOURCE = 0xFD
+EPC_CEILING_FAN_MELODY = 0xFE
+
 # Class-specific EPCs used by the cover platform.
 EPC_COVER_OPEN_CLOSE = 0xE0
 EPC_COVER_POSITION = 0xE1
@@ -174,6 +191,19 @@ DEDICATED_PLATFORM_EPCS: dict[int, frozenset[int]] = {
             EPC_LIGHTING_MODE,
         }
     ),
+    DeviceClass.CEILING_FAN: frozenset(
+        {
+            EPC_OPERATION_STATUS,
+            EPC_CEILING_FAN_AIR_FLOW_RATE,
+            EPC_CEILING_FAN_AIR_FLOW_DIRECTION,
+            EPC_CEILING_FAN_NATURAL_WIND,
+            EPC_CEILING_FAN_LIGHT,
+            EPC_CEILING_FAN_LIGHT_MODE,
+            EPC_CEILING_FAN_BRIGHTNESS,
+            EPC_CEILING_FAN_COLOR,
+            EPC_CEILING_FAN_NIGHT_LIGHTING,
+        }
+    ),
 }
 
 # EPCs required by dedicated platform entities for state updates. This is
@@ -206,6 +236,18 @@ DEDICATED_PLATFORM_REQUIRED_EPCS: dict[int, frozenset[int]] = (
 # frames; see docs/ha-0287-epc-be-implementation-report-v2.md section 6.2.
 EXCLUDED_EPCS_BY_CLASS: dict[int, frozenset[int]] = {
     DeviceClass.POWER_DISTRIBUTION_BOARD_METERING: frozenset(range(0xD0, 0xF0)),
+    # Ceiling fan control companions and remote-control setting. A generic
+    # switch/select would write a single EPC and omit the buzzer (and, for
+    # lamp changes, the Wi-Fi control source and melody) that
+    # ceiling_fan_set_properties always includes in the same SetC.
+    DeviceClass.CEILING_FAN: frozenset(
+        {
+            EPC_CEILING_FAN_REMOTE_CONTROL,
+            EPC_CEILING_FAN_BUZZER,
+            EPC_CEILING_FAN_CONTROL_SOURCE,
+            EPC_CEILING_FAN_MELODY,
+        }
+    ),
 }
 
 
