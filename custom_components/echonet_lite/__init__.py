@@ -238,7 +238,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
 async def async_remove_config_entry_device(
     hass: HomeAssistant,
     config_entry: EchonetLiteConfigEntry,
-    device_entry: dr.DeviceEntry,
+    device_entry: dr.AnyDeviceEntry,
 ) -> bool:
     """Remove a config entry from a device.
 
