@@ -238,8 +238,7 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
                 translation_key="epc_not_writable",
                 translation_placeholders={"epc_list": hex_list},
             )
-        controller = self.coordinator.config_entry.runtime_data
-        result = await controller.client.set_properties(
+        result = await self.coordinator.device_manager.set_properties(
             node_id=node.node_id,
             deoj=node.eoj,
             properties=properties,
@@ -269,6 +268,7 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
 
         # After a Set operation, schedule an earlier poll so the UI reflects the
         # updated device state sooner.
+        controller = self.coordinator.config_entry.runtime_data
         controller.property_poller.schedule_immediate_poll(node.device_key)
 
     async def _send_prop[ValueT](self, prop: Prop[ValueT], value: ValueT) -> None:
