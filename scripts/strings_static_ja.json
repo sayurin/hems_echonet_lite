@@ -69,6 +69,16 @@
           }
         }
       },
+      "ceiling_fan": {
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "natural": "自然風",
+              "normal": "通常"
+            }
+          }
+        }
+      },
       "fan": {
         "state_attributes": {
           "preset_mode": {
@@ -81,6 +91,17 @@
       }
     },
     "light": {
+      "ceiling_fan_light": {
+        "name": "照明",
+        "state_attributes": {
+          "effect": {
+            "state": {
+              "night": "常夜灯",
+              "normal": "主照明"
+            }
+          }
+        }
+      },
       "general_lighting": {
         "state_attributes": {
           "effect": {

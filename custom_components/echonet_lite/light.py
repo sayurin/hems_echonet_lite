@@ -27,6 +27,9 @@ from .const import (
 )
 from .coordinator import EchonetLiteCoordinator
 from .entity import EchonetLiteEntity, setup_dedicated_platform
+from .manufacturers.panasonic.ceiling_fan_light import (
+    setup_panasonic_ceiling_fan_light_platform,
+)
 from .prop import BinaryProp, EnumProp, NumericProp
 from .runtime import EchonetLiteConfigEntry
 
@@ -136,6 +139,7 @@ async def async_setup_entry(
         _DESCRIPTIONS,
         EchonetLiteLight,
     )
+    setup_panasonic_ceiling_fan_light_platform(entry, async_add_entities)
 
 
 class EchonetLiteLight(EchonetLiteEntity, LightEntity):

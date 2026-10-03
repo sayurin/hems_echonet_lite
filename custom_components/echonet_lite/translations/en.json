@@ -275,6 +275,9 @@
         "class_0135": {
             "name": "Air cleaner"
         },
+        "class_013a": {
+            "name": "Ceiling fan"
+        },
         "class_0156": {
             "name": "Package-type commercial air conditioner (indoor unit) (except those for facilities)"
         },
@@ -883,6 +886,16 @@
                     }
                 }
             },
+            "ceiling_fan": {
+                "state_attributes": {
+                    "preset_mode": {
+                        "state": {
+                            "natural": "Natural wind",
+                            "normal": "Normal"
+                        }
+                    }
+                }
+            },
             "fan": {
                 "state_attributes": {
                     "preset_mode": {
@@ -895,6 +908,17 @@
             }
         },
         "light": {
+            "ceiling_fan_light": {
+                "name": "Light",
+                "state_attributes": {
+                    "effect": {
+                        "state": {
+                            "night": "Night lighting",
+                            "normal": "Main lighting"
+                        }
+                    }
+                }
+            },
             "general_lighting": {
                 "state_attributes": {
                     "effect": {

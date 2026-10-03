@@ -28,6 +28,7 @@ from .const import (
 )
 from .coordinator import EchonetLiteCoordinator
 from .entity import EchonetLiteEntity, setup_dedicated_platform
+from .manufacturers.panasonic.ceiling_fan import setup_panasonic_ceiling_fan_platform
 from .prop import BinaryProp, EnumProp
 from .runtime import EchonetLiteConfigEntry
 
@@ -97,6 +98,7 @@ async def async_setup_entry(
         _DESCRIPTIONS,
         EchonetLiteFan,
     )
+    setup_panasonic_ceiling_fan_platform(entry, async_add_entities)
 
 
 class EchonetLiteFan(EchonetLiteEntity, FanEntity):

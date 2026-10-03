@@ -79,6 +79,9 @@
     "class_0135": {
       "name": "空気清浄器"
     },
+    "class_013a": {
+      "name": "シーリングファン"
+    },
     "class_0156": {
       "name": "業務用パッケージエアコン室内機 (設備用を除く)"
     },
@@ -687,6 +690,16 @@
           }
         }
       },
+      "ceiling_fan": {
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "natural": "自然風",
+              "normal": "通常"
+            }
+          }
+        }
+      },
       "fan": {
         "state_attributes": {
           "preset_mode": {
@@ -699,6 +712,17 @@
       }
     },
     "light": {
+      "ceiling_fan_light": {
+        "name": "照明",
+        "state_attributes": {
+          "effect": {
+            "state": {
+              "night": "常夜灯",
+              "normal": "主照明"
+            }
+          }
+        }
+      },
       "general_lighting": {
         "state_attributes": {
           "effect": {
@@ -739,6 +763,12 @@
       },
       "class_0134_epc_b4": {
         "name": "室内相対湿度設定値"
+      },
+      "class_013a_epc_f5": {
+        "name": "照明の明るさ設定"
+      },
+      "class_013a_epc_f6": {
+        "name": "光色設定"
       },
       "class_0156_epc_b3": {
         "name": "温度設定値"
@@ -1408,6 +1438,43 @@
           "level_6": "レベル6",
           "level_7": "レベル7",
           "level_8": "レベル8"
+        }
+      },
+      "class_013a_epc_f0": {
+        "name": "風量設定",
+        "state": {
+          "level_1": "10%",
+          "level_10": "100%",
+          "level_2": "20%",
+          "level_3": "30%",
+          "level_4": "40%",
+          "level_5": "50%",
+          "level_6": "60%",
+          "level_7": "70%",
+          "level_8": "80%",
+          "level_9": "90%"
+        }
+      },
+      "class_013a_epc_f1": {
+        "name": "風向",
+        "state": {
+          "down": "下向き",
+          "up": "上向き"
+        }
+      },
+      "class_013a_epc_f4": {
+        "name": "点灯モード設定",
+        "state": {
+          "night": "常夜灯",
+          "normal": "通常灯"
+        }
+      },
+      "class_013a_epc_f7": {
+        "name": "常夜灯レベル",
+        "state": {
+          "high": "高",
+          "low": "低",
+          "medium": "中"
         }
       },
       "class_0156_epc_b0": {
@@ -3803,6 +3870,20 @@
         "state": {
           "off": "光触媒OFF",
           "on": "光触媒ON"
+        }
+      },
+      "class_013a_epc_f2": {
+        "name": "自然風",
+        "state": {
+          "off": "切",
+          "on": "入"
+        }
+      },
+      "class_013a_epc_f3": {
+        "name": "照明",
+        "state": {
+          "off": "切",
+          "on": "入"
         }
       },
       "class_0260_epc_90": {
