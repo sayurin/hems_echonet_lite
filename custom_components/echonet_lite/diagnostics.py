@@ -8,7 +8,7 @@ from pyhems import DeviceManager, NodeState, decode_collection_page
 from homeassistant.components.diagnostics import REDACTED, async_redact_data
 from homeassistant.const import CONF_UNIQUE_ID
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import DeviceEntry
+from homeassistant.helpers.device_registry import AnyDeviceEntry
 
 from .const import (
     COLLECTION_SENSOR_PROJECTIONS,
@@ -144,7 +144,7 @@ def _add_poller_stats(
     }
 
 
-def _get_device_key(device: DeviceEntry) -> str | None:
+def _get_device_key(device: AnyDeviceEntry) -> str | None:
     """Extract the ECHONET Lite ``device_key`` from a device entry."""
     for domain, identifier in device.identifiers:
         if domain == DOMAIN:
@@ -195,7 +195,7 @@ async def async_get_config_entry_diagnostics(
 async def async_get_device_diagnostics(
     hass: HomeAssistant,
     entry: EchonetLiteConfigEntry,
-    device: DeviceEntry,
+    device: AnyDeviceEntry,
 ) -> dict[str, Any]:
     """Return diagnostics for a device."""
     device_key = _get_device_key(device)

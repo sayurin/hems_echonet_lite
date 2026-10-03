@@ -4,8 +4,8 @@ from collections.abc import Mapping
 import logging
 from typing import Any, override
 
+from probatio import Optional, Schema
 from pyhems import create_multicast_socket
-import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.components import network
@@ -79,9 +79,9 @@ class EchonetLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 return self._async_finish_interface_step(entry, interface)
 
-        schema = vol.Schema(
+        schema = Schema(
             {
-                vol.Optional(CONF_INTERFACE, default=current_interface): (
+                Optional(CONF_INTERFACE, default=current_interface): (
                     SelectSelector(
                         SelectSelectorConfig(
                             options=interface_options,
