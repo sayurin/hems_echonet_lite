@@ -116,7 +116,9 @@ def _node_to_dict(node: NodeState, device_manager: DeviceManager) -> dict[str, A
         "effective_fast_poll_epcs": _format_epcs(
             device_manager.effective_fast_poll_epcs(node.device_key)
         ),
-        "observed_batch_capacity": node.observed_batch_capacity,
+        "observed_batch_capacity": device_manager.get_observed_batch_capacity(
+            node.device_key
+        ),
         "properties": _format_properties(node.properties),
     }
     if collection := _collection_pages(node):
