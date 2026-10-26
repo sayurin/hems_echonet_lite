@@ -20,6 +20,7 @@
     "blankets": "Blankets",
     "both_reservation_functions_are_off": "Both reservation functions are OFF.",
     "both_the_time_and_relative_time_based_reservation_functions_are_on": "Both the time- and relative time-based reservation functions are ON.",
+    "buzzer": "Buzzer",
     "channel_channel_instantaneous_power": "Channel {channel} instantaneous power",
     "charge": "Charge",
     "chargeable": "Chargeable",
@@ -77,7 +78,9 @@
     "level_6": "Level 6",
     "level_7": "Level 7",
     "level_8": "Level 8",
+    "light_color_setting": "Light color setting",
     "light_level_setting": "Light level setting",
+    "lighting_mode_setting": "Lighting mode setting",
     "local_setting_position": "Local setting position",
     "lock": "Lock",
     "measured_cumulative_amount_of_charging_electric_energy": "Measured cumulative amount of charging electric energy",
@@ -155,6 +158,7 @@
     "set": "Set",
     "set_temperature_value": "Set temperature value",
     "set_value_of_ventilation_air_flow_rate": "Set value of ventilation air flow rate",
+    "silent": "Silent",
     "smoke_cigarette_detection_status": "Smoke (cigarette) detection status",
     "smoke_cigarette_detection_status_found": "Smoke (cigarette) detection status found.",
     "smoke_cigarette_detection_status_not_found": "Smoke (cigarette) detection status not found.",
@@ -274,6 +278,9 @@
     },
     "class_0135": {
       "name": "Air cleaner"
+    },
+    "class_013a": {
+      "name": "Ceiling fan"
     },
     "class_0156": {
       "name": "Package-type commercial air conditioner (indoor unit) (except those for facilities)"
@@ -811,7 +818,7 @@
         "name": "Emergency occurrence status resetting"
       },
       "class_0130_epc_d0": {
-        "name": "Buzzer"
+        "name": "[%key:component::echonet_lite::common::buzzer%]"
       },
       "class_0279_epc_e2": {
         "name": "Resetting cumulative amount of electric energy generated"
@@ -935,6 +942,12 @@
       },
       "class_0134_epc_b4": {
         "name": "Set value of room relative humidity"
+      },
+      "class_013a_epc_f5_0000fe": {
+        "name": "[%key:component::echonet_lite::common::light_level_setting%]"
+      },
+      "class_013a_epc_f6_0000fe": {
+        "name": "[%key:component::echonet_lite::common::light_color_setting%]"
       },
       "class_0156_epc_b3": {
         "name": "Temperature setting"
@@ -1606,6 +1619,50 @@
           "level_8": "[%key:component::echonet_lite::common::level_8%]"
         }
       },
+      "class_013a_epc_f0_0000fe": {
+        "name": "[%key:component::echonet_lite::common::air_flow_rate_setting%]",
+        "state": {
+          "level_1": "10%",
+          "level_10": "100%",
+          "level_2": "20%",
+          "level_3": "30%",
+          "level_4": "40%",
+          "level_5": "50%",
+          "level_6": "60%",
+          "level_7": "70%",
+          "level_8": "80%",
+          "level_9": "90%"
+        }
+      },
+      "class_013a_epc_f1_0000fe": {
+        "name": "Air flow direction setting",
+        "state": {
+          "down": "Down",
+          "up": "Up"
+        }
+      },
+      "class_013a_epc_f4_0000fe": {
+        "name": "[%key:component::echonet_lite::common::lighting_mode_setting%]",
+        "state": {
+          "night": "[%key:component::echonet_lite::common::night_lighting%]",
+          "normal": "[%key:common::state::normal%]"
+        }
+      },
+      "class_013a_epc_f7_0000fe": {
+        "name": "Night lighting level",
+        "state": {
+          "high": "[%key:common::state::high%]",
+          "low": "[%key:common::state::low%]",
+          "medium": "[%key:common::state::medium%]"
+        }
+      },
+      "class_013a_epc_fd_0000fe": {
+        "name": "Control source",
+        "state": {
+          "remote_controller": "Remote Controller",
+          "wifi": "Wi-Fi"
+        }
+      },
       "class_0156_epc_b0": {
         "name": "[%key:component::echonet_lite::common::operation_mode_setting%]",
         "state": {
@@ -2129,7 +2186,7 @@
         }
       },
       "class_0290_epc_b1": {
-        "name": "Light color setting",
+        "name": "[%key:component::echonet_lite::common::light_color_setting%]",
         "state": {
           "daylight_color": "[%key:component::echonet_lite::common::daylight_color%]",
           "daylight_white": "[%key:component::echonet_lite::common::daylight_white%]",
@@ -2140,7 +2197,7 @@
         }
       },
       "class_0290_epc_b6": {
-        "name": "Lighting mode setting",
+        "name": "[%key:component::echonet_lite::common::lighting_mode_setting%]",
         "state": {
           "auto": "[%key:common::state::auto%]",
           "color": "[%key:component::echonet_lite::common::color_lighting%]",
@@ -2409,7 +2466,7 @@
           "wash_dry_no_wash": "No washing",
           "wash_dry_oil_strains": "Oil stains",
           "wash_dry_presoaking": "Presoaking",
-          "wash_dry_silent": "Silent",
+          "wash_dry_silent": "[%key:component::echonet_lite::common::silent%]",
           "wash_dry_small_amount_quick": "Quick wash of small amount of laundry",
           "wash_dry_soft": "[%key:component::echonet_lite::common::soft%]",
           "wash_dry_standard": "[%key:component::echonet_lite::common::standard%]",
@@ -3999,6 +4056,27 @@
         "state": {
           "off": "Optical catalyst OFF",
           "on": "Optical catalyst ON"
+        }
+      },
+      "class_013a_epc_f2_0000fe": {
+        "name": "Natural wind",
+        "state": {
+          "off": "[%key:common::state::off%]",
+          "on": "[%key:common::state::on%]"
+        }
+      },
+      "class_013a_epc_f3_0000fe": {
+        "name": "Light",
+        "state": {
+          "off": "[%key:common::state::off%]",
+          "on": "[%key:common::state::on%]"
+        }
+      },
+      "class_013a_epc_fc_0000fe": {
+        "name": "[%key:component::echonet_lite::common::buzzer%]",
+        "state": {
+          "off": "[%key:component::echonet_lite::common::silent%]",
+          "on": "Beep"
         }
       },
       "class_0260_epc_90": {
