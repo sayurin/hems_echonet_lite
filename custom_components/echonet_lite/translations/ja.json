@@ -79,6 +79,9 @@
     "class_0135": {
       "name": "空気清浄器"
     },
+    "class_013a": {
+      "name": "シーリングファン"
+    },
     "class_0156": {
       "name": "業務用パッケージエアコン室内機 (設備用を除く)"
     },
@@ -739,6 +742,12 @@
       },
       "class_0134_epc_b4": {
         "name": "室内相対湿度設定値"
+      },
+      "class_013a_epc_f5_0000fe": {
+        "name": "照明の明るさ設定"
+      },
+      "class_013a_epc_f6_0000fe": {
+        "name": "光色設定"
       },
       "class_0156_epc_b3": {
         "name": "温度設定値"
@@ -1408,6 +1417,50 @@
           "level_6": "レベル6",
           "level_7": "レベル7",
           "level_8": "レベル8"
+        }
+      },
+      "class_013a_epc_f0_0000fe": {
+        "name": "風量設定",
+        "state": {
+          "level_1": "10%",
+          "level_10": "100%",
+          "level_2": "20%",
+          "level_3": "30%",
+          "level_4": "40%",
+          "level_5": "50%",
+          "level_6": "60%",
+          "level_7": "70%",
+          "level_8": "80%",
+          "level_9": "90%"
+        }
+      },
+      "class_013a_epc_f1_0000fe": {
+        "name": "風向",
+        "state": {
+          "down": "下向き",
+          "up": "上向き"
+        }
+      },
+      "class_013a_epc_f4_0000fe": {
+        "name": "点灯モード設定",
+        "state": {
+          "night": "常夜灯",
+          "normal": "通常灯"
+        }
+      },
+      "class_013a_epc_f7_0000fe": {
+        "name": "常夜灯レベル",
+        "state": {
+          "high": "高",
+          "low": "低",
+          "medium": "中"
+        }
+      },
+      "class_013a_epc_fd_0000fe": {
+        "name": "制御元",
+        "state": {
+          "remote_controller": "リモコン",
+          "wifi": "Wi-Fi"
         }
       },
       "class_0156_epc_b0": {
@@ -3803,6 +3856,27 @@
         "state": {
           "off": "光触媒OFF",
           "on": "光触媒ON"
+        }
+      },
+      "class_013a_epc_f2_0000fe": {
+        "name": "自然風",
+        "state": {
+          "off": "切",
+          "on": "入"
+        }
+      },
+      "class_013a_epc_f3_0000fe": {
+        "name": "照明",
+        "state": {
+          "off": "切",
+          "on": "入"
+        }
+      },
+      "class_013a_epc_fc_0000fe": {
+        "name": "ブザー",
+        "state": {
+          "off": "無音",
+          "on": "鳴動"
         }
       },
       "class_0260_epc_90": {
