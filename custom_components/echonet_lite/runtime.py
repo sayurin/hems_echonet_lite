@@ -204,6 +204,8 @@ class RuntimeController:
         self.issue_monitor = issue_monitor
         self.health = health
         self._restart_lock = asyncio.Lock()
+        # Serializes diagnostics downloads that read from devices.
+        self.diagnostics_lock = asyncio.Lock()
         self._error_tasks: set[asyncio.Task[None]] = set()
         # Populated by ``async_start``; safe to access directly from
         # ``async_setup_entry`` because callers only read these after
