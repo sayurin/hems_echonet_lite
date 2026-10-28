@@ -1,9 +1,12 @@
 """Diagnostics support for the HEMS Echonet Lite integration."""
 
+import asyncio
+from collections import defaultdict
 from collections.abc import Mapping
+import logging
 from typing import Any
 
-from pyhems import DeviceManager, NodeState, decode_collection_page
+from pyhems import DeviceManager, HemsClient, NodeState, decode_collection_page
 
 from homeassistant.components.diagnostics import REDACTED, async_redact_data
 from homeassistant.const import CONF_UNIQUE_ID
@@ -17,6 +20,8 @@ from .const import (
     EXCLUDED_EPCS_BY_CLASS,
 )
 from .runtime import EchonetLiteConfigEntry
+
+_LOGGER = logging.getLogger(__name__)
 
 TO_REDACT = {
     CONF_INTERFACE,
@@ -32,6 +37,12 @@ TO_REDACT = {
 # alongside ``serial_number``.
 TO_REDACT_PROPERTY_EPCS = frozenset({0x83, 0x8D})
 
+# Manufacturer-specific EPC range. These are not monitored by default, so
+# diagnostics read them from the device on demand.
+VENDOR_SPECIFIC_EPCS = frozenset(range(0xF0, 0x100))
+DIAGNOSTICS_GET_TIMEOUT = 5.0
+DIAGNOSTICS_TOTAL_TIMEOUT = 15.0
+
 
 def _format_epcs(epcs: frozenset[int]) -> str:
     """Return sorted EPCs as hexadecimal strings."""
@@ -44,6 +55,59 @@ def _format_properties(properties: Mapping[int, bytes]) -> dict[str, str]:
         f"0x{epc:02X}": REDACTED if epc in TO_REDACT_PROPERTY_EPCS else edt.hex(" ")
         for epc, edt in sorted(properties.items())
     }
+
+
+def _live_read_epcs(node: NodeState) -> list[int]:
+    """Return the vendor-specific EPCs to read from the device on demand."""
+    return sorted((VENDOR_SPECIFIC_EPCS & node.get_epcs) - node.monitored_epcs)
+
+
+async def _read_live_properties(
+    client: HemsClient, node: NodeState
+) -> dict[int, bytes]:
+    """Read vendor-specific EPCs from the device, ignoring empty responses.
+
+    The returned values are used directly instead of the cache because the
+    runtime event that updates the cache is processed asynchronously.
+    """
+    if not (epcs := _live_read_epcs(node)):
+        return {}
+    try:
+        properties = await client.get(
+            node.node_id,
+            node.eoj,
+            epcs,
+            request_timeout=DIAGNOSTICS_GET_TIMEOUT,
+        )
+    except OSError as err:
+        _LOGGER.debug("Failed to read vendor EPCs for %s: %s", node.device_key, err)
+        return {}
+    return {prop.epc: prop.edt for prop in properties if prop.edt}
+
+
+async def _read_live_properties_for_nodes(
+    client: HemsClient, nodes: list[NodeState]
+) -> dict[str, dict[int, bytes]]:
+    """Read vendor-specific EPCs for nodes, returning values by device key.
+
+    Nodes sharing a ``node_id`` are read sequentially, different ``node_id``s
+    in parallel. Devices not finished within the total timeout are omitted.
+    """
+    live: dict[str, dict[int, bytes]] = {}
+    groups: defaultdict[str, list[NodeState]] = defaultdict(list)
+    for node in nodes:
+        groups[node.node_id].append(node)
+
+    async def _read_group(group: list[NodeState]) -> None:
+        for node in group:
+            live[node.device_key] = await _read_live_properties(client, node)
+
+    try:
+        async with asyncio.timeout(DIAGNOSTICS_TOTAL_TIMEOUT):
+            await asyncio.gather(*(_read_group(group) for group in groups.values()))
+    except TimeoutError:
+        _LOGGER.debug("Timed out reading vendor EPCs for diagnostics")
+    return live
 
 
 def _collection_pages(node: NodeState) -> dict[str, Any]:
@@ -80,7 +144,11 @@ def _collection_pages(node: NodeState) -> dict[str, Any]:
     return result
 
 
-def _node_to_dict(node: NodeState, device_manager: DeviceManager) -> dict[str, Any]:
+def _node_to_dict(
+    node: NodeState,
+    device_manager: DeviceManager,
+    live_properties: Mapping[int, bytes],
+) -> dict[str, Any]:
     """Serialize ``NodeState`` into a diagnostics-friendly dictionary."""
     eoj = node.eoj
 
@@ -119,7 +187,7 @@ def _node_to_dict(node: NodeState, device_manager: DeviceManager) -> dict[str, A
         "observed_batch_capacity": device_manager.get_observed_batch_capacity(
             node.device_key
         ),
-        "properties": _format_properties(node.properties),
+        "properties": _format_properties({**node.properties, **live_properties}),
     }
     if collection := _collection_pages(node):
         node_dict["collection"] = collection
@@ -163,9 +231,15 @@ async def async_get_config_entry_diagnostics(
     coordinator = controller.coordinator
     health = controller.health
 
+    nodes = [node for _, node in sorted(coordinator.data.items())]
+    async with controller.diagnostics_lock:
+        live = await _read_live_properties_for_nodes(controller.client, nodes)
+
     devices: list[dict[str, Any]] = []
-    for _, node in sorted(coordinator.data.items()):
-        node_dict = _node_to_dict(node, coordinator.device_manager)
+    for node in nodes:
+        node_dict = _node_to_dict(
+            node, coordinator.device_manager, live.get(node.device_key, {})
+        )
         _add_poller_stats(node_dict, device_key=node.device_key, entry=entry)
         devices.append(node_dict)
 
@@ -204,14 +278,18 @@ async def async_get_device_diagnostics(
     if device_key is None:
         return {"error": "device_not_found", "reason": "missing_identifier"}
 
-    coordinator = entry.runtime_data.coordinator
+    controller = entry.runtime_data
+    coordinator = controller.coordinator
     node = coordinator.data.get(device_key)
     if node is None:
         return async_redact_data(
             {"device_key": device_key, "node_known": False}, TO_REDACT
         )
 
-    node_dict = _node_to_dict(node, coordinator.device_manager)
+    async with controller.diagnostics_lock:
+        live = await _read_live_properties(controller.client, node)
+
+    node_dict = _node_to_dict(node, coordinator.device_manager, live)
     _add_poller_stats(node_dict, device_key=node.device_key, entry=entry)
 
     return async_redact_data(node_dict, TO_REDACT)
