@@ -36,6 +36,8 @@
     "color_lighting": "Color lighting",
     "cooling": "Cooling",
     "cumulative_amount_of_charging_electric_energy_reset_setting": "Cumulative amount of charging electric energy reset setting",
+    "cumulative_electric_energy_bought": "Cumulative Electric Energy Bought",
+    "cumulative_electric_energy_sold": "Cumulative Electric Energy Sold",
     "daily_timer_setting": "Daily timer setting",
     "day_for_which_the_historical_data_of_measured_cumulative_amounts_of_electric_energy_is_to_be_retrieved": "Day for which the historical data of measured cumulative amounts of electric energy is to be retrieved",
     "daylight_color": "Daylight color",
@@ -3659,6 +3661,12 @@
       "class_02a5_epc_f5_00006c_04": {
         "name": "Measured instantaneous house consumption"
       },
+      "class_02a5_epc_f6_00006c": {
+        "name": "[%key:component::echonet_lite::common::cumulative_electric_energy_bought%]"
+      },
+      "class_02a5_epc_f6_00006c_04": {
+        "name": "[%key:component::echonet_lite::common::cumulative_electric_energy_sold%]"
+      },
       "class_02a6_epc_e1": {
         "name": "Measured amount of hot water remaining in tank"
       },
@@ -3960,10 +3968,10 @@
         "name": "Instantaneous Electric Power Bought"
       },
       "class_05ff_epc_f4_000005": {
-        "name": "Cumulative Electric Energy Sold"
+        "name": "[%key:component::echonet_lite::common::cumulative_electric_energy_sold%]"
       },
       "class_05ff_epc_f5_000005": {
-        "name": "Cumulative Electric Energy Bought"
+        "name": "[%key:component::echonet_lite::common::cumulative_electric_energy_bought%]"
       },
       "class_0f01_epc_be_000006": {
         "name": "[%key:component::echonet_lite::common::measured_outdoor_air_temperature%]"
