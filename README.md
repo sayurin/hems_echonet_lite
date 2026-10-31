@@ -38,6 +38,7 @@ Device classes are processed automatically when they are discovered:
 | 0x026B | Electric Water Heater | Water Heater |
 | 0x026F | Electric Lock | Lock |
 | 0x0272 | Instantaneous Water Heater |
+| 0x0273 | Bathroom Heating Dryer |
 | 0x0279 | Residential Solar Power Generation |
 | 0x027B | Floor heater |
 | 0x027D | Storage Battery |
@@ -46,9 +47,12 @@ Device classes are processed automatically when they are discovered:
 | 0x0281 | Water Flow Meter |
 | 0x0282 | Gas Meter |
 | 0x0287 | Power Distribution Board Metering |
+| 0x0290 | General Lighting | Light |
 | 0x0291 | Mono-Functional Lighting | Light |
+| 0x02A3 | Lighting System | Light |
 | 0x02A5 | Multiple Input PCS |
 | 0x02A6 | Hybrid water heater |
+| 0x03B7 | Refrigerator |
 | 0x03B8 | Oven |
 | 0x03BB | Rice Cooker |
 | 0x05FD | Switch (JEM-A/HA terminals) |
@@ -123,6 +127,7 @@ Sharp air cleaners expose extra environmental data via manufacturer-specific EPC
 
 | Entity | Unit | Notes |
 |--------|------|-------|
+| Illuminance | — | Bright/dark status |
 | Temperature | °C | Room temperature measured inside the unit |
 | Humidity | %RH | Relative humidity measured inside the unit |
 | PM2.5 | µg/m³ | Particulate matter concentration |
@@ -136,6 +141,17 @@ Sharp solar power systems expose per-string input data via manufacturer-specific
 | Input Voltage 1–4 | V | 0xF2 |
 | Input Current 1–4 | A | 0xF3 |
 | Input Power 1–4 | W | 0xF4 |
+
+### Nichicon — Multiple Input PCS (0x02A5)
+
+Nichicon Tribrid systems expose grid exchange and household consumption data via manufacturer-specific EPCs. The following sensor entities are added when a Nichicon device is detected:
+
+| Entity | Unit | EPC |
+|--------|------|-----|
+| Instantaneous Grid Electric Power | W | 0xF5 |
+| Instantaneous Household Consumption | W | 0xF5 (second value) |
+| Cumulative Electric Energy Bought | kWh | 0xF6 |
+| Cumulative Electric Energy Sold | kWh | 0xF6 (second value) |
 
 ### Sharp — Controller (0x05FF)
 
