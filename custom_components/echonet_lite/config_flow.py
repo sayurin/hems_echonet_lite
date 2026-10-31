@@ -5,7 +5,7 @@ import logging
 from typing import Any, override
 
 from probatio import Optional, Schema
-from pyhems import create_multicast_socket
+from pyhems import check_interface
 
 from homeassistant import config_entries
 from homeassistant.components import network
@@ -111,13 +111,10 @@ class EchonetLiteConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def _async_test_multicast(self, interface: str) -> str | None:
         """Test multicast socket can be created. Returns error key or None."""
         try:
-            protocol = await create_multicast_socket(interface, lambda *_: None)
+            await check_interface(interface)
         except OSError:
             return "cannot_connect"
-        try:
-            return None
-        finally:
-            protocol.close()
+        return None
 
 
 async def _async_get_interface_options(hass: HomeAssistant) -> list[SelectOptionDict]:
