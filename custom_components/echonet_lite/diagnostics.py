@@ -72,16 +72,12 @@ async def _read_live_properties(
     """
     if not (epcs := _live_read_epcs(node)):
         return {}
-    try:
-        properties = await client.get(
-            node.node_id,
-            node.eoj,
-            epcs,
-            request_timeout=DIAGNOSTICS_GET_TIMEOUT,
-        )
-    except OSError as err:
-        _LOGGER.debug("Failed to read vendor EPCs for %s: %s", node.device_key, err)
-        return {}
+    properties = await client.get(
+        node.node_id,
+        node.eoj,
+        epcs,
+        request_timeout=DIAGNOSTICS_GET_TIMEOUT,
+    )
     return {prop.epc: prop.edt for prop in properties if prop.edt}
 
 
@@ -256,6 +252,7 @@ async def async_get_config_entry_diagnostics(
                 "last_client_error_recorded": health.last_client_error_at is not None,
                 "last_restart_recorded": health.last_restart_at is not None,
                 "restart_attempts": health.restart_attempts,
+                "decode_error_count": controller.client.decode_error_count,
             },
             "tasks": {
                 "event_consumer_task_done": (
