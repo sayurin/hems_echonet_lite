@@ -171,9 +171,9 @@ def _node_to_dict(
         "failed_inf_epcs": _format_epcs(node.failed_inf_epcs),
         "poll_epcs": _format_epcs(node.poll_epcs),
         "fast_poll_epcs": _format_epcs(node.fast_poll_epcs),
-        # Narrowed by disabled-entity EPC subscriptions (Step 6). May equal
-        # the corresponding candidate set above if no entity has been
-        # disabled, or if subscriptions haven't been confirmed yet.
+        # Narrowed by entity EPC subscriptions. May equal the candidate set
+        # above if no entity has been disabled, or if subscriptions haven't
+        # been confirmed yet.
         "effective_poll_epcs": _format_epcs(
             device_manager.effective_poll_epcs(node.device_key)
         ),
@@ -200,9 +200,7 @@ def _add_poller_stats(
     stats = entry.runtime_data.property_poller.get_device_stats(device_key)
     node_dict["poller"] = {
         "normal_interval": round(stats.normal_interval, 3),
-        "fast_interval": (
-            None if stats.fast_interval is None else round(stats.fast_interval, 3)
-        ),
+        "fast_interval": round(stats.fast_interval, 3),
         "latency_ewma": (
             None if stats.latency_ewma is None else round(stats.latency_ewma, 3)
         ),

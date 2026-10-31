@@ -265,9 +265,7 @@ def _build_collection_sensors(
 
     Channel count is decoded once, at initial device setup, from the
     projection's curated ``CollectionBinding`` count EPC. Later count changes
-    are not tracked (see
-    docs/ha-0287-epc-be-implementation-report-v2.md section 7.5); the entity
-    set only grows on integration reload.
+    are not tracked; the entity set only changes on integration reload.
     """
     entities: list[Entity] = []
     for projection in COLLECTION_SENSOR_PROJECTIONS:

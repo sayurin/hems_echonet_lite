@@ -121,9 +121,10 @@ def _get_or_build_device_info(
 
     # Prefer a translation_key so the device name is localized via
     # ``strings.json`` (``device.class_XXXX.name``) rather than hard-coding
-    # the English MRA name. Unknown class codes (only possible with the
-    # experimental flag) fall back to the shared ``unknown_class`` key with
-    # the hex class code rendered through ``translation_placeholders``.
+    # the English MRA name. Every discovered class is set up, so class codes
+    # missing from the pyhems registry fall back to the shared
+    # ``unknown_class`` key with the hex class code rendered through
+    # ``translation_placeholders``.
     if node.class_name_en is not None:
         translation_key = f"class_{node.eoj.class_code:04x}"
         translation_placeholders: dict[str, str] | None = None

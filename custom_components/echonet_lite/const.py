@@ -203,7 +203,7 @@ DEDICATED_PLATFORM_REQUIRED_EPCS: dict[int, frozenset[int]] = (
 # array EPCs (0xB1/0xB3/0xB7/0xB8/0xBA/0xBE, see
 # COLLECTION_SENSOR_PROJECTIONS below). Including both would create up to
 # 96 redundant entities and risk oversized Get requests being split across
-# frames; see docs/ha-0287-epc-be-implementation-report-v2.md section 6.2.
+# frames.
 EXCLUDED_EPCS_BY_CLASS: dict[int, frozenset[int]] = {
     DeviceClass.POWER_DISTRIBUTION_BOARD_METERING: frozenset(range(0xD0, 0xF0)),
 }
@@ -261,8 +261,7 @@ class CollectionSensorProjection:
           ``pyhems.CollectionBinding.result_epc`` for the same class_code.
         max_exposed_items: Maximum number of channel entities to create,
           independent of the MRA per-page item limit or the device's actual
-          channel count (see
-          docs/ha-0287-epc-be-implementation-report-v2.md section 3).
+          channel count.
         unique_id_prefix: Prefix for each channel entity's unique_id, before
           the channel number (e.g. ``"simplex_channel"``).
         fields: One or more fields decoded from each item (more than one for

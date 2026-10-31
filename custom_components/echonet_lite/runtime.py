@@ -131,10 +131,6 @@ class RuntimeIssueMonitor:
             minutes,
         )
         self._inactivity_issue_active = True
-        # Entity ``available`` depends on the same silence threshold. Push a
-        # listener update so entities re-evaluate availability right away
-        # instead of waiting for the next frame (which, by definition, is
-        # not arriving).
         self._coordinator.async_update_listeners()
 
     @callback
