@@ -58,6 +58,7 @@ class EchonetLiteSelectEntityDescription(
     @override
     def build_from_entity_def(
         cls,
+        class_code: int,
         entity_def: EntityDefinition,
     ) -> EchonetLiteSelectEntityDescription:
         """Construct a select description from an EntityDefinition."""

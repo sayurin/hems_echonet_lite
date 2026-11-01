@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import override
 
-from pyhems import EntityDefinition
+from pyhems import EntityDefinition, Indication
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
@@ -26,59 +26,22 @@ from .runtime import EchonetLiteConfigEntry
 PARALLEL_UPDATES = 0
 
 
-# Device class inference based on name keywords.
-# Order matters: first match wins. PROBLEM-related phrases come first to avoid
-# being shadowed by more generic keywords.
-_BINARY_DEVICE_CLASS_KEYWORDS: tuple[tuple[str, BinarySensorDeviceClass], ...] = (
-    # PROBLEM variants (includes "Fault status" at EPC 0x88)
-    ("fault", BinarySensorDeviceClass.PROBLEM),
-    ("abnormal", BinarySensorDeviceClass.PROBLEM),
-    ("emergency", BinarySensorDeviceClass.PROBLEM),
-    ("exceptional", BinarySensorDeviceClass.PROBLEM),
-    ("maintenance", BinarySensorDeviceClass.PROBLEM),
-    ("filter change", BinarySensorDeviceClass.PROBLEM),
-    # RUNNING (includes "Operation status" at EPC 0x80)
-    ("operation status", BinarySensorDeviceClass.RUNNING),
-    # HEAT
-    ("heating", BinarySensorDeviceClass.HEAT),
-    ("heater", BinarySensorDeviceClass.HEAT),
-    # OPENING
-    ("cover", BinarySensorDeviceClass.OPENING),
-    ("removal", BinarySensorDeviceClass.OPENING),
-    # OCCUPANCY
-    ("occupancy", BinarySensorDeviceClass.OCCUPANCY),
-    ("occupant", BinarySensorDeviceClass.OCCUPANCY),
-    ("human", BinarySensorDeviceClass.OCCUPANCY),
-    # LIGHT
-    ("illuminance", BinarySensorDeviceClass.LIGHT),
-    ("sunlight", BinarySensorDeviceClass.LIGHT),
-    # Common HA device_classes matched directly by name
-    ("door", BinarySensorDeviceClass.DOOR),
-    ("gas", BinarySensorDeviceClass.GAS),
-    ("moisture", BinarySensorDeviceClass.MOISTURE),
-    ("motion", BinarySensorDeviceClass.MOTION),
-    ("smoke", BinarySensorDeviceClass.SMOKE),
-    ("window", BinarySensorDeviceClass.WINDOW),
-)
-
-
-def _infer_binary_device_class(
-    entity_def: EntityDefinition,
-) -> BinarySensorDeviceClass | None:
-    """Infer device class for binary sensor from name keywords.
-
-    Args:
-        entity_def: Entity definition.
-
-    Returns:
-        BinarySensorDeviceClass or None.
-    """
-    name_lower = entity_def.name_en.lower()
-    for keyword, device_class in _BINARY_DEVICE_CLASS_KEYWORDS:
-        if keyword in name_lower:
-            return device_class
-
-    return None
+# pyhems Indication -> binary sensor device class. pyhems derives the
+# indication of each boolean property from its name.
+_INDICATION_TO_DEVICE_CLASS: dict[Indication, BinarySensorDeviceClass] = {
+    Indication.DOOR: BinarySensorDeviceClass.DOOR,
+    Indication.GAS: BinarySensorDeviceClass.GAS,
+    Indication.HEAT: BinarySensorDeviceClass.HEAT,
+    Indication.LIGHT: BinarySensorDeviceClass.LIGHT,
+    Indication.MOISTURE: BinarySensorDeviceClass.MOISTURE,
+    Indication.MOTION: BinarySensorDeviceClass.MOTION,
+    Indication.OCCUPANCY: BinarySensorDeviceClass.OCCUPANCY,
+    Indication.OPENING: BinarySensorDeviceClass.OPENING,
+    Indication.PROBLEM: BinarySensorDeviceClass.PROBLEM,
+    Indication.RUNNING: BinarySensorDeviceClass.RUNNING,
+    Indication.SMOKE: BinarySensorDeviceClass.SMOKE,
+    Indication.WINDOW: BinarySensorDeviceClass.WINDOW,
+}
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -93,12 +56,17 @@ class EchonetLiteBinarySensorEntityDescription(
     @override
     def build_from_entity_def(
         cls,
+        class_code: int,
         entity_def: EntityDefinition,
     ) -> EchonetLiteBinarySensorEntityDescription:
         """Construct a binary sensor description from an EntityDefinition."""
         return cls(
             key=f"{entity_def.epc:02x}",
-            device_class=_infer_binary_device_class(entity_def),
+            device_class=(
+                _INDICATION_TO_DEVICE_CLASS[entity_def.indication]
+                if entity_def.indication is not None
+                else None
+            ),
             prop=BinaryProp.from_entity_def(entity_def),
             **cls._common_kwargs(entity_def),
         )

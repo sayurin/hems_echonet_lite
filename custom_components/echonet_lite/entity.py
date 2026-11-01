@@ -72,9 +72,8 @@ def infer_platform(entity: EntityDefinition) -> Platform | None:
     Returns:
         Platform type string, or None if entity should be skipped.
     """
-    # Readable property (get != notApplicable)
-    if entity.get != "notApplicable":
-        writable = entity.set != "notApplicable"
+    if entity.readable:
+        writable = entity.writable
         if entity.enum_values:
             if len(entity.enum_values) == 1:
                 # Single enum value on readable property is skipped
@@ -89,8 +88,8 @@ def infer_platform(entity: EntityDefinition) -> Platform | None:
             return None
         return Platform.NUMBER if writable else Platform.SENSOR
 
-    # Write-only properties (get == notApplicable)
-    if entity.set != "notApplicable":
+    # Write-only properties
+    if entity.writable:
         # Button: write-only with exactly 1 enum value (action command)
         if entity.enum_values and len(entity.enum_values) == 1:
             return Platform.BUTTON
@@ -355,9 +354,10 @@ class EchonetLiteEntityDescription(EntityDescription):
     @classmethod
     def build_from_entity_def(
         cls,
+        class_code: int,
         entity_def: EntityDefinition,
     ) -> Self:
-        """Construct an instance from a pyhems EntityDefinition.
+        """Construct an instance from a pyhems EntityDefinition of ``class_code``.
 
         Subclasses must override this classmethod.  The override should call
         ``cls(key=…, prop=…, **cls._common_kwargs(entity_def))`` so that
@@ -457,17 +457,17 @@ def build_platform_descriptions[DescriptionT: EchonetLiteEntityDescription](
             class_code, frozenset()
         ) | EXCLUDED_EPCS_BY_CLASS.get(class_code, frozenset())
         descriptions[class_code] = [
-            description_cls.build_from_entity_def(entity_def)
+            description_cls.build_from_entity_def(class_code, entity_def)
             for entity_def in entity_defs
             if infer_platform(entity_def) == platform_type
             and entity_def.epc not in excluded
             and can_process_enum_values(entity_def)
-            # Skip writable bit/byte-packed sub-properties (set != notApplicable
-            # and byte_offset > 0). A single EPC payload often carries multiple
-            # sub-properties; only the leader (byte_offset == 0) owns the write
-            # path. Allowing followers to be set independently would clobber the
-            # sibling bits since pyhems writes the full EPC value at once.
-            and not (entity_def.set != "notApplicable" and entity_def.byte_offset > 0)
+            # Skip writable bit/byte-packed sub-properties (byte_offset > 0). A
+            # single EPC payload often carries multiple sub-properties; only the
+            # leader (byte_offset == 0) owns the write path. Allowing followers
+            # to be set independently would clobber the sibling bits since
+            # pyhems writes the full EPC value at once.
+            and not (entity_def.writable and entity_def.byte_offset > 0)
         ]
     return descriptions
 

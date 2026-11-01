@@ -128,7 +128,7 @@ def _collection_pages(node: NodeState) -> dict[str, Any]:
             pages[key] = {"ok": False, "start": None, "count": None}
             continue
         page = decode_collection_page(
-            node.eoj.class_code, projection.result_epc, edt, node
+            node.eoj.class_code, projection.result_epc, edt, node.properties
         )
         pages[key] = (
             {"ok": True, "start": page.start, "count": page.count}

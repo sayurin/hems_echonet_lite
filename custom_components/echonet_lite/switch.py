@@ -34,6 +34,7 @@ class EchonetLiteSwitchEntityDescription(
     @override
     def build_from_entity_def(
         cls,
+        class_code: int,
         entity_def: EntityDefinition,
     ) -> EchonetLiteSwitchEntityDescription:
         """Construct a switch description from an EntityDefinition."""
