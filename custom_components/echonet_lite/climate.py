@@ -416,7 +416,11 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
         await self._send_prop(self.entity_description.swing_mode_prop, pyhems_key)
 
     def _infer_auto_action(self) -> HVACAction:
-        """Infer HVAC action for AUTO mode from temperatures."""
+        """Infer HVAC action for AUTO mode from temperatures.
+
+        Kept for devices that cannot report whether they are cooling or
+        heating while in AUTO mode.
+        """
         target = self.target_temperature
         current = self.current_temperature
         if target is None or current is None:

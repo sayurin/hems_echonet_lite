@@ -40,6 +40,9 @@ from .runtime import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 0
 
+# The pyhems installation location support is a simplified 1-byte format
+# implementation (pyhems ADR-0010); updates are rare, so one lock serializes
+# the read-modify-write of both select entities across all devices.
 _INSTALLATION_LOCATION_LOCK = asyncio.Lock()
 
 

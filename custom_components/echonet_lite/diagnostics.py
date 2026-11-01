@@ -72,16 +72,12 @@ async def _read_live_properties(
     """
     if not (epcs := _live_read_epcs(node)):
         return {}
-    try:
-        properties = await client.get(
-            node.node_id,
-            node.eoj,
-            epcs,
-            request_timeout=DIAGNOSTICS_GET_TIMEOUT,
-        )
-    except OSError as err:
-        _LOGGER.debug("Failed to read vendor EPCs for %s: %s", node.device_key, err)
-        return {}
+    properties = await client.get(
+        node.node_id,
+        node.eoj,
+        epcs,
+        request_timeout=DIAGNOSTICS_GET_TIMEOUT,
+    )
     return {prop.epc: prop.edt for prop in properties if prop.edt}
 
 
@@ -175,9 +171,9 @@ def _node_to_dict(
         "failed_inf_epcs": _format_epcs(node.failed_inf_epcs),
         "poll_epcs": _format_epcs(node.poll_epcs),
         "fast_poll_epcs": _format_epcs(node.fast_poll_epcs),
-        # Narrowed by disabled-entity EPC subscriptions (Step 6). May equal
-        # the corresponding candidate set above if no entity has been
-        # disabled, or if subscriptions haven't been confirmed yet.
+        # Narrowed by entity EPC subscriptions. May equal the candidate set
+        # above if no entity has been disabled, or if subscriptions haven't
+        # been confirmed yet.
         "effective_poll_epcs": _format_epcs(
             device_manager.effective_poll_epcs(node.device_key)
         ),
@@ -204,9 +200,7 @@ def _add_poller_stats(
     stats = entry.runtime_data.property_poller.get_device_stats(device_key)
     node_dict["poller"] = {
         "normal_interval": round(stats.normal_interval, 3),
-        "fast_interval": (
-            None if stats.fast_interval is None else round(stats.fast_interval, 3)
-        ),
+        "fast_interval": round(stats.fast_interval, 3),
         "latency_ewma": (
             None if stats.latency_ewma is None else round(stats.latency_ewma, 3)
         ),
@@ -256,6 +250,7 @@ async def async_get_config_entry_diagnostics(
                 "last_client_error_recorded": health.last_client_error_at is not None,
                 "last_restart_recorded": health.last_restart_at is not None,
                 "restart_attempts": health.restart_attempts,
+                "decode_error_count": controller.client.decode_error_count,
             },
             "tasks": {
                 "event_consumer_task_done": (

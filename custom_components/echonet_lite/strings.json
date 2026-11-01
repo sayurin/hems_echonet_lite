@@ -4531,8 +4531,8 @@
       "class_0f02_epc_8f_000006": {
         "name": "Keep operation setting",
         "state": {
-          "off": "Operating in keep mode",
-          "on": "Operating in normal mode"
+          "off": "Operating in normal mode",
+          "on": "Operating in keep mode"
         }
       }
     },
