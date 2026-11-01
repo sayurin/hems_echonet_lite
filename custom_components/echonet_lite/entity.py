@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import logging
 from typing import Self, override
 
-from pyhems import REGISTRY, EntityDefinition, NodeState, Property
+from pyhems import EntityDefinition, NodeState, Property
 
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, callback
@@ -16,84 +16,13 @@ from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import (
-    DEDICATED_PLATFORM_EPCS,
-    DOMAIN,
-    EXCLUDED_EPCS_BY_CLASS,
-    get_entity_category,
-)
+from .catalog import CATALOG
+from .const import DOMAIN, get_entity_category
 from .coordinator import EchonetLiteCoordinator
 from .prop import Prop
 from .runtime import EchonetLiteConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
-
-
-def can_process_enum_values(entity: EntityDefinition) -> bool:
-    """Check if entity's enum_values can be automatically processed.
-
-    Enum values must have unique keys for automatic processing.
-    Entities with duplicate keys cannot be reliably mapped and are
-    excluded from platform creation and string generation.
-
-    Args:
-        entity: Entity definition to check.
-
-    Returns:
-        True if enum_values can be processed, False otherwise.
-    """
-    if not entity.enum_values:
-        return True  # Numeric entities are always processable
-
-    keys = set()
-    for enum_val in entity.enum_values:
-        if enum_val.key in keys:
-            return False
-        keys.add(enum_val.key)
-
-    return True
-
-
-def infer_platform(entity: EntityDefinition) -> Platform | None:
-    """Infer the platform type from entity definition using MRA get/set info.
-
-    Decision matrix:
-        | Data shape    | readable + writable | readable only | write-only         |
-        |---------------|---------------------|---------------|-----------         |
-        | true/false enum | switch            | binary_sensor | None (skip)        |
-        | other enum values | select          | sensor (ENUM) | None (skip)        |
-        | 1 enum value  | None (skip)         | None (skip)   | button             |
-        | numeric       | number              | sensor        | None (skip)        |
-        | numericValue  | None (skip)         | None (skip)   | None (skip)        |
-
-    Args:
-        entity: Entity definition to analyze.
-
-    Returns:
-        Platform type string, or None if entity should be skipped.
-    """
-    if entity.readable:
-        writable = entity.writable
-        if entity.enum_values:
-            if len(entity.enum_values) == 1:
-                # Single enum value on readable property is skipped
-                return None
-            if entity.is_binary:
-                return Platform.SWITCH if writable else Platform.BINARY_SENSOR
-            return Platform.SELECT if writable else Platform.SENSOR
-        if entity.format is None:
-            # MRA "numericValue" properties (e.g. EPC 0xC2 unit/coefficient
-            # tables) are not exposed as HA entities themselves; they are
-            # only consumed internally via other entities' coefficient_epcs.
-            return None
-        return Platform.NUMBER if writable else Platform.SENSOR
-
-    # Write-only properties
-    if entity.writable:
-        # Button: write-only with exactly 1 enum value (action command)
-        if entity.enum_values and len(entity.enum_values) == 1:
-            return Platform.BUTTON
-    return None
 
 
 def _get_or_build_device_info(
@@ -397,19 +326,13 @@ class EchonetLiteDescribedEntity[DescriptionT: EchonetLiteEntityDescription](
     ) -> None:
         """Initialize a described ECHONET Lite entity.
 
+        The caller has already checked ``description.should_create(node)``.
+
         Args:
             coordinator: The data update coordinator.
             node: The node state for this entity.
             description: The entity description with EPC metadata.
-
-        Raises:
-            ValueError: If description.should_create(node) returns False.
         """
-        if not description.should_create(node):
-            raise ValueError(
-                f"Entity created for EPC 0x{description.epc:02X} "
-                "that doesn't meet creation criteria"
-            )
         super().__init__(coordinator, node)
         self.description = description
         self.entity_description = description  # HA standard attribute
@@ -451,25 +374,14 @@ def build_platform_descriptions[DescriptionT: EchonetLiteEntityDescription](
     Returns:
         Dict mapping class_code → list of entity descriptions for that platform.
     """
-    descriptions: dict[int, list[DescriptionT]] = {}
-    for class_code, entity_defs in REGISTRY.entities.items():
-        excluded = DEDICATED_PLATFORM_EPCS.get(
-            class_code, frozenset()
-        ) | EXCLUDED_EPCS_BY_CLASS.get(class_code, frozenset())
-        descriptions[class_code] = [
-            description_cls.build_from_entity_def(class_code, entity_def)
-            for entity_def in entity_defs
-            if infer_platform(entity_def) == platform_type
-            and entity_def.epc not in excluded
-            and can_process_enum_values(entity_def)
-            # Skip writable bit/byte-packed sub-properties (byte_offset > 0). A
-            # single EPC payload often carries multiple sub-properties; only the
-            # leader (byte_offset == 0) owns the write path. Allowing followers
-            # to be set independently would clobber the sibling bits since
-            # pyhems writes the full EPC value at once.
-            and not (entity_def.writable and entity_def.byte_offset > 0)
+    return {
+        class_code: [
+            description_cls.build_from_entity_def(class_code, entry.entity_def)
+            for entry in entries
+            if entry.platform == platform_type
         ]
-    return descriptions
+        for class_code, entries in CATALOG.items()
+    }
 
 
 def setup_common_platform[DescriptionT: EchonetLiteEntityDescription](
@@ -631,7 +543,11 @@ def setup_echonet_lite_device_platform(
             if not device_entities or not _has_enabled_entity_candidate(
                 coordinator.hass, platform_domain, device_entities
             ):
-                coordinator.device_manager.subscribe_epcs(device_key, frozenset())
+                # An empty subscription marks the device's interest as
+                # settled, so EPCs nobody subscribes to stop being polled.
+                entry.async_on_unload(
+                    coordinator.device_manager.subscribe_epcs(device_key, frozenset())
+                )
             new_entities.extend(device_entities)
         if new_entities:
             async_add_entities(new_entities)

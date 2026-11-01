@@ -10,10 +10,8 @@
     "accplt": "AC_CPLT",
     "achlccharge": "AC_HLC_Charge",
     "air_circulation": "Air circulation",
-    "air_flow_rate_setting": "Air flow rate setting",
     "automatic": "Automatic",
     "automatic_selection_mode": "Automatic selection mode",
-    "automatic_water_heating_setting": "Automatic water heating setting",
     "bath_operation_status_monitor": "Bath Operation Status Monitor",
     "bath_water_volume_setting_4": "Bath water volume setting 4",
     "bathroom_priority_setting": "Bathroom priority setting",
@@ -31,7 +29,6 @@
     "charging_electric_energy_setting": "Charging electric energy setting",
     "charging_method": "Charging method",
     "class_unit": "Class unit",
-    "close": "Close",
     "coefficient": "Coefficient",
     "color_lighting": "Color lighting",
     "cooling": "Cooling",
@@ -62,8 +59,6 @@
     "electric_lock_setting": "Electric lock setting",
     "fixed_date": "Fixed date",
     "fluorescent_light": "Fluorescent light",
-    "fully_closed": "Fully closed",
-    "fully_open": "Fully open",
     "group_information": "Group information",
     "heating": "Heating",
     "hot_water_supply_status": "Hot water supply status",
@@ -80,9 +75,7 @@
     "level_6": "Level 6",
     "level_7": "Level 7",
     "level_8": "Level 8",
-    "light_color_setting": "Light color setting",
     "light_level_setting": "Light level setting",
-    "lighting_mode_setting": "Lighting mode setting",
     "local_setting_position": "Local setting position",
     "lock": "Lock",
     "measured_cumulative_amount_of_charging_electric_energy": "Measured cumulative amount of charging electric energy",
@@ -159,7 +152,6 @@
     "scene_control_setting": "Scene control setting",
     "set": "Set",
     "set_temperature_value": "Set temperature value",
-    "set_value_of_ventilation_air_flow_rate": "Set value of ventilation air flow rate",
     "silent": "Silent",
     "smoke_cigarette_detection_status": "Smoke (cigarette) detection status",
     "smoke_cigarette_detection_status_found": "Smoke (cigarette) detection status found.",
@@ -169,8 +161,6 @@
     "special_state": "Special state",
     "standard": "Standard",
     "steaming": "Steaming",
-    "stop": "Stop",
-    "stopped_halfway": "Stopped halfway",
     "supplying_hot_water": "Supplying hot water",
     "system_interconnected_type": "System interconnected type",
     "system_interconnected_type_reverse_power_flow_acceptable": "System-interconnected type (reverse power flow acceptable)",
@@ -924,9 +914,6 @@
       "class_0000_epc_99": {
         "name": "Power limit setting"
       },
-      "class_0130_epc_b3": {
-        "name": "[%key:component::echonet_lite::common::set_temperature_value%]"
-      },
       "class_0130_epc_b4": {
         "name": "Set value of relative humidity in dehumidifying mode"
       },
@@ -949,7 +936,7 @@
         "name": "[%key:component::echonet_lite::common::light_level_setting%]"
       },
       "class_013a_epc_f6_0000fe": {
-        "name": "[%key:component::echonet_lite::common::light_color_setting%]"
+        "name": "Light color setting"
       },
       "class_0156_epc_b3": {
         "name": "Temperature setting"
@@ -960,23 +947,8 @@
       "class_0260_epc_d2": {
         "name": "[%key:component::echonet_lite::common::operation_time%]"
       },
-      "class_0260_epc_e1": {
-        "name": "Degree-of-opening level"
-      },
-      "class_0260_epc_e2": {
-        "name": "Shade angle setting"
-      },
       "class_0263_epc_d2": {
         "name": "[%key:component::echonet_lite::common::operation_time%]"
-      },
-      "class_0263_epc_e1": {
-        "name": "Degree-of-opening setting"
-      },
-      "class_0263_epc_e2": {
-        "name": "Blind angle setting"
-      },
-      "class_026b_epc_b3": {
-        "name": "Water heating temperature setting"
       },
       "class_026b_epc_b4": {
         "name": "Manual water heating stop days setting"
@@ -1140,9 +1112,6 @@
       "class_028f_epc_e1": {
         "name": "[%key:component::echonet_lite::common::day_for_which_the_historical_data_of_measured_cumulative_amounts_of_electric_energy_is_to_be_retrieved%]"
       },
-      "class_0290_epc_b0": {
-        "name": "Light level"
-      },
       "class_0290_epc_b7": {
         "name": "Light level setting for main lighting"
       },
@@ -1151,15 +1120,6 @@
       },
       "class_0290_epc_c0": {
         "name": "RGB setting for color lighting - Byte 1: R"
-      },
-      "class_0290_epc_c0_01": {
-        "name": "RGB setting for color lighting - Byte 2: G"
-      },
-      "class_0290_epc_c0_02": {
-        "name": "RGB setting for color lighting - Byte 3: B"
-      },
-      "class_0291_epc_b0": {
-        "name": "[%key:component::echonet_lite::common::light_level_setting%]"
       },
       "class_02a1_epc_e7": {
         "name": "Charging amount setting"
@@ -1191,47 +1151,11 @@
       "class_02a7_epc_c3": {
         "name": "Command control parameter setting - Command control instruction number"
       },
-      "class_02a7_epc_c3_04": {
-        "name": "Command control parameter setting - Power value for the instruction. (W)"
-      },
       "class_02a7_epc_c4": {
         "name": "Autonomous control parameter setting 1 - Width of dead band. (Plus side) (mHz)"
       },
-      "class_02a7_epc_c4_02": {
-        "name": "Autonomous control parameter setting 1 - Width of dead band. (Minus side) (mHz)"
-      },
-      "class_02a7_epc_c4_04": {
-        "name": "Autonomous control parameter setting 1 - Rate of power control.  (Normal direction) (W/mHz)"
-      },
-      "class_02a7_epc_c4_08": {
-        "name": "Autonomous control parameter setting 1 - Rate of power control.  (Reverse direction) (W/mHz)"
-      },
-      "class_02a7_epc_c4_0c": {
-        "name": "Autonomous control parameter setting 1 - Power upper limit for autonomous control. (Normal direction) (W)"
-      },
-      "class_02a7_epc_c4_10": {
-        "name": "Autonomous control parameter setting 1 - Power upper limit for autonomous control. (Reverse direction) (W)"
-      },
-      "class_02a7_epc_c4_14": {
-        "name": "Autonomous control parameter setting 1 - Abnormal frequency deviation threshold (mHz)"
-      },
       "class_02a7_epc_c5": {
         "name": "Autonomous control parameter setting 2 - Time constant for filter. (LPF)"
-      },
-      "class_02a7_epc_c5_02": {
-        "name": "Autonomous control parameter setting 2 - Time constant for filter. (HPF)"
-      },
-      "class_02a7_epc_c5_04": {
-        "name": "Autonomous control parameter setting 2 - PI control coefficient. (Proportional gain)"
-      },
-      "class_02a7_epc_c5_06": {
-        "name": "Autonomous control parameter setting 2 - PI control coefficient. (Integral gain)"
-      },
-      "class_02a7_epc_c5_08": {
-        "name": "Autonomous control parameter setting 2 - Rate limiter. (Normal direction) (W/sec)"
-      },
-      "class_02a7_epc_c5_0c": {
-        "name": "Autonomous control parameter setting 2 - Rate limiter. (Reverse direction) (W/sec)"
       },
       "class_02a7_epc_c7": {
         "name": "Correction value for reference frequency"
@@ -1275,23 +1199,8 @@
       "class_03b9_epc_e3": {
         "name": "Heating temperature setting - Left stove temperature setting"
       },
-      "class_03b9_epc_e3_01": {
-        "name": "Heating temperature setting - Right stove temperature setting"
-      },
-      "class_03b9_epc_e3_02": {
-        "name": "Heating temperature setting - Far-side stove temperature setting"
-      },
       "class_03b9_epc_e7": {
         "name": "Heating power setting - Heating power of the left stove"
-      },
-      "class_03b9_epc_e7_02": {
-        "name": "Heating power setting - Heating power of the right stove"
-      },
-      "class_03b9_epc_e7_04": {
-        "name": "Heating power setting - Heating power of the far-side stove"
-      },
-      "class_03b9_epc_e7_06": {
-        "name": "Heating power setting - Heating power of the roaster"
       },
       "class_03ce_epc_ca": {
         "name": "[%key:component::echonet_lite::common::group_information%]"
@@ -1395,20 +1304,6 @@
           "time_based_on": "[%key:component::echonet_lite::common::time_based_reservation_function_is_on%]"
         }
       },
-      "class_0130_epc_a0": {
-        "name": "[%key:component::echonet_lite::common::air_flow_rate_setting%]",
-        "state": {
-          "auto": "[%key:common::state::auto%]",
-          "level_1": "[%key:component::echonet_lite::common::level_1%]",
-          "level_2": "[%key:component::echonet_lite::common::level_2%]",
-          "level_3": "[%key:component::echonet_lite::common::level_3%]",
-          "level_4": "[%key:component::echonet_lite::common::level_4%]",
-          "level_5": "[%key:component::echonet_lite::common::level_5%]",
-          "level_6": "[%key:component::echonet_lite::common::level_6%]",
-          "level_7": "[%key:component::echonet_lite::common::level_7%]",
-          "level_8": "[%key:component::echonet_lite::common::level_8%]"
-        }
-      },
       "class_0130_epc_a1": {
         "name": "Automatic control of air flow direction setting",
         "state": {
@@ -1416,15 +1311,6 @@
           "auto_horizontal": "Automatic (horizontal)",
           "auto_vertical": "Automatic (vertical)",
           "non_auto": "[%key:component::echonet_lite::common::non_automatic%]"
-        }
-      },
-      "class_0130_epc_a3": {
-        "name": "Automatic swing of air flow setting",
-        "state": {
-          "horizontal": "Horizontal",
-          "off": "[%key:common::state::off%]",
-          "vertical": "Vertical",
-          "vertical_and_horizontal": "Vertical and Horizontal"
         }
       },
       "class_0130_epc_a4": {
@@ -1471,17 +1357,6 @@
           "r": "|　　　　→|",
           "rc": "|　　　↘　|",
           "rc_r": "|　　　↘→|"
-        }
-      },
-      "class_0130_epc_b0": {
-        "name": "[%key:component::echonet_lite::common::operation_mode_setting%]",
-        "state": {
-          "auto": "[%key:common::state::auto%]",
-          "circulation": "[%key:component::echonet_lite::common::air_circulation%]",
-          "cooling": "[%key:component::echonet_lite::common::cooling%]",
-          "dehumidification": "[%key:component::echonet_lite::common::dehumidification%]",
-          "heating": "[%key:component::echonet_lite::common::heating%]",
-          "other": "[%key:component::echonet_lite::common::other%]"
         }
       },
       "class_0130_epc_b2": {
@@ -1547,34 +1422,6 @@
           "on": "[%key:common::state::on%]"
         }
       },
-      "class_0133_epc_a0": {
-        "name": "[%key:component::echonet_lite::common::set_value_of_ventilation_air_flow_rate%]",
-        "state": {
-          "auto": "[%key:common::state::auto%]",
-          "level_1": "[%key:component::echonet_lite::common::level_1%]",
-          "level_2": "[%key:component::echonet_lite::common::level_2%]",
-          "level_3": "[%key:component::echonet_lite::common::level_3%]",
-          "level_4": "[%key:component::echonet_lite::common::level_4%]",
-          "level_5": "[%key:component::echonet_lite::common::level_5%]",
-          "level_6": "[%key:component::echonet_lite::common::level_6%]",
-          "level_7": "[%key:component::echonet_lite::common::level_7%]",
-          "level_8": "[%key:component::echonet_lite::common::level_8%]"
-        }
-      },
-      "class_0134_epc_a0": {
-        "name": "[%key:component::echonet_lite::common::set_value_of_ventilation_air_flow_rate%]",
-        "state": {
-          "auto": "[%key:common::state::auto%]",
-          "level_1": "[%key:component::echonet_lite::common::level_1%]",
-          "level_2": "[%key:component::echonet_lite::common::level_2%]",
-          "level_3": "[%key:component::echonet_lite::common::level_3%]",
-          "level_4": "[%key:component::echonet_lite::common::level_4%]",
-          "level_5": "[%key:component::echonet_lite::common::level_5%]",
-          "level_6": "[%key:component::echonet_lite::common::level_6%]",
-          "level_7": "[%key:component::echonet_lite::common::level_7%]",
-          "level_8": "[%key:component::echonet_lite::common::level_8%]"
-        }
-      },
       "class_0134_epc_b1": {
         "name": "Ventilation method setting",
         "state": {
@@ -1607,22 +1454,8 @@
           "level_8": "[%key:component::echonet_lite::common::level_8%]"
         }
       },
-      "class_0135_epc_a0": {
-        "name": "[%key:component::echonet_lite::common::air_flow_rate_setting%]",
-        "state": {
-          "auto": "[%key:common::state::auto%]",
-          "level_1": "[%key:component::echonet_lite::common::level_1%]",
-          "level_2": "[%key:component::echonet_lite::common::level_2%]",
-          "level_3": "[%key:component::echonet_lite::common::level_3%]",
-          "level_4": "[%key:component::echonet_lite::common::level_4%]",
-          "level_5": "[%key:component::echonet_lite::common::level_5%]",
-          "level_6": "[%key:component::echonet_lite::common::level_6%]",
-          "level_7": "[%key:component::echonet_lite::common::level_7%]",
-          "level_8": "[%key:component::echonet_lite::common::level_8%]"
-        }
-      },
       "class_013a_epc_f0_0000fe": {
-        "name": "[%key:component::echonet_lite::common::air_flow_rate_setting%]",
+        "name": "Air flow rate setting",
         "state": {
           "level_1": "10%",
           "level_10": "100%",
@@ -1644,7 +1477,7 @@
         }
       },
       "class_013a_epc_f4_0000fe": {
-        "name": "[%key:component::echonet_lite::common::lighting_mode_setting%]",
+        "name": "Lighting mode setting",
         "state": {
           "night": "[%key:component::echonet_lite::common::night_lighting%]",
           "normal": "[%key:common::state::normal%]"
@@ -1689,14 +1522,6 @@
           "high": "[%key:common::state::high%]",
           "low": "[%key:common::state::low%]",
           "medium": "[%key:common::state::medium%]"
-        }
-      },
-      "class_0260_epc_e0": {
-        "name": "Open/close (extension/retraction) setting",
-        "state": {
-          "close": "[%key:component::echonet_lite::common::close%]",
-          "open": "[%key:common::state::open%]",
-          "stop": "[%key:component::echonet_lite::common::stop%]"
         }
       },
       "class_0260_epc_e3": {
@@ -1750,14 +1575,6 @@
           "medium": "[%key:common::state::medium%]"
         }
       },
-      "class_0263_epc_e0": {
-        "name": "Open/close operation setting",
-        "state": {
-          "close": "[%key:component::echonet_lite::common::close%]",
-          "open": "[%key:common::state::open%]",
-          "stop": "[%key:component::echonet_lite::common::stop%]"
-        }
-      },
       "class_0263_epc_e3": {
         "name": "Opening/closing speed setting",
         "state": {
@@ -1805,14 +1622,6 @@
           "low": "[%key:common::state::low%]",
           "medium": "[%key:common::state::medium%]",
           "none": "[%key:component::echonet_lite::common::none%]"
-        }
-      },
-      "class_026b_epc_b0": {
-        "name": "[%key:component::echonet_lite::common::automatic_water_heating_setting%]",
-        "state": {
-          "auto": "[%key:common::state::auto%]",
-          "manual_heating": "Non-automatic water heating function used",
-          "manual_no_heating": "Non-automatic water heating function stopped"
         }
       },
       "class_026b_epc_b6": {
@@ -1886,7 +1695,7 @@
           "heating": "Heating operation",
           "mist_sauna": "Mist sauna operation",
           "prewarming": "Prewarming operation",
-          "stop": "[%key:component::echonet_lite::common::stop%]",
+          "stop": "Stop",
           "ventilation": "Ventilation",
           "water_mist": "Water mist operation"
         }
@@ -2187,26 +1996,6 @@
           "public_waterworks_company": "Public waterworks company"
         }
       },
-      "class_0290_epc_b1": {
-        "name": "[%key:component::echonet_lite::common::light_color_setting%]",
-        "state": {
-          "daylight_color": "[%key:component::echonet_lite::common::daylight_color%]",
-          "daylight_white": "[%key:component::echonet_lite::common::daylight_white%]",
-          "incandescent": "[%key:component::echonet_lite::common::incandescent_lamp_color%]",
-          "other": "[%key:component::echonet_lite::common::other%]",
-          "undefined": "[%key:component::echonet_lite::common::undefined%]",
-          "white": "[%key:component::echonet_lite::common::white%]"
-        }
-      },
-      "class_0290_epc_b6": {
-        "name": "[%key:component::echonet_lite::common::lighting_mode_setting%]",
-        "state": {
-          "auto": "[%key:common::state::auto%]",
-          "color": "[%key:component::echonet_lite::common::color_lighting%]",
-          "night": "[%key:component::echonet_lite::common::night_lighting%]",
-          "normal": "[%key:common::state::normal%]"
-        }
-      },
       "class_0290_epc_bb": {
         "name": "Light color setting for main lighting",
         "state": {
@@ -2237,7 +2026,7 @@
         }
       },
       "class_02a6_epc_b0": {
-        "name": "[%key:component::echonet_lite::common::automatic_water_heating_setting%]",
+        "name": "Automatic water heating setting",
         "state": {
           "auto": "[%key:common::state::auto%]",
           "manual_heating": "Manual water heating",
@@ -2637,15 +2426,6 @@
       "class_00d0_epc_e1": {
         "name": "Measured illuminance value 2"
       },
-      "class_0130_epc_aa": {
-        "name": "[%key:component::echonet_lite::common::special_state%]",
-        "state": {
-          "defrosting": "[%key:component::echonet_lite::common::defrosting%]",
-          "heat_removal": "Heat removal",
-          "normal": "[%key:common::state::normal%]",
-          "preheating": "[%key:component::echonet_lite::common::preheating%]"
-        }
-      },
       "class_0130_epc_b8": {
         "name": "Rated power consumption - Cooling"
       },
@@ -2760,26 +2540,6 @@
       "class_0157_epc_df": {
         "name": "Minimum power consumption for restricted outdoor unit"
       },
-      "class_0260_epc_ea": {
-        "name": "Open/closed (extended/retracted) status",
-        "state": {
-          "closing": "[%key:common::state::closing%]",
-          "fully_closed": "[%key:component::echonet_lite::common::fully_closed%]",
-          "fully_open": "[%key:component::echonet_lite::common::fully_open%]",
-          "opening": "[%key:common::state::opening%]",
-          "stopped_halfway": "[%key:component::echonet_lite::common::stopped_halfway%]"
-        }
-      },
-      "class_0263_epc_ea": {
-        "name": "Open/closed status",
-        "state": {
-          "closing": "[%key:common::state::closing%]",
-          "fully_closed": "[%key:component::echonet_lite::common::fully_closed%]",
-          "fully_open": "[%key:component::echonet_lite::common::fully_open%]",
-          "opening": "[%key:common::state::opening%]",
-          "stopped_halfway": "[%key:component::echonet_lite::common::stopped_halfway%]"
-        }
-      },
       "class_026b_epc_c1": {
         "name": "[%key:component::echonet_lite::common::measured_temperature_of_water_in_water_heater%]"
       },
@@ -2858,16 +2618,6 @@
           "keeping_temperature": "Keeping temperature",
           "no_operation": "[%key:common::state::stopped%]",
           "running_hot_water": "Filling hot water"
-        }
-      },
-      "class_026f_epc_e5": {
-        "name": "Alarm status",
-        "state": {
-          "break_open": "Break open",
-          "door_open": "[%key:component::echonet_lite::common::door_open%]",
-          "manual_unlocked": "Manual unlocked",
-          "normal": "[%key:common::state::normal%]",
-          "tampered": "Tampered"
         }
       },
       "class_0272_epc_d5": {
@@ -4183,20 +3933,6 @@
         "state": {
           "off": "Lukewarm water temperature function OFF",
           "on": "Lukewarm water temperature function ON"
-        }
-      },
-      "class_026f_epc_e0": {
-        "name": "Lock setting 1",
-        "state": {
-          "off": "[%key:component::echonet_lite::common::unlock%]",
-          "on": "[%key:component::echonet_lite::common::lock%]"
-        }
-      },
-      "class_026f_epc_e1": {
-        "name": "Lock setting 2",
-        "state": {
-          "off": "[%key:component::echonet_lite::common::unlock%]",
-          "on": "[%key:component::echonet_lite::common::lock%]"
         }
       },
       "class_026f_epc_e6": {

@@ -42,14 +42,14 @@ _REPO_ROOT = Path(__file__).parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from custom_components.echonet_lite.const import (  # noqa: E402
-    EXCLUDED_EPCS_BY_CLASS,
-    INSTALLATION_LOCATION_UNSET,
-    camel_to_snake,
-)
-from custom_components.echonet_lite.entity import (  # noqa: E402
+from custom_components.echonet_lite.catalog import (  # noqa: E402
+    build_catalog,
     can_process_enum_values,
     infer_platform,
+)
+from custom_components.echonet_lite.const import (  # noqa: E402
+    INSTALLATION_LOCATION_UNSET,
+    camel_to_snake,
 )
 
 # ============================================================================
@@ -255,12 +255,10 @@ def generate_ja(registry: DefinitionsRegistry) -> dict[str, Any]:
     """
     entity_strings: dict[str, dict[str, dict[str, Any]]] = {}
 
-    for class_code, entity_defs in registry.entities.items():
-        excluded = EXCLUDED_EPCS_BY_CLASS.get(class_code, frozenset())
-        for entity in entity_defs:
-            if entity.epc in excluded:
-                continue
-            _process_entity(entity_strings, entity)
+    # Use the same entity selection as the platforms (catalog.py).
+    for entries in build_catalog(registry).values():
+        for entry in entries:
+            _process_entity(entity_strings, entry.entity_def)
 
     # Load static file
     with STRINGS_STATIC_JA_FILE.open(encoding="utf-8") as f:

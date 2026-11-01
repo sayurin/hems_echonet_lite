@@ -3,29 +3,19 @@
 import logging
 from typing import Final
 
-from pyhems import (
-    REGISTRY,
-    DeviceManager,
-    HemsClient,
-    PropertyPoller,
-    PropertyRole,
-    get_collection_binding,
-)
+from pyhems import DeviceManager, HemsClient, PropertyPoller
 
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv, device_registry as dr
 
+from .catalog import CLASS_EPCS, FAST_POLL_EPCS, VENDOR_EPCS, monitored_epcs_for
 from .const import (
-    COLLECTION_SENSOR_PROJECTIONS,
     CONF_INTERFACE,
-    DEDICATED_PLATFORM_REQUIRED_EPCS,
     DEFAULT_FAST_POLL_INTERVAL,
     DEFAULT_INTERFACE,
     DEFAULT_POLL_INTERVAL,
     DOMAIN,
-    EPC_INSTALLATION_LOCATION,
-    EXCLUDED_EPCS_BY_CLASS,
     RUNTIME_MONITOR_INTERVAL,
     RUNTIME_MONITOR_MAX_SILENCE,
 )
@@ -57,144 +47,6 @@ PLATFORMS: Final = [
 ]
 
 
-# EPCs to monitor (poll/notify) per device class code, built once at import time.
-#
-# Four layers are merged/removed:
-#  1. Definition-driven EPCs from the pyhems REGISTRY (sensor/switch/select …)
-#  2. Dedicated-platform EPCs from DEDICATED_PLATFORM_REQUIRED_EPCS
-#     (climate/fan/cover …)
-#  3. EPC 0x81 (Installation Location) — mandatory super-class property that
-#     must be monitored for every known class even if absent from the registry.
-#  4. EXCLUDED_EPCS_BY_CLASS EPCs are removed (e.g. class 0x0287's legacy
-#     0xD0-0xEF), then COLLECTION_SENSOR_PROJECTIONS' EPCs are added back —
-#     these are not in the pyhems REGISTRY (paged list properties have no
-#     scalar EntityDefinition) but must still be polled for the dynamic,
-#     per-node collection sensor entities built in sensor.py.
-def _collection_projection_epcs(class_code: int) -> frozenset[int]:
-    """Return the EPCs needed by class_code's curated collection projections."""
-    epcs: set[int] = set()
-    for projection in COLLECTION_SENSOR_PROJECTIONS:
-        if projection.class_code != class_code:
-            continue
-        epcs.add(projection.result_epc)
-        epcs.update(projection.coefficient_epcs)
-        binding = get_collection_binding(class_code, projection.result_epc)
-        if binding is not None and binding.count_epc is not None:
-            epcs.add(binding.count_epc)
-    return frozenset(epcs)
-
-
-def _build_monitored_epcs() -> dict[int, frozenset[int]]:
-    result: dict[int, frozenset[int]] = {
-        class_code: frozenset(entity_def.epc for entity_def in entity_defs)
-        for class_code, entity_defs in REGISTRY.entities.items()
-    }
-    for class_code, epcs in DEDICATED_PLATFORM_REQUIRED_EPCS.items():
-        result[class_code] = result.get(class_code, frozenset()) | epcs
-    for class_code in list(result):
-        result[class_code] = result[class_code] | {EPC_INSTALLATION_LOCATION}
-    for class_code, excluded in EXCLUDED_EPCS_BY_CLASS.items():
-        result[class_code] = result.get(class_code, frozenset()) - excluded
-    for class_code in {p.class_code for p in COLLECTION_SENSOR_PROJECTIONS}:
-        result[class_code] = result.get(class_code, frozenset()) | (
-            _collection_projection_epcs(class_code)
-        )
-    return result
-
-
-_MONITORED_EPCS: Final[dict[int, frozenset[int]]] = _build_monitored_epcs()
-
-
-# Manufacturer-specific EPCs per (class_code, manufacturer_code): EPCs that
-# only manufacturer-specific definitions use. They are monitored only for
-# devices of that manufacturer; the manufacturer code is read before the other
-# EPCs during setup.
-def _build_vendor_epcs() -> dict[tuple[int, int], frozenset[int]]:
-    result: dict[tuple[int, int], set[int]] = {}
-    for class_code, entity_defs in REGISTRY.entities.items():
-        shared = (
-            {
-                entity_def.epc
-                for entity_def in entity_defs
-                if entity_def.manufacturer_code is None
-            }
-            | DEDICATED_PLATFORM_REQUIRED_EPCS.get(class_code, frozenset())
-            | {EPC_INSTALLATION_LOCATION}
-            | _collection_projection_epcs(class_code)
-        )
-        monitored = _MONITORED_EPCS.get(class_code, frozenset())
-        for entity_def in entity_defs:
-            if (
-                entity_def.manufacturer_code is not None
-                and entity_def.epc not in shared
-                and entity_def.epc in monitored
-            ):
-                result.setdefault(
-                    (class_code, entity_def.manufacturer_code), set()
-                ).add(entity_def.epc)
-    return {key: frozenset(epcs) for key, epcs in result.items()}
-
-
-_VENDOR_EPCS: Final[dict[tuple[int, int], frozenset[int]]] = _build_vendor_epcs()
-_VENDOR_ONLY_EPCS_BY_CLASS: Final[dict[int, frozenset[int]]] = {
-    class_code: frozenset().union(
-        *(epcs for (code, _), epcs in _VENDOR_EPCS.items() if code == class_code)
-    )
-    for class_code in {class_code for class_code, _ in _VENDOR_EPCS}
-}
-
-
-def _monitored_epcs_for(class_code: int, manufacturer_code: int) -> frozenset[int]:
-    """Return the EPCs to monitor for a device class and manufacturer."""
-    return (
-        _MONITORED_EPCS.get(class_code, frozenset())
-        - _VENDOR_ONLY_EPCS_BY_CLASS.get(class_code, frozenset())
-    ) | _VENDOR_EPCS.get((class_code, manufacturer_code), frozenset())
-
-
-# EPCs that should be polled at a higher frequency (e.g. instantaneous power),
-# per device class code, built once at import time.
-#
-# The candidate set is the curated PropertyRole.INSTANTANEOUS role (see
-# pyhems.definitions.PropertyRole and scripts/property_roles.xlsx), not a
-# name-based heuristic: whether a property is worth fast-polling is a
-# protocol-level fact about the property, not something this integration
-# should re-derive from its English name.
-#
-# Only EPCs already present in _MONITORED_EPCS are kept: a fast-poll
-# candidate that isn't monitored/polled at all should not be introduced by
-# this table alone.
-#
-# COLLECTION_SENSOR_PROJECTIONS entries marked ``fast_poll=True`` (e.g. class
-# 0x0287's instantaneous power lists) are added the same way, since they have
-# no scalar EntityDefinition/PropertyRole to derive a role from.
-def _build_fast_poll_epcs() -> dict[int, frozenset[int]]:
-    result: dict[int, frozenset[int]] = {}
-    for class_code, entity_defs in REGISTRY.entities.items():
-        candidates = frozenset(
-            entity_def.epc
-            for entity_def in entity_defs
-            if entity_def.role is PropertyRole.INSTANTANEOUS
-        )
-        candidates &= _MONITORED_EPCS.get(class_code, frozenset())
-        if candidates:
-            result[class_code] = candidates
-    for projection in COLLECTION_SENSOR_PROJECTIONS:
-        if not projection.fast_poll:
-            continue
-        candidates = frozenset({projection.result_epc}) & _MONITORED_EPCS.get(
-            projection.class_code, frozenset()
-        )
-        if candidates:
-            result[projection.class_code] = (
-                result.get(projection.class_code, frozenset()) | candidates
-            )
-    return result
-
-
-_FAST_POLL_EPCS: Final[dict[int, frozenset[int]]] = _build_fast_poll_epcs()
-
-
 async def async_migrate_entry(
     hass: HomeAssistant, entry: EchonetLiteConfigEntry
 ) -> bool:
@@ -219,18 +71,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     interface = entry.data.get(CONF_INTERFACE, DEFAULT_INTERFACE)
     _LOGGER.debug("Setting up ECHONET Lite with interface %s", interface)
     _LOGGER.debug(
-        "Monitored EPC candidates (polling/notification) per device class, "
-        "manufacturer-specific EPCs only for their manufacturer: %s",
+        "Monitored EPC candidates (polling/notification) per device class: %s; "
+        "per class and manufacturer: %s",
         {
-            hex(class_code): " ".join(f"{epc:02x}" for epc in epcs)
-            for class_code, epcs in _MONITORED_EPCS.items()
+            hex(class_code): " ".join(f"{epc:02x}" for epc in sorted(epcs))
+            for class_code, epcs in CLASS_EPCS.items()
+        },
+        {
+            f"{class_code:#06x}/{manufacturer_code:#08x}": " ".join(
+                f"{epc:02x}" for epc in sorted(epcs)
+            )
+            for (class_code, manufacturer_code), epcs in VENDOR_EPCS.items()
         },
     )
     _LOGGER.debug(
         "Fast-poll EPCs per device class: %s",
         {
-            hex(class_code): " ".join(f"{epc:02x}" for epc in epcs)
-            for class_code, epcs in _FAST_POLL_EPCS.items()
+            hex(class_code): " ".join(f"{epc:02x}" for epc in sorted(epcs))
+            for class_code, epcs in FAST_POLL_EPCS.items()
         },
     )
 
@@ -238,8 +96,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
 
     device_manager = DeviceManager(
         client=client,
-        monitored_epcs=_monitored_epcs_for,
-        fast_epcs=_FAST_POLL_EPCS,
+        monitored_epcs=monitored_epcs_for,
+        fast_epcs=FAST_POLL_EPCS,
     )
 
     runtime_health = RuntimeHealth()

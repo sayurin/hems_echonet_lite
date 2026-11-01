@@ -13,7 +13,6 @@ from homeassistant.components.fan import (
 )
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util.percentage import (
     ordered_list_item_to_percentage,
@@ -22,7 +21,6 @@ from homeassistant.util.percentage import (
 
 from .const import (
     DEDICATED_PLATFORM_REQUIRED_EPCS,
-    DOMAIN,
     EPC_AIR_FLOW_LEVEL,
     EPC_OPERATION_STATUS,
 )
@@ -182,12 +180,6 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         * ``preset_mode="manual"``: ``OP_STATUS=ON`` only. ``manual`` is
           not a distinct ECHONET level, so no ``AIR_FLOW_LEVEL`` is sent.
         """
-        if EPC_OPERATION_STATUS not in self._node.set_epcs:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="epc_not_writable",
-                translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
-            )
 
         # Turn off the fan if percentage is explicitly set to 0
         if percentage == 0:
@@ -232,8 +224,6 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         if percentage == 0:
             await self._send_prop(self.entity_description.op_status, False)
             return
-        if EPC_AIR_FLOW_LEVEL not in self._node.set_epcs:
-            return
         properties: list[Property] = []
         if not self.is_on:
             properties.append(self.entity_description.op_status.make_property(True))
@@ -256,8 +246,6 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         level with an arbitrary value.
         """
         if preset_mode == PRESET_MODE_AUTO:
-            if EPC_AIR_FLOW_LEVEL not in self._node.set_epcs:
-                return
             properties: list[Property] = []
             if not self.is_on:
                 properties.append(self.entity_description.op_status.make_property(True))
@@ -270,10 +258,4 @@ class EchonetLiteFan(EchonetLiteEntity, FanEntity):
         # preset_mode == PRESET_MODE_MANUAL
         if self.is_on:
             return
-        if EPC_OPERATION_STATUS not in self._node.set_epcs:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="epc_not_writable",
-                translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
-            )
         await self._send_prop(self.entity_description.op_status, True)

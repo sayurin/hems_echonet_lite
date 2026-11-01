@@ -20,7 +20,7 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import Platform, UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
@@ -324,18 +324,6 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
             await self.async_turn_off()
             return
 
-        if EPC_OPERATION_MODE not in self._node.set_epcs:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="epc_not_writable",
-                translation_placeholders={"epc_list": f"0x{EPC_OPERATION_MODE:02X}"},
-            )
-        if EPC_OPERATION_STATUS not in self._node.set_epcs:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="epc_not_writable",
-                translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
-            )
         pyhems_mode = _HA_TO_PYHEMS_MODE.get(hvac_mode)
         if pyhems_mode is None:
             raise ServiceValidationError(
@@ -353,23 +341,11 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
     @override
     async def async_turn_on(self) -> None:
         """Turn on the climate device."""
-        if EPC_OPERATION_STATUS not in self._node.set_epcs:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="epc_not_writable",
-                translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
-            )
         await self._send_prop(self.entity_description.op_status, True)
 
     @override
     async def async_turn_off(self) -> None:
         """Turn off the climate device."""
-        if EPC_OPERATION_STATUS not in self._node.set_epcs:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="epc_not_writable",
-                translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
-            )
         await self._send_prop(self.entity_description.op_status, False)
 
     @override
@@ -379,14 +355,6 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
                 translation_key="target_temperature_required",
-            )
-        if EPC_TARGET_TEMPERATURE not in self._node.set_epcs:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="epc_not_writable",
-                translation_placeholders={
-                    "epc_list": f"0x{EPC_TARGET_TEMPERATURE:02X}"
-                },
             )
         temperature = float(kwargs[ATTR_TEMPERATURE])
         clamped = min(max(temperature, self._attr_min_temp), self._attr_max_temp)
