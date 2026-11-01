@@ -5,6 +5,7 @@ import re
 from typing import override
 
 from pyhems import (
+    CollectionPage,
     EntityDefinition,
     EnumCodec,
     NodeState,
@@ -240,12 +241,11 @@ class EchonetLiteCollectionSensor(EchonetLiteEntity, SensorEntity):
     def native_value(self) -> float | int | None:
         """Return this channel's value from the current page, or None if unavailable."""
         description = self.description
-        node = self._node
-        edt = node.properties.get(description.result_epc)
-        if edt is None:
-            return None
-        page = decode_collection_page(
-            node.eoj.class_code, description.result_epc, edt, node
+        page = _collection_page(
+            self.coordinator,
+            self._node,
+            description.result_epc,
+            description.coefficient_epcs,
         )
         if page is None:
             return None
@@ -256,6 +256,27 @@ class EchonetLiteCollectionSensor(EchonetLiteEntity, SensorEntity):
         if description.item_field is not None:
             item = item.get(description.item_field) if isinstance(item, dict) else None
         return item if isinstance(item, int | float) else None
+
+
+def _collection_page(
+    coordinator: EchonetLiteCoordinator,
+    node: NodeState,
+    result_epc: int,
+    coefficient_epcs: tuple[int, ...],
+) -> CollectionPage | None:
+    """Return the decoded page of a list, decoding it once per value change."""
+    edt = node.properties.get(result_epc)
+    if edt is None:
+        return None
+    source = (edt, *(node.properties.get(epc) for epc in coefficient_epcs))
+    cache_key = (node.device_key, result_epc)
+    if (cached := coordinator.collection_pages.get(cache_key)) is not None and (
+        cached[0] == source
+    ):
+        return cached[1]
+    page = decode_collection_page(node.eoj.class_code, result_epc, edt, node)
+    coordinator.collection_pages[cache_key] = (source, page)
+    return page
 
 
 def _build_collection_sensors(

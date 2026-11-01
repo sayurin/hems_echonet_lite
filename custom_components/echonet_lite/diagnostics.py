@@ -241,10 +241,9 @@ async def async_get_config_entry_diagnostics(
         "config_entry": entry.as_dict(),
         "runtime": {
             "device_count": len(coordinator.data),
-            "last_runtime_activity_seen": coordinator.last_runtime_activity_at
-            is not None,
-            "last_frame_received": coordinator.device_manager.last_frame_received_at
-            is not None,
+            "last_runtime_activity_seen": (
+                coordinator.device_manager.last_activity_at is not None
+            ),
             "health": {
                 "last_client_error": health.last_client_error,
                 "last_client_error_recorded": health.last_client_error_at is not None,

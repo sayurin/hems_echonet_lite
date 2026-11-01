@@ -174,10 +174,17 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
 
     @override
     async def async_added_to_hass(self) -> None:
-        """Subscribe this entity's EPCs for polling once added to hass."""
+        """Subscribe this entity's EPCs for polling and updates."""
         await super().async_added_to_hass()
         self._unsub_epc_subscription = self.coordinator.device_manager.subscribe_epcs(
             self._node.device_key, self._subscribed_epcs
+        )
+        self.async_on_remove(
+            self.coordinator.async_add_device_listener(
+                self._node.device_key,
+                self._subscribed_epcs,
+                self.async_write_ha_state,
+            )
         )
 
     @override
@@ -243,6 +250,7 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
             node_id=node.node_id,
             deoj=node.eoj,
             properties=properties,
+            refresh=True,
         )
         if not result.sent:
             raise HomeAssistantError(
@@ -266,11 +274,6 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
                     "unanswered_epcs": unanswered_epcs,
                 },
             )
-
-        # After a Set operation, schedule an earlier poll so the UI reflects the
-        # updated device state sooner.
-        controller = self.coordinator.config_entry.runtime_data
-        controller.property_poller.schedule_immediate_poll(node.device_key)
 
     async def _send_prop[ValueT](self, prop: Prop[ValueT], value: ValueT) -> None:
         """Encode value via prop and send as a SetC request for this EPC.
@@ -611,7 +614,7 @@ def setup_echonet_lite_device_platform(
         """Create entities for any device that became known since last call.
 
         Uses the standard ``DataUpdateCoordinator.async_add_listener`` hook:
-        every ``async_set_updated_data`` call in ``_on_device_added`` triggers
+        every ``async_set_updated_data`` call for a ``DeviceAdded`` event triggers
         this listener; we then diff ``coordinator.data`` against the keys we
         have already processed to find new devices.
         """
