@@ -1,18 +1,27 @@
 """Data coordinator for the HEMS Echonet Lite integration."""
 
+from collections.abc import Callable
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from pyhems import DeviceManager, NodeState
+from pyhems import (
+    AvailabilityChanged,
+    CollectionPage,
+    DeviceAdded,
+    DeviceManager,
+    DeviceManagerEvent,
+    NodeState,
+    PropertiesChanged,
+)
 
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import DOMAIN
 
 if TYPE_CHECKING:
-    from .runtime import EchonetLiteConfigEntry, RuntimeHealth
+    from .runtime import EchonetLiteConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,8 +30,9 @@ class EchonetLiteCoordinator(DataUpdateCoordinator[dict[str, NodeState]]):
     """Coordinator that tracks state for detected SEOJ nodes.
 
     Delegates device management (discovery, frame processing, property tracking)
-    to pyhems DeviceManager. This coordinator acts as a thin bridge between
-    DeviceManager and Home Assistant's DataUpdateCoordinator pattern.
+    to pyhems DeviceManager. The coordinator data (the device snapshot) is
+    republished when a device is added; property and availability changes
+    are delivered only to the entities of the affected device.
     """
 
     config_entry: EchonetLiteConfigEntry
@@ -33,7 +43,6 @@ class EchonetLiteCoordinator(DataUpdateCoordinator[dict[str, NodeState]]):
         *,
         config_entry: EchonetLiteConfigEntry,
         device_manager: DeviceManager,
-        health: RuntimeHealth,
     ) -> None:
         """Initialize the coordinator for a specific config entry."""
 
@@ -50,44 +59,65 @@ class EchonetLiteCoordinator(DataUpdateCoordinator[dict[str, NodeState]]):
         # for callers (and tests) that inspect it before the first update.
         self.data: dict[str, NodeState] = {}
         self.device_manager = device_manager
-        # Per-node ``DeviceInfo`` cache keyed by ``node.device_key``. Built
-        # once on first entity instantiation for a node and shared by every
-        # entity platform bound to that node. Lives on the coordinator
-        # (rather than on the config entry's runtime data) since it shares
-        # the coordinator's per-entry lifetime and is only ever read via
-        # ``coordinator`` from entity setup.
+        # Per-node ``DeviceInfo`` cache keyed by ``node.device_key``, shared by
+        # every entity platform bound to that node.
         self.device_info_cache: dict[str, DeviceInfo] = {}
-        # ``RuntimeHealth`` is the single canonical store for runtime health
-        # telemetry (client errors, restarts, activity). Kept here too so
-        # entities (which only have direct access to the coordinator via
-        # ``CoordinatorEntity``) can read ``last_runtime_activity_at``
-        # without reaching into ``RuntimeController``.
-        self._health = health
-
-        # Wire DeviceManager callbacks to coordinator
-        device_manager.on_device_added(self._on_device_added)
-        device_manager.on_device_updated(self._on_device_updated)
-
-    @callback
-    def _on_device_added(self, device_key: str) -> None:
-        """Handle new device from DeviceManager."""
-        # ``async_set_updated_data`` is the documented contract for publishing
-        # new data on ``DataUpdateCoordinator``; it notifies all listeners
-        # registered via ``async_add_listener``. Platforms register their own
-        # listener in :func:`setup_echonet_lite_device_platform` and detect
-        # newly added devices by diffing ``coordinator.data`` keys.
-        self.async_set_updated_data(dict(self.device_manager.data))
+        # Decoded collection pages keyed by (device_key, result EPC); each
+        # value also stores the EDTs it was decoded from. Shared by every
+        # channel entity of a list so a page is decoded once per change.
+        self.collection_pages: dict[
+            tuple[str, int], tuple[tuple[Any, ...], CollectionPage | None]
+        ] = {}
+        # device_key -> [(relevant EPCs, callback)]; see async_add_device_listener.
+        self._device_listeners: dict[
+            str, list[tuple[frozenset[int], CALLBACK_TYPE]]
+        ] = {}
 
     @callback
-    def _on_device_updated(self, device_key: str) -> None:
-        """Handle property update from DeviceManager."""
-        self.async_update_listeners()
+    def async_handle_device_manager_event(self, event: DeviceManagerEvent) -> None:
+        """Publish device manager events to listeners."""
+        if isinstance(event, DeviceAdded):
+            # Platforms detect newly added devices by diffing coordinator.data.
+            self.async_set_updated_data(dict(self.device_manager.data))
+        elif isinstance(event, PropertiesChanged):
+            self._async_notify_device(event.device_key, event.epcs)
+        elif isinstance(event, AvailabilityChanged):
+            self._async_notify_device(event.device_key, None)
 
-    @property
-    def last_runtime_activity_at(self) -> float | None:
-        """Return the timestamp of the last runtime activity seen by HA."""
-        return self._health.last_runtime_activity_at
+    @callback
+    def async_add_device_listener(
+        self,
+        device_key: str,
+        epcs: frozenset[int],
+        update_callback: CALLBACK_TYPE,
+    ) -> Callable[[], None]:
+        """Call ``update_callback`` when the device changes.
 
-    def record_runtime_activity(self, timestamp: float) -> None:
-        """Record the timestamp of the latest runtime activity."""
-        self._health.last_runtime_activity_at = timestamp
+        The callback runs when any of ``epcs`` changes or when the device's
+        availability changes.
+
+        Returns:
+            Function that removes the listener.
+        """
+        entry = (epcs, update_callback)
+        listeners = self._device_listeners.setdefault(device_key, [])
+        listeners.append(entry)
+
+        @callback
+        def remove_listener() -> None:
+            listeners.remove(entry)
+            if not listeners:
+                self._device_listeners.pop(device_key, None)
+
+        return remove_listener
+
+    @callback
+    def _async_notify_device(
+        self, device_key: str, epcs: frozenset[int] | None
+    ) -> None:
+        """Run the listeners of a device; ``epcs`` None runs every listener."""
+        for listener_epcs, update_callback in list(
+            self._device_listeners.get(device_key, ())
+        ):
+            if epcs is None or listener_epcs & epcs:
+                update_callback()

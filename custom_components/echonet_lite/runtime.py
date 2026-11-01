@@ -8,7 +8,14 @@ from datetime import datetime, timedelta
 import logging
 import time
 
-from pyhems import HemsClient, HemsErrorEvent, PropertyPoller, RuntimeEvent
+from pyhems import (
+    DeviceManagerEvent,
+    HemsClient,
+    HemsErrorEvent,
+    PropertyPoller,
+    RuntimeActivity,
+    RuntimeEvent,
+)
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -26,19 +33,14 @@ _LOGGER = logging.getLogger(__name__)
 class RuntimeHealth:
     """Health metadata tracked for the runtime client.
 
-    The single canonical store for runtime health telemetry.
-    ``EchonetLiteCoordinator`` delegates its ``last_runtime_activity_at``
-    property to this object rather than keeping its own copy, so entities
-    (which only have direct access to the coordinator) and diagnostics
-    (which reaches this object via ``RuntimeController.health``) always see
-    the same value.
+    The time of the latest runtime activity is kept by pyhems
+    (``DeviceManager.last_activity_at``), not here.
     """
 
     last_client_error: str | None = None
     last_client_error_at: float | None = None
     last_restart_at: float | None = None
     restart_attempts: int = 0
-    last_runtime_activity_at: float | None = None
 
 
 class RuntimeIssueMonitor:
@@ -62,20 +64,19 @@ class RuntimeIssueMonitor:
         self._cancel_interval: Callable[[], None] | None = None
         self._inactivity_issue_active = False
         self._client_issue_active = False
-        self._unavailable_device_keys: set[str] = set()
+        # Monotonic time the silence measurement started from (startup or
+        # the latest successful restart).
+        self._baseline: float | None = None
 
     def start(self) -> None:
         """Begin checking for runtime inactivity.
 
-        Seeds ``last_runtime_activity_at`` with the current monotonic time so
-        that a total absence of incoming frames (never a single activity
-        observed) still trips the threshold. Without this baseline the
-        inactivity check silently skips every tick while
-        ``last_runtime_activity_at is None``.
+        The silence is measured from the start, so a total absence of
+        incoming frames still trips the threshold.
         """
         if self._cancel_interval is not None:
             return
-        self.record_activity(self._monotonic())
+        self._baseline = self._monotonic()
         self._cancel_interval = async_track_time_interval(
             self._hass, self._async_check_runtime, self._interval
         )
@@ -87,27 +88,30 @@ class RuntimeIssueMonitor:
             self._cancel_interval = None
         self._clear_inactivity_issue_if_needed()
         self.clear_client_error()
-        self._unavailable_device_keys.clear()
 
     @callback
-    def record_activity(self, timestamp: float) -> None:
-        """Note that activity was observed and clear issues if present."""
-        self._coordinator.record_runtime_activity(timestamp)
+    def async_handle_device_manager_event(self, event: DeviceManagerEvent) -> None:
+        """Clear the inactivity issue when runtime activity is observed."""
+        if isinstance(event, RuntimeActivity):
+            self._clear_inactivity_issue_if_needed()
+
+    @callback
+    def reset_inactivity(self) -> None:
+        """Measure the silence from now on, e.g. after a successful restart."""
+        self._baseline = self._monotonic()
         self._clear_inactivity_issue_if_needed()
+
+    @property
+    def last_activity_at(self) -> float | None:
+        """Return the time the current silence started from."""
+        activity_at = self._coordinator.device_manager.last_activity_at
+        if activity_at is None or self._baseline is None:
+            return self._baseline if activity_at is None else activity_at
+        return max(activity_at, self._baseline)
 
     @callback
     def _async_check_runtime(self, _now: datetime) -> None:
-        unavailable_device_keys = {
-            device_key
-            for device_key in self._coordinator.data
-            if self._coordinator.device_manager.is_device_polling_available(device_key)
-            is False
-        }
-        if unavailable_device_keys != self._unavailable_device_keys:
-            self._unavailable_device_keys = unavailable_device_keys
-            self._coordinator.async_update_listeners()
-
-        last_activity_at = self._coordinator.last_runtime_activity_at
+        last_activity_at = self.last_activity_at
         if last_activity_at is None:
             return
         if self._monotonic() - last_activity_at < self._threshold:
@@ -131,7 +135,6 @@ class RuntimeIssueMonitor:
             minutes,
         )
         self._inactivity_issue_active = True
-        self._coordinator.async_update_listeners()
 
     @callback
     def _clear_inactivity_issue_if_needed(self) -> None:
@@ -139,7 +142,6 @@ class RuntimeIssueMonitor:
             ir.async_delete_issue(self._hass, DOMAIN, ISSUE_RUNTIME_INACTIVE)
             self._inactivity_issue_active = False
             _LOGGER.info("ECHONET Lite communication restored")
-            self._coordinator.async_update_listeners()
 
     @callback
     def record_client_error(self, message: str) -> None:
@@ -301,10 +303,9 @@ class RuntimeController:
                 return
             self.health.last_restart_at = time.monotonic()
             self.issue_monitor.clear_client_error()
-            # Treat a successful restart as activity so the inactivity issue
-            # (if any) is cleared immediately instead of waiting for the
-            # next incoming frame.
-            self.issue_monitor.record_activity(time.monotonic())
+            # Clear the inactivity issue (if any) immediately instead of
+            # waiting for the next incoming frame.
+            self.issue_monitor.reset_inactivity()
             # Re-publish the current DeviceManager state so entities for
             # already-known devices stay available after the restart.
             # DeviceManager retains its ``data`` across client stop/start,

@@ -1,13 +1,14 @@
 """Sensor platform for the HEMS Echonet Lite integration."""
 
 from dataclasses import dataclass
-import re
 from typing import override
 
 from pyhems import (
+    CollectionPage,
     EntityDefinition,
     EnumCodec,
     NodeState,
+    ValueKind,
     decode_collection_page,
     get_codec,
     get_codec_for_epc,
@@ -20,7 +21,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import DEGREE, Platform, UnitOfEnergy, UnitOfVolume
+from homeassistant.const import DEGREE, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
@@ -40,59 +41,26 @@ from .runtime import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 0
 
-_NO_STATE_CLASS_NAME_KEYWORDS = ("capacity", "rated", "number of effective digits")
-_MEASUREMENT_NAME_KEYWORDS = ("maximum electric power demand",)
-_TOTAL_STATE_CLASS_UNIT_NAME_KEYWORDS: tuple[tuple[str, str], ...] = (
-    (UnitOfEnergy.WATT_HOUR, "electric energy"),
-    (UnitOfEnergy.KILO_WATT_HOUR, "electric energy"),
-    (UnitOfEnergy.MEGA_JOULE, "electric energy"),
-    (UnitOfEnergy.WATT_HOUR, "heating value"),
-    (UnitOfEnergy.KILO_WATT_HOUR, "heating value"),
-    (UnitOfEnergy.MEGA_JOULE, "heating value"),
-    (UnitOfVolume.CUBIC_METERS, "gas consumption"),
-    (UnitOfVolume.CUBIC_METERS, "water consumption"),
-    (UnitOfVolume.CUBIC_METERS, "flowing water"),
-)
+_VALUE_KIND_TO_STATE_CLASS: dict[ValueKind, SensorStateClass] = {
+    ValueKind.MEASUREMENT: SensorStateClass.MEASUREMENT,
+    ValueKind.TOTAL: SensorStateClass.TOTAL,
+    ValueKind.CUMULATIVE: SensorStateClass.TOTAL_INCREASING,
+}
 
 
-def _contains_keyword(name_lower: str, keyword: str) -> bool:
-    """Return True if ``keyword`` appears as a whole word/phrase in ``name_lower``."""
-    return re.search(rf"\b{re.escape(keyword)}\b", name_lower) is not None
-
-
-def _infer_state_class(
+def _state_class(
     entity_def: EntityDefinition,
     native_unit_of_measurement: str | None,
 ) -> SensorStateClass | None:
-    """Infer sensor state class.
-
-    Args:
-        entity_def: Entity definition with name.
-        native_unit_of_measurement: Native unit after mapping MRA units to HA units.
-
-    Returns:
-        Inferred state class.
-    """
-    name_lower = entity_def.name_en.lower()
-    if any(
-        _contains_keyword(name_lower, keyword)
-        for keyword in _NO_STATE_CLASS_NAME_KEYWORDS
-    ):
+    """Return the sensor state class for the pyhems value kind."""
+    if entity_def.value_kind is None:
         return None
-    if any(
-        _contains_keyword(name_lower, keyword) for keyword in _MEASUREMENT_NAME_KEYWORDS
+    if (
+        entity_def.value_kind is ValueKind.MEASUREMENT
+        and native_unit_of_measurement == DEGREE
     ):
-        return SensorStateClass.MEASUREMENT
-    if native_unit_of_measurement == DEGREE:
         return SensorStateClass.MEASUREMENT_ANGLE
-    if _contains_keyword(name_lower, "cumulative"):
-        return SensorStateClass.TOTAL_INCREASING
-    for unit, keyword in _TOTAL_STATE_CLASS_UNIT_NAME_KEYWORDS:
-        if native_unit_of_measurement == unit and _contains_keyword(
-            name_lower, keyword
-        ):
-            return SensorStateClass.TOTAL
-    return SensorStateClass.MEASUREMENT
+    return _VALUE_KIND_TO_STATE_CLASS[entity_def.value_kind]
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -107,10 +75,11 @@ class EchonetLiteSensorEntityDescription(
     @override
     def build_from_entity_def(
         cls,
+        class_code: int,
         entity_def: EntityDefinition,
     ) -> EchonetLiteSensorEntityDescription:
         """Construct a sensor description from an EntityDefinition."""
-        codec = get_codec(entity_def)
+        codec = get_codec(entity_def, class_code=class_code)
 
         # Read-only multi-value enum → ENUM sensor
         if isinstance(codec, EnumCodec):
@@ -125,13 +94,13 @@ class EchonetLiteSensorEntityDescription(
 
         # Numeric sensor
         native_unit_of_measurement = infer_ha_unit(entity_def)
-        state_class = _infer_state_class(entity_def, native_unit_of_measurement)
+        state_class = _state_class(entity_def, native_unit_of_measurement)
         return cls(
             key=f"{entity_def.epc:02x}_{entity_def.byte_offset}",
             device_class=infer_device_classes(entity_def)[0],
             native_unit_of_measurement=native_unit_of_measurement,
             state_class=state_class,
-            prop=NumericProp.from_entity_def(entity_def),
+            prop=NumericProp.from_entity_def(entity_def, class_code=class_code),
             **cls._common_kwargs(entity_def),
         )
 
@@ -240,12 +209,11 @@ class EchonetLiteCollectionSensor(EchonetLiteEntity, SensorEntity):
     def native_value(self) -> float | int | None:
         """Return this channel's value from the current page, or None if unavailable."""
         description = self.description
-        node = self._node
-        edt = node.properties.get(description.result_epc)
-        if edt is None:
-            return None
-        page = decode_collection_page(
-            node.eoj.class_code, description.result_epc, edt, node
+        page = _collection_page(
+            self.coordinator,
+            self._node,
+            description.result_epc,
+            description.coefficient_epcs,
         )
         if page is None:
             return None
@@ -256,6 +224,27 @@ class EchonetLiteCollectionSensor(EchonetLiteEntity, SensorEntity):
         if description.item_field is not None:
             item = item.get(description.item_field) if isinstance(item, dict) else None
         return item if isinstance(item, int | float) else None
+
+
+def _collection_page(
+    coordinator: EchonetLiteCoordinator,
+    node: NodeState,
+    result_epc: int,
+    coefficient_epcs: tuple[int, ...],
+) -> CollectionPage | None:
+    """Return the decoded page of a list, decoding it once per value change."""
+    edt = node.properties.get(result_epc)
+    if edt is None:
+        return None
+    source = (edt, *(node.properties.get(epc) for epc in coefficient_epcs))
+    cache_key = (node.device_key, result_epc)
+    if (cached := coordinator.collection_pages.get(cache_key)) is not None and (
+        cached[0] == source
+    ):
+        return cached[1]
+    page = decode_collection_page(node.eoj.class_code, result_epc, edt, node.properties)
+    coordinator.collection_pages[cache_key] = (source, page)
+    return page
 
 
 def _build_collection_sensors(

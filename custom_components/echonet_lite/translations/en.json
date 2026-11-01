@@ -10,10 +10,8 @@
         "accplt": "AC_CPLT",
         "achlccharge": "AC_HLC_Charge",
         "air_circulation": "Air circulation",
-        "air_flow_rate_setting": "Air flow rate setting",
         "automatic": "Automatic",
         "automatic_selection_mode": "Automatic selection mode",
-        "automatic_water_heating_setting": "Automatic water heating setting",
         "bath_operation_status_monitor": "Bath Operation Status Monitor",
         "bath_water_volume_setting_4": "Bath water volume setting 4",
         "bathroom_priority_setting": "Bathroom priority setting",
@@ -31,7 +29,6 @@
         "charging_electric_energy_setting": "Charging electric energy setting",
         "charging_method": "Charging method",
         "class_unit": "Class unit",
-        "close": "Close",
         "coefficient": "Coefficient",
         "color_lighting": "Color lighting",
         "cooling": "Cooling",
@@ -62,8 +59,6 @@
         "electric_lock_setting": "Electric lock setting",
         "fixed_date": "Fixed date",
         "fluorescent_light": "Fluorescent light",
-        "fully_closed": "Fully closed",
-        "fully_open": "Fully open",
         "group_information": "Group information",
         "heating": "Heating",
         "hot_water_supply_status": "Hot water supply status",
@@ -80,9 +75,7 @@
         "level_6": "Level 6",
         "level_7": "Level 7",
         "level_8": "Level 8",
-        "light_color_setting": "Light color setting",
         "light_level_setting": "Light level setting",
-        "lighting_mode_setting": "Lighting mode setting",
         "local_setting_position": "Local setting position",
         "lock": "Lock",
         "measured_cumulative_amount_of_charging_electric_energy": "Measured cumulative amount of charging electric energy",
@@ -159,7 +152,6 @@
         "scene_control_setting": "Scene control setting",
         "set": "Set",
         "set_temperature_value": "Set temperature value",
-        "set_value_of_ventilation_air_flow_rate": "Set value of ventilation air flow rate",
         "silent": "Silent",
         "smoke_cigarette_detection_status": "Smoke (cigarette) detection status",
         "smoke_cigarette_detection_status_found": "Smoke (cigarette) detection status found.",
@@ -169,8 +161,6 @@
         "special_state": "Special state",
         "standard": "Standard",
         "steaming": "Steaming",
-        "stop": "Stop",
-        "stopped_halfway": "Stopped halfway",
         "supplying_hot_water": "Supplying hot water",
         "system_interconnected_type": "System interconnected type",
         "system_interconnected_type_reverse_power_flow_acceptable": "System-interconnected type (reverse power flow acceptable)",
@@ -924,9 +914,6 @@
             "class_0000_epc_99": {
                 "name": "Power limit setting"
             },
-            "class_0130_epc_b3": {
-                "name": "Set temperature value"
-            },
             "class_0130_epc_b4": {
                 "name": "Set value of relative humidity in dehumidifying mode"
             },
@@ -960,23 +947,8 @@
             "class_0260_epc_d2": {
                 "name": "Operation time"
             },
-            "class_0260_epc_e1": {
-                "name": "Degree-of-opening level"
-            },
-            "class_0260_epc_e2": {
-                "name": "Shade angle setting"
-            },
             "class_0263_epc_d2": {
                 "name": "Operation time"
-            },
-            "class_0263_epc_e1": {
-                "name": "Degree-of-opening setting"
-            },
-            "class_0263_epc_e2": {
-                "name": "Blind angle setting"
-            },
-            "class_026b_epc_b3": {
-                "name": "Water heating temperature setting"
             },
             "class_026b_epc_b4": {
                 "name": "Manual water heating stop days setting"
@@ -1140,9 +1112,6 @@
             "class_028f_epc_e1": {
                 "name": "Day for which the historical data of measured cumulative amounts of electric energy is to be retrieved"
             },
-            "class_0290_epc_b0": {
-                "name": "Light level"
-            },
             "class_0290_epc_b7": {
                 "name": "Light level setting for main lighting"
             },
@@ -1151,15 +1120,6 @@
             },
             "class_0290_epc_c0": {
                 "name": "RGB setting for color lighting - Byte 1: R"
-            },
-            "class_0290_epc_c0_01": {
-                "name": "RGB setting for color lighting - Byte 2: G"
-            },
-            "class_0290_epc_c0_02": {
-                "name": "RGB setting for color lighting - Byte 3: B"
-            },
-            "class_0291_epc_b0": {
-                "name": "Light level setting"
             },
             "class_02a1_epc_e7": {
                 "name": "Charging amount setting"
@@ -1191,47 +1151,11 @@
             "class_02a7_epc_c3": {
                 "name": "Command control parameter setting - Command control instruction number"
             },
-            "class_02a7_epc_c3_04": {
-                "name": "Command control parameter setting - Power value for the instruction. (W)"
-            },
             "class_02a7_epc_c4": {
                 "name": "Autonomous control parameter setting 1 - Width of dead band. (Plus side) (mHz)"
             },
-            "class_02a7_epc_c4_02": {
-                "name": "Autonomous control parameter setting 1 - Width of dead band. (Minus side) (mHz)"
-            },
-            "class_02a7_epc_c4_04": {
-                "name": "Autonomous control parameter setting 1 - Rate of power control.  (Normal direction) (W/mHz)"
-            },
-            "class_02a7_epc_c4_08": {
-                "name": "Autonomous control parameter setting 1 - Rate of power control.  (Reverse direction) (W/mHz)"
-            },
-            "class_02a7_epc_c4_0c": {
-                "name": "Autonomous control parameter setting 1 - Power upper limit for autonomous control. (Normal direction) (W)"
-            },
-            "class_02a7_epc_c4_10": {
-                "name": "Autonomous control parameter setting 1 - Power upper limit for autonomous control. (Reverse direction) (W)"
-            },
-            "class_02a7_epc_c4_14": {
-                "name": "Autonomous control parameter setting 1 - Abnormal frequency deviation threshold (mHz)"
-            },
             "class_02a7_epc_c5": {
                 "name": "Autonomous control parameter setting 2 - Time constant for filter. (LPF)"
-            },
-            "class_02a7_epc_c5_02": {
-                "name": "Autonomous control parameter setting 2 - Time constant for filter. (HPF)"
-            },
-            "class_02a7_epc_c5_04": {
-                "name": "Autonomous control parameter setting 2 - PI control coefficient. (Proportional gain)"
-            },
-            "class_02a7_epc_c5_06": {
-                "name": "Autonomous control parameter setting 2 - PI control coefficient. (Integral gain)"
-            },
-            "class_02a7_epc_c5_08": {
-                "name": "Autonomous control parameter setting 2 - Rate limiter. (Normal direction) (W/sec)"
-            },
-            "class_02a7_epc_c5_0c": {
-                "name": "Autonomous control parameter setting 2 - Rate limiter. (Reverse direction) (W/sec)"
             },
             "class_02a7_epc_c7": {
                 "name": "Correction value for reference frequency"
@@ -1275,23 +1199,8 @@
             "class_03b9_epc_e3": {
                 "name": "Heating temperature setting - Left stove temperature setting"
             },
-            "class_03b9_epc_e3_01": {
-                "name": "Heating temperature setting - Right stove temperature setting"
-            },
-            "class_03b9_epc_e3_02": {
-                "name": "Heating temperature setting - Far-side stove temperature setting"
-            },
             "class_03b9_epc_e7": {
                 "name": "Heating power setting - Heating power of the left stove"
-            },
-            "class_03b9_epc_e7_02": {
-                "name": "Heating power setting - Heating power of the right stove"
-            },
-            "class_03b9_epc_e7_04": {
-                "name": "Heating power setting - Heating power of the far-side stove"
-            },
-            "class_03b9_epc_e7_06": {
-                "name": "Heating power setting - Heating power of the roaster"
             },
             "class_03ce_epc_ca": {
                 "name": "Group information"
@@ -1395,20 +1304,6 @@
                     "time_based_on": "Time-based reservation function is ON."
                 }
             },
-            "class_0130_epc_a0": {
-                "name": "Air flow rate setting",
-                "state": {
-                    "auto": "Auto",
-                    "level_1": "Level 1",
-                    "level_2": "Level 2",
-                    "level_3": "Level 3",
-                    "level_4": "Level 4",
-                    "level_5": "Level 5",
-                    "level_6": "Level 6",
-                    "level_7": "Level 7",
-                    "level_8": "Level 8"
-                }
-            },
             "class_0130_epc_a1": {
                 "name": "Automatic control of air flow direction setting",
                 "state": {
@@ -1416,15 +1311,6 @@
                     "auto_horizontal": "Automatic (horizontal)",
                     "auto_vertical": "Automatic (vertical)",
                     "non_auto": "Non-automatic"
-                }
-            },
-            "class_0130_epc_a3": {
-                "name": "Automatic swing of air flow setting",
-                "state": {
-                    "horizontal": "Horizontal",
-                    "off": "Off",
-                    "vertical": "Vertical",
-                    "vertical_and_horizontal": "Vertical and Horizontal"
                 }
             },
             "class_0130_epc_a4": {
@@ -1471,17 +1357,6 @@
                     "r": "|\u3000\u3000\u3000\u3000\u2192|",
                     "rc": "|\u3000\u3000\u3000\u2198\u3000|",
                     "rc_r": "|\u3000\u3000\u3000\u2198\u2192|"
-                }
-            },
-            "class_0130_epc_b0": {
-                "name": "Operation mode setting",
-                "state": {
-                    "auto": "Auto",
-                    "circulation": "Air circulation",
-                    "cooling": "Cooling",
-                    "dehumidification": "Dehumidification",
-                    "heating": "Heating",
-                    "other": "Other"
                 }
             },
             "class_0130_epc_b2": {
@@ -1547,34 +1422,6 @@
                     "on": "On"
                 }
             },
-            "class_0133_epc_a0": {
-                "name": "Set value of ventilation air flow rate",
-                "state": {
-                    "auto": "Auto",
-                    "level_1": "Level 1",
-                    "level_2": "Level 2",
-                    "level_3": "Level 3",
-                    "level_4": "Level 4",
-                    "level_5": "Level 5",
-                    "level_6": "Level 6",
-                    "level_7": "Level 7",
-                    "level_8": "Level 8"
-                }
-            },
-            "class_0134_epc_a0": {
-                "name": "Set value of ventilation air flow rate",
-                "state": {
-                    "auto": "Auto",
-                    "level_1": "Level 1",
-                    "level_2": "Level 2",
-                    "level_3": "Level 3",
-                    "level_4": "Level 4",
-                    "level_5": "Level 5",
-                    "level_6": "Level 6",
-                    "level_7": "Level 7",
-                    "level_8": "Level 8"
-                }
-            },
             "class_0134_epc_b1": {
                 "name": "Ventilation method setting",
                 "state": {
@@ -1597,20 +1444,6 @@
             "class_0134_epc_b3": {
                 "name": "Cooling / heating high-low setting",
                 "state": {
-                    "level_1": "Level 1",
-                    "level_2": "Level 2",
-                    "level_3": "Level 3",
-                    "level_4": "Level 4",
-                    "level_5": "Level 5",
-                    "level_6": "Level 6",
-                    "level_7": "Level 7",
-                    "level_8": "Level 8"
-                }
-            },
-            "class_0135_epc_a0": {
-                "name": "Air flow rate setting",
-                "state": {
-                    "auto": "Auto",
                     "level_1": "Level 1",
                     "level_2": "Level 2",
                     "level_3": "Level 3",
@@ -1691,14 +1524,6 @@
                     "medium": "Medium"
                 }
             },
-            "class_0260_epc_e0": {
-                "name": "Open/close (extension/retraction) setting",
-                "state": {
-                    "close": "Close",
-                    "open": "Open",
-                    "stop": "Stop"
-                }
-            },
             "class_0260_epc_e3": {
                 "name": "Open/close (extension/retraction) speed setting",
                 "state": {
@@ -1750,14 +1575,6 @@
                     "medium": "Medium"
                 }
             },
-            "class_0263_epc_e0": {
-                "name": "Open/close operation setting",
-                "state": {
-                    "close": "Close",
-                    "open": "Open",
-                    "stop": "Stop"
-                }
-            },
             "class_0263_epc_e3": {
                 "name": "Opening/closing speed setting",
                 "state": {
@@ -1805,14 +1622,6 @@
                     "low": "Low",
                     "medium": "Medium",
                     "none": "None"
-                }
-            },
-            "class_026b_epc_b0": {
-                "name": "Automatic water heating setting",
-                "state": {
-                    "auto": "Auto",
-                    "manual_heating": "Non-automatic water heating function used",
-                    "manual_no_heating": "Non-automatic water heating function stopped"
                 }
             },
             "class_026b_epc_b6": {
@@ -2185,26 +1994,6 @@
                     "not_specified": "Not specified",
                     "private_sector_company": "Private sector company",
                     "public_waterworks_company": "Public waterworks company"
-                }
-            },
-            "class_0290_epc_b1": {
-                "name": "Light color setting",
-                "state": {
-                    "daylight_color": "Daylight color",
-                    "daylight_white": "Daylight white",
-                    "incandescent": "Incandescent lamp color",
-                    "other": "Other",
-                    "undefined": "Undefined",
-                    "white": "White"
-                }
-            },
-            "class_0290_epc_b6": {
-                "name": "Lighting mode setting",
-                "state": {
-                    "auto": "Auto",
-                    "color": "Color lighting",
-                    "night": "Night lighting",
-                    "normal": "Normal"
                 }
             },
             "class_0290_epc_bb": {
@@ -2637,15 +2426,6 @@
             "class_00d0_epc_e1": {
                 "name": "Measured illuminance value 2"
             },
-            "class_0130_epc_aa": {
-                "name": "Special state",
-                "state": {
-                    "defrosting": "Defrosting",
-                    "heat_removal": "Heat removal",
-                    "normal": "Normal",
-                    "preheating": "Preheating"
-                }
-            },
             "class_0130_epc_b8": {
                 "name": "Rated power consumption - Cooling"
             },
@@ -2760,26 +2540,6 @@
             "class_0157_epc_df": {
                 "name": "Minimum power consumption for restricted outdoor unit"
             },
-            "class_0260_epc_ea": {
-                "name": "Open/closed (extended/retracted) status",
-                "state": {
-                    "closing": "Closing",
-                    "fully_closed": "Fully closed",
-                    "fully_open": "Fully open",
-                    "opening": "Opening",
-                    "stopped_halfway": "Stopped halfway"
-                }
-            },
-            "class_0263_epc_ea": {
-                "name": "Open/closed status",
-                "state": {
-                    "closing": "Closing",
-                    "fully_closed": "Fully closed",
-                    "fully_open": "Fully open",
-                    "opening": "Opening",
-                    "stopped_halfway": "Stopped halfway"
-                }
-            },
             "class_026b_epc_c1": {
                 "name": "Measured temperature of water in water heater"
             },
@@ -2858,16 +2618,6 @@
                     "keeping_temperature": "Keeping temperature",
                     "no_operation": "Stopped",
                     "running_hot_water": "Filling hot water"
-                }
-            },
-            "class_026f_epc_e5": {
-                "name": "Alarm status",
-                "state": {
-                    "break_open": "Break open",
-                    "door_open": "Door open",
-                    "manual_unlocked": "Manual unlocked",
-                    "normal": "Normal",
-                    "tampered": "Tampered"
                 }
             },
             "class_0272_epc_d5": {
@@ -4183,20 +3933,6 @@
                 "state": {
                     "off": "Lukewarm water temperature function OFF",
                     "on": "Lukewarm water temperature function ON"
-                }
-            },
-            "class_026f_epc_e0": {
-                "name": "Lock setting 1",
-                "state": {
-                    "off": "Unlock",
-                    "on": "Lock"
-                }
-            },
-            "class_026f_epc_e1": {
-                "name": "Lock setting 2",
-                "state": {
-                    "off": "Unlock",
-                    "on": "Lock"
                 }
             },
             "class_026f_epc_e6": {

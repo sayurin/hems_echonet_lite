@@ -18,7 +18,7 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import (
@@ -181,23 +181,11 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
     @override
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on the water heater."""
-        if EPC_OPERATION_STATUS not in self._node.set_epcs:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="epc_not_writable",
-                translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
-            )
         await self._send_prop(self.entity_description.op_status, True)
 
     @override
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off the water heater."""
-        if EPC_OPERATION_STATUS not in self._node.set_epcs:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="epc_not_writable",
-                translation_placeholders={"epc_list": f"0x{EPC_OPERATION_STATUS:02X}"},
-            )
         await self._send_prop(self.entity_description.op_status, False)
 
     @override
@@ -212,12 +200,6 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
                 translation_key="unsupported_value",
                 translation_placeholders={"value": operation_mode},
             )
-        if EPC_OPERATION_MODE not in self._node.set_epcs:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="epc_not_writable",
-                translation_placeholders={"epc_list": f"0x{EPC_OPERATION_MODE:02X}"},
-            )
         properties = [self.entity_description.op_mode.make_property(operation_mode)]
         if EPC_OPERATION_STATUS in self._node.set_epcs:
             properties.append(self.entity_description.op_status.make_property(True))
@@ -230,14 +212,6 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
                 translation_key="target_temperature_required",
-            )
-        if EPC_TARGET_TEMPERATURE not in self._node.set_epcs:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN,
-                translation_key="epc_not_writable",
-                translation_placeholders={
-                    "epc_list": f"0x{EPC_TARGET_TEMPERATURE:02X}"
-                },
             )
         temperature = float(kwargs[ATTR_TEMPERATURE])
         clamped = min(max(temperature, self._attr_min_temp), self._attr_max_temp)

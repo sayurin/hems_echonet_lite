@@ -35,6 +35,7 @@ class EchonetLiteButtonEntityDescription(
     @override
     def build_from_entity_def(
         cls,
+        class_code: int,
         entity_def: EntityDefinition,
     ) -> EchonetLiteButtonEntityDescription:
         """Construct a button description from an EntityDefinition.
@@ -46,10 +47,12 @@ class EchonetLiteButtonEntityDescription(
             raise ValueError(
                 f"Button entity requires enum values, but {entity_def.id} has none"
             )
+        prop = EnumProp.from_entity_def(entity_def)
         return cls(
             key=f"{entity_def.epc:02x}",
-            prop=EnumProp.from_entity_def(entity_def),
-            press_value=entity_def.enum_values[0].key,
+            prop=prop,
+            # Use the converted key so it matches the codec of ``prop``.
+            press_value=prop.options[0],
             **cls._common_kwargs(entity_def),
         )
 
