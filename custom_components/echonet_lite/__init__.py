@@ -105,6 +105,53 @@ def _build_monitored_epcs() -> dict[int, frozenset[int]]:
 _MONITORED_EPCS: Final[dict[int, frozenset[int]]] = _build_monitored_epcs()
 
 
+# Manufacturer-specific EPCs per (class_code, manufacturer_code): EPCs that
+# only manufacturer-specific definitions use. They are monitored only for
+# devices of that manufacturer; the manufacturer code is read before the other
+# EPCs during setup.
+def _build_vendor_epcs() -> dict[tuple[int, int], frozenset[int]]:
+    result: dict[tuple[int, int], set[int]] = {}
+    for class_code, entity_defs in REGISTRY.entities.items():
+        shared = (
+            {
+                entity_def.epc
+                for entity_def in entity_defs
+                if entity_def.manufacturer_code is None
+            }
+            | DEDICATED_PLATFORM_REQUIRED_EPCS.get(class_code, frozenset())
+            | {EPC_INSTALLATION_LOCATION}
+            | _collection_projection_epcs(class_code)
+        )
+        monitored = _MONITORED_EPCS.get(class_code, frozenset())
+        for entity_def in entity_defs:
+            if (
+                entity_def.manufacturer_code is not None
+                and entity_def.epc not in shared
+                and entity_def.epc in monitored
+            ):
+                result.setdefault(
+                    (class_code, entity_def.manufacturer_code), set()
+                ).add(entity_def.epc)
+    return {key: frozenset(epcs) for key, epcs in result.items()}
+
+
+_VENDOR_EPCS: Final[dict[tuple[int, int], frozenset[int]]] = _build_vendor_epcs()
+_VENDOR_ONLY_EPCS_BY_CLASS: Final[dict[int, frozenset[int]]] = {
+    class_code: frozenset().union(
+        *(epcs for (code, _), epcs in _VENDOR_EPCS.items() if code == class_code)
+    )
+    for class_code in {class_code for class_code, _ in _VENDOR_EPCS}
+}
+
+
+def _monitored_epcs_for(class_code: int, manufacturer_code: int) -> frozenset[int]:
+    """Return the EPCs to monitor for a device class and manufacturer."""
+    return (
+        _MONITORED_EPCS.get(class_code, frozenset())
+        - _VENDOR_ONLY_EPCS_BY_CLASS.get(class_code, frozenset())
+    ) | _VENDOR_EPCS.get((class_code, manufacturer_code), frozenset())
+
+
 # EPCs that should be polled at a higher frequency (e.g. instantaneous power),
 # per device class code, built once at import time.
 #
@@ -172,7 +219,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     interface = entry.data.get(CONF_INTERFACE, DEFAULT_INTERFACE)
     _LOGGER.debug("Setting up ECHONET Lite with interface %s", interface)
     _LOGGER.debug(
-        "Monitored EPCs (polling/notification) per device class: %s",
+        "Monitored EPC candidates (polling/notification) per device class, "
+        "manufacturer-specific EPCs only for their manufacturer: %s",
         {
             hex(class_code): " ".join(f"{epc:02x}" for epc in epcs)
             for class_code, epcs in _MONITORED_EPCS.items()
@@ -190,7 +238,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
 
     device_manager = DeviceManager(
         client=client,
-        monitored_epcs=_MONITORED_EPCS,
+        monitored_epcs=_monitored_epcs_for,
         fast_epcs=_FAST_POLL_EPCS,
     )
 
