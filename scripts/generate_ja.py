@@ -182,6 +182,18 @@ def _add_entity_string(
     entity_strings.setdefault(platform, {})[entity.id] = entry
 
 
+def _binary_state(entity: EntityDefinition) -> dict[str, str]:
+    """Build switch or binary sensor state strings from normalized enum keys.
+
+    The enum value order is not significant; only the true/false keys are.
+    """
+    values = {value.key: value for value in entity.enum_values}
+    return {
+        "on": _escape_html_brackets(values["true"].name_ja),
+        "off": _escape_html_brackets(values["false"].name_ja),
+    }
+
+
 def _process_entity(
     entity_strings: dict[str, dict[str, dict[str, Any]]],
     entity: EntityDefinition,
@@ -202,16 +214,8 @@ def _process_entity(
     platform = infer_platform(entity)
 
     match platform:
-        case "binary_sensor":
-            on_text = _escape_html_brackets(entity.enum_values[0].name_ja)
-            off_text = _escape_html_brackets(entity.enum_values[1].name_ja)
-            state = {"on": on_text, "off": off_text}
-            _add_entity_string(entity_strings, "binary_sensor", entity, state)
-        case "switch":
-            on_text = _escape_html_brackets(entity.enum_values[0].name_ja)
-            off_text = _escape_html_brackets(entity.enum_values[1].name_ja)
-            state = {"on": on_text, "off": off_text}
-            _add_entity_string(entity_strings, "switch", entity, state)
+        case "binary_sensor" | "switch":
+            _add_entity_string(entity_strings, platform, entity, _binary_state(entity))
         case "button":
             _add_entity_string(entity_strings, "button", entity, None)
         case "select":

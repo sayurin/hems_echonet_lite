@@ -262,8 +262,8 @@
       "class_0130_epc_ab": {
         "name": "非優先状態",
         "state": {
-          "off": "非優先状態",
-          "on": "通常状態"
+          "off": "通常状態",
+          "on": "非優先状態"
         }
       },
       "class_0134_epc_c1": {
@@ -318,8 +318,8 @@
       "class_0157_epc_ab": {
         "name": "特殊状態",
         "state": {
-          "off": "特殊状態",
-          "on": "通常状態"
+          "off": "通常状態",
+          "on": "特殊状態"
         }
       },
       "class_0260_epc_c2": {
@@ -486,8 +486,8 @@
       "class_03b7_epc_a6": {
         "name": "製氷用給水タンク状態",
         "state": {
-          "off": "タンクなし or 水なし",
-          "on": "タンク水あり"
+          "off": "タンク水あり",
+          "on": "タンクなし or 水なし"
         }
       },
       "class_03b7_epc_b0": {
@@ -605,8 +605,8 @@
       "class_0602_epc_b1": {
         "name": "文字列設定受付可能状態",
         "state": {
-          "off": "Busy",
-          "on": "Ready"
+          "off": "Ready",
+          "on": "Busy"
         }
       }
     },
@@ -4322,15 +4322,15 @@
       "class_0f01_epc_c0_000006": {
         "name": "換気モード設定",
         "state": {
-          "off": "換気ON",
-          "on": "換気OFF"
+          "off": "換気OFF",
+          "on": "換気ON"
         }
       },
       "class_0f02_epc_8f_000006": {
         "name": "キープ運転設定",
         "state": {
-          "off": "キープON",
-          "on": "キープOFF"
+          "off": "キープOFF",
+          "on": "キープON"
         }
       }
     },
