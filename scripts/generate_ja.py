@@ -224,13 +224,13 @@ def _process_entity(
                 for ev in entity.enum_values
             }
             _add_entity_string(entity_strings, "select", entity, state)
-        case "sensor" if entity.enum_values:
+        case "sensor" if entity.enum_values and entity.temporal is None:
             state = {
                 camel_to_snake(ev.key): _escape_html_brackets(ev.name_ja)
                 for ev in entity.enum_values
             }
             _add_entity_string(entity_strings, "sensor", entity, state)
-        case "sensor" | "number":
+        case "sensor" | "number" | "date" | "time" | "datetime":
             _add_entity_string(entity_strings, platform, entity, None)
 
 

@@ -35,6 +35,8 @@
     "cumulative_amount_of_charging_electric_energy_reset_setting": "Cumulative amount of charging electric energy reset setting",
     "cumulative_electric_energy_bought": "Cumulative Electric Energy Bought",
     "cumulative_electric_energy_sold": "Cumulative Electric Energy Sold",
+    "current_date_setting": "Current date setting",
+    "current_time_setting": "Current time setting",
     "daily_timer_setting": "Daily timer setting",
     "day_for_which_the_historical_data_of_measured_cumulative_amounts_of_electric_energy_is_to_be_retrieved": "Day for which the historical data of measured cumulative amounts of electric energy is to be retrieved",
     "daylight_color": "Daylight color",
@@ -123,6 +125,7 @@
     "off_timer_reservation_setting": "OFF timer reservation setting",
     "on_permitted": "ON (permitted)",
     "on_timer_reservation_setting": "ON timer reservation setting",
+    "on_timer_setting": "ON timer setting",
     "operation_mode_setting": "Operation mode setting",
     "operation_time": "Operation time",
     "operation_time_setting_value_close": "Operation time setting value: Close",
@@ -140,6 +143,8 @@
     "rated_voltage": "Rated voltage",
     "rated_voltage_independent": "Rated voltage (Independent)",
     "re_interconnection_permission_setting": "Re-interconnection permission setting",
+    "relative_off_timer_setting": "Relative OFF timer setting",
+    "relative_on_timer_setting": "Relative ON timer setting",
     "relative_time_based_reservation_function_is_on": "Relative time-based reservation function is ON.",
     "remaining_chargeable_capacity_of_vehicle_mounted_battery": "Remaining chargeable capacity of vehicle mounted battery",
     "remaining_stored_electricity_of_vehicle_mounted_battery_1": "Remaining stored electricity of vehicle mounted battery 1",
@@ -168,6 +173,7 @@
     "tank_capacity": "Tank capacity",
     "test": "Test",
     "time_based_reservation_function_is_on": "Time-based reservation function is ON.",
+    "time_set_by_off_timer": "Time set by OFF timer",
     "time_synchronization_failed": "Time synchronization failed",
     "time_synchronization_function_not_implemented": "Time synchronization function not implemented",
     "time_synchronization_status": "Time synchronization status",
@@ -871,6 +877,28 @@
         }
       }
     },
+    "date": {
+      "class_0000_epc_98": {
+        "name": "[%key:component::echonet_lite::common::current_date_setting%]"
+      },
+      "class_0279_epc_98": {
+        "name": "[%key:component::echonet_lite::common::current_date_setting%]"
+      },
+      "class_027d_epc_98": {
+        "name": "[%key:component::echonet_lite::common::current_date_setting%]"
+      },
+      "class_02a5_epc_98": {
+        "name": "[%key:component::echonet_lite::common::current_date_setting%]"
+      },
+      "class_02a7_epc_98": {
+        "name": "[%key:component::echonet_lite::common::current_date_setting%]"
+      }
+    },
+    "datetime": {
+      "class_02a7_epc_cd": {
+        "name": "Date and time when the history of measured instantaneous power measurements is to be acquired"
+      }
+    },
     "fan": {
       "air_cleaner": {
         "state_attributes": {
@@ -914,6 +942,12 @@
       "class_0000_epc_99": {
         "name": "Power limit setting"
       },
+      "class_0130_epc_92": {
+        "name": "ON timer setting (relative time)"
+      },
+      "class_0130_epc_96": {
+        "name": "OFF timer setting (relative time)"
+      },
       "class_0130_epc_b4": {
         "name": "Set value of relative humidity in dehumidifying mode"
       },
@@ -953,6 +987,12 @@
       "class_026b_epc_b4": {
         "name": "Manual water heating stop days setting"
       },
+      "class_026b_epc_b5": {
+        "name": "Relative time setting value for manual water heating OFF"
+      },
+      "class_026b_epc_c4": {
+        "name": "Relative time setting for keeping bath temperature"
+      },
       "class_026b_epc_d1": {
         "name": "Temperature of supplied water setting"
       },
@@ -974,6 +1014,9 @@
       "class_026b_epc_ee": {
         "name": "Bath water volume setting 3"
       },
+      "class_0272_epc_92": {
+        "name": "Set value of ON timer relative time"
+      },
       "class_0272_epc_d1": {
         "name": "Set value of hot water temperature"
       },
@@ -991,6 +1034,12 @@
       },
       "class_0272_epc_ee": {
         "name": "Bath hot water volume setting 3"
+      },
+      "class_0273_epc_92": {
+        "name": "On relative timer setting value"
+      },
+      "class_0273_epc_96": {
+        "name": "Off relative timer setting value"
       },
       "class_0279_epc_a0": {
         "name": "Output power control setting 1"
@@ -1013,6 +1062,12 @@
       "class_0279_epc_e9": {
         "name": "Rated power generation output (Independent)"
       },
+      "class_027a_epc_92": {
+        "name": "[%key:component::echonet_lite::common::relative_on_timer_setting%]"
+      },
+      "class_027a_epc_96": {
+        "name": "[%key:component::echonet_lite::common::relative_off_timer_setting%]"
+      },
       "class_027a_epc_d1": {
         "name": "Cold water temperature setting 2 Maximum allowable setting level"
       },
@@ -1021,6 +1076,12 @@
       },
       "class_027a_epc_e1": {
         "name": "Water temperature setting 1"
+      },
+      "class_027b_epc_92": {
+        "name": "[%key:component::echonet_lite::common::relative_on_timer_setting%]"
+      },
+      "class_027b_epc_96": {
+        "name": "[%key:component::echonet_lite::common::relative_off_timer_setting%]"
       },
       "class_027b_epc_e0": {
         "name": "[%key:component::echonet_lite::common::set_temperature_value%]"
@@ -1202,6 +1263,9 @@
       "class_03b9_epc_e7": {
         "name": "Heating power setting - Heating power of the left stove"
       },
+      "class_03bb_epc_92": {
+        "name": "Rice cooking reservation relative time setting"
+      },
       "class_03ce_epc_ca": {
         "name": "[%key:component::echonet_lite::common::group_information%]"
       },
@@ -1213,6 +1277,9 @@
       },
       "class_03ce_epc_ef": {
         "name": "Set temperature setting of inside the case and acquire the current setting."
+      },
+      "class_03d3_epc_92": {
+        "name": "Relative time-based on timer setting"
       },
       "class_03d3_epc_d7": {
         "name": "Rotation speed for spin drying setting"
@@ -2384,6 +2451,9 @@
           "user_definable1": "User-definable domain 1"
         }
       },
+      "class_0000_epc_8e": {
+        "name": "Production date"
+      },
       "class_0011_epc_e0": {
         "name": "Measured temperature value"
       },
@@ -2623,6 +2693,9 @@
       "class_0272_epc_d5": {
         "name": "Bath water volume setting 4 Maximum settable level"
       },
+      "class_0272_epc_db": {
+        "name": "Remaining Automatic operation time"
+      },
       "class_0272_epc_ef": {
         "name": "[%key:component::echonet_lite::common::bath_operation_status_monitor%]",
         "state": {
@@ -2636,6 +2709,9 @@
       },
       "class_0273_epc_bb": {
         "name": "Measured value of bathroom temperature"
+      },
+      "class_0279_epc_b1": {
+        "name": "Next access date and time"
       },
       "class_0279_epc_b3": {
         "name": "Output power change time setting value"
@@ -3661,6 +3737,15 @@
           "other": "[%key:component::echonet_lite::common::other%]"
         }
       },
+      "class_03d3_epc_db": {
+        "name": "Remaining washing time"
+      },
+      "class_03d3_epc_dc": {
+        "name": "Remaining drying time"
+      },
+      "class_03d3_epc_df": {
+        "name": "Elapsed time on the ON timer"
+      },
       "class_03d3_epc_e2": {
         "name": "Current stage of washer and dryer cycle",
         "state": {
@@ -3693,6 +3778,9 @@
           "wrinkle_minimizing": "Wrinkling minimization"
         }
       },
+      "class_03d3_epc_ed": {
+        "name": "Time remaining to complete washer and dryer cycle"
+      },
       "class_03d4_epc_be": {
         "name": "Used to acquire measurements of outdoor air temperature."
       },
@@ -3707,6 +3795,12 @@
           "disconnected": "[%key:common::state::disconnected%]",
           "not_registered": "Not registered"
         }
+      },
+      "class_05ff_epc_c9": {
+        "name": "Manufacture date of the device to be controlled"
+      },
+      "class_05ff_epc_ca": {
+        "name": "Registered information renewal date of the device to be controlled"
       },
       "class_05ff_epc_cb": {
         "name": "Registered information renewal version information of the device to be controlled"
@@ -3873,7 +3967,7 @@
         }
       },
       "class_026b_epc_90": {
-        "name": "ON timer setting",
+        "name": "[%key:component::echonet_lite::common::on_timer_setting%]",
         "state": {
           "off": "[%key:component::echonet_lite::common::reservation_off%]",
           "on": "[%key:component::echonet_lite::common::reservation_on%]"
@@ -4272,6 +4366,71 @@
         }
       }
     },
+    "time": {
+      "class_0000_epc_97": {
+        "name": "[%key:component::echonet_lite::common::current_time_setting%]"
+      },
+      "class_0130_epc_91": {
+        "name": "ON timer setting (time)"
+      },
+      "class_0130_epc_95": {
+        "name": "OFF timer setting (time)"
+      },
+      "class_026b_epc_91": {
+        "name": "[%key:component::echonet_lite::common::on_timer_setting%]"
+      },
+      "class_0272_epc_91": {
+        "name": "[%key:component::echonet_lite::common::on_timer_setting%]"
+      },
+      "class_0272_epc_ed": {
+        "name": "Set value of hot water warmer ON timer time"
+      },
+      "class_0273_epc_91": {
+        "name": "On timer setting value"
+      },
+      "class_0273_epc_95": {
+        "name": "OFF timer setting value"
+      },
+      "class_0279_epc_97": {
+        "name": "[%key:component::echonet_lite::common::current_time_setting%]"
+      },
+      "class_027a_epc_91": {
+        "name": "[%key:component::echonet_lite::common::on_timer_setting%]"
+      },
+      "class_027a_epc_95": {
+        "name": "[%key:component::echonet_lite::common::time_set_by_off_timer%]"
+      },
+      "class_027b_epc_91": {
+        "name": "Time set by ON timer"
+      },
+      "class_027b_epc_95": {
+        "name": "[%key:component::echonet_lite::common::time_set_by_off_timer%]"
+      },
+      "class_027d_epc_97": {
+        "name": "[%key:component::echonet_lite::common::current_time_setting%]"
+      },
+      "class_028e_epc_da": {
+        "name": "Current hour, minute, and second setting"
+      },
+      "class_0290_epc_91": {
+        "name": "[%key:component::echonet_lite::common::on_timer_setting%]"
+      },
+      "class_0290_epc_95": {
+        "name": "[%key:component::echonet_lite::common::time_set_by_off_timer%]"
+      },
+      "class_02a5_epc_97": {
+        "name": "[%key:component::echonet_lite::common::current_time_setting%]"
+      },
+      "class_02a7_epc_c9": {
+        "name": "Current hour, minute and second setting"
+      },
+      "class_03bb_epc_91": {
+        "name": "Rice cooking reservation time setting"
+      },
+      "class_03d3_epc_91": {
+        "name": "[%key:component::echonet_lite::common::on_timer_setting%]"
+      }
+    },
     "water_heater": {
       "electric_water_heater": {
         "state_attributes": {
@@ -4293,6 +4452,9 @@
     },
     "installation_location_number_unset": {
       "message": "Cannot set location number: no installation location code is currently set. Select a location first."
+    },
+    "invalid_property_value": {
+      "message": "The value cannot be represented by the device: {error}"
     },
     "runtime_start_failed": {
       "message": "Failed to start runtime client: {error}"

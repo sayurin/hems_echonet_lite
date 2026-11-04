@@ -1,6 +1,7 @@
 """Sensor platform for the HEMS Echonet Lite integration."""
 
 from dataclasses import dataclass
+from datetime import date, datetime
 from typing import override
 
 from pyhems import (
@@ -8,6 +9,7 @@ from pyhems import (
     EntityDefinition,
     EnumCodec,
     NodeState,
+    TemporalKind,
     ValueKind,
     decode_collection_page,
     get_codec,
@@ -36,7 +38,7 @@ from .entity import (
     setup_common_platform,
     setup_echonet_lite_device_platform,
 )
-from .prop import EnumProp, NumericProp
+from .prop import DatetimeProp, DurationProp, EnumProp, NumericProp, TemporalProp
 from .runtime import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 0
@@ -69,7 +71,7 @@ class EchonetLiteSensorEntityDescription(
 ):
     """Entity description with EPC metadata."""
 
-    prop: EnumProp | NumericProp
+    prop: EnumProp | NumericProp | DurationProp | TemporalProp[date] | DatetimeProp
 
     @classmethod
     @override
@@ -80,6 +82,34 @@ class EchonetLiteSensorEntityDescription(
     ) -> EchonetLiteSensorEntityDescription:
         """Construct a sensor description from an EntityDefinition."""
         codec = get_codec(entity_def, class_code=class_code)
+        if (temporal := entity_def.temporal) is not None:
+            kwargs = cls._common_kwargs(entity_def)
+            if temporal.kind is TemporalKind.DURATION:
+                duration = DurationProp.from_entity_def(entity_def)
+                return cls(
+                    key=f"{entity_def.epc:02x}",
+                    device_class=SensorDeviceClass.DURATION,
+                    native_unit_of_measurement=duration.unit,
+                    prop=duration,
+                    **kwargs,
+                )
+            if temporal.kind is TemporalKind.DATE:
+                return cls(
+                    key=f"{entity_def.epc:02x}",
+                    device_class=SensorDeviceClass.DATE,
+                    prop=TemporalProp.from_entity_def(entity_def, date),
+                    **kwargs,
+                )
+            if temporal.kind is TemporalKind.DATETIME:
+                return cls(
+                    key=f"{entity_def.epc:02x}",
+                    device_class=SensorDeviceClass.TIMESTAMP,
+                    prop=DatetimeProp(
+                        TemporalProp.from_entity_def(entity_def, datetime)
+                    ),
+                    **kwargs,
+                )
+            raise ValueError("Readonly clock is not a sensor")
 
         # Read-only multi-value enum → ENUM sensor
         if isinstance(codec, EnumCodec):
@@ -136,9 +166,16 @@ class EchonetLiteSensor(
 ):
     """Representation of an ECHONET Lite sensor property."""
 
+    @override
+    async def async_added_to_hass(self) -> None:
+        """Subscribe only when the sensor interprets a local datetime."""
+        await super().async_added_to_hass()
+        if isinstance(self.description.prop, DatetimeProp):
+            self._async_listen_timezone_updates()
+
     @property
     @override
-    def native_value(self) -> float | int | str | None:
+    def native_value(self) -> float | int | str | date | datetime | None:
         """Return the state of the sensor."""
         return self.description.prop.get(self._node)
 

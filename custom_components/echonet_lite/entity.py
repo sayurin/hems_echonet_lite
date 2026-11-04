@@ -7,8 +7,8 @@ from typing import Self, override
 
 from pyhems import EntityDefinition, NodeState, Property
 
-from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.const import EVENT_CORE_CONFIG_UPDATE, Platform
+from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -209,7 +209,15 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
         Raises:
             HomeAssistantError: If the EPC is not writable by the device.
         """
-        await self._send_properties([prop.make_property(value)])
+        try:
+            property_value = prop.make_property(value)
+        except ValueError as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="invalid_property_value",
+                translation_placeholders={"error": str(err)},
+            ) from err
+        await self._send_properties([property_value])
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -351,6 +359,19 @@ class EchonetLiteDescribedEntity[DescriptionT: EchonetLiteEntityDescription](
             description.coefficient_epcs
         )
 
+    @callback
+    def _async_listen_timezone_updates(self) -> None:
+        """Reinterpret cached local datetimes when HA's timezone changes."""
+
+        @callback
+        def timezone_updated(event: Event) -> None:
+            if "time_zone" in event.data:
+                self.async_write_ha_state()
+
+        self.async_on_remove(
+            self.hass.bus.async_listen(EVENT_CORE_CONFIG_UPDATE, timezone_updated)
+        )
+
 
 def build_platform_descriptions[DescriptionT: EchonetLiteEntityDescription](
     platform_type: Platform,
@@ -374,14 +395,15 @@ def build_platform_descriptions[DescriptionT: EchonetLiteEntityDescription](
     Returns:
         Dict mapping class_code → list of entity descriptions for that platform.
     """
-    return {
-        class_code: [
-            description_cls.build_from_entity_def(class_code, entry.entity_def)
-            for entry in entries
-            if entry.platform == platform_type
-        ]
-        for class_code, entries in CATALOG.items()
-    }
+    descriptions: dict[int, list[DescriptionT]] = {}
+    for class_code, entries in CATALOG.items():
+        descriptions[class_code] = []
+        for entry in entries:
+            if entry.platform == platform_type:
+                descriptions[class_code].append(
+                    description_cls.build_from_entity_def(class_code, entry.entity_def)
+                )
+    return descriptions
 
 
 def setup_common_platform[DescriptionT: EchonetLiteEntityDescription](

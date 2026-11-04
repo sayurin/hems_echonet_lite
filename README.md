@@ -116,6 +116,27 @@ All remaining properties are automatically mapped based on the ECHONET Lite prop
 | 3+ value enum | Select | Sensor (enum) |
 | 1-value enum | Button | — |
 | Numeric | Number | Sensor |
+| Scalar calendar date | Date | Sensor (date) |
+| Scalar local datetime | Date/time | Sensor (timestamp) |
+| Scalar clock time | Time | Not exposed |
+| Scalar duration | Number (duration) | Sensor (duration) |
+
+Platform selection uses the definition's readable/writable flags, not the
+device's SET property map. GET-only devices keep the defined platform without
+a sensor fallback; writes still require actual SET support. Readonly clock
+definitions are not exposed.
+Durations use minutes for two-byte values and seconds for three-byte values;
+they are not clock times. Unrepresentable precision is rejected, not rounded.
+
+Except for clocks, readonly temporal `oneOf` values with explicit special states use one sensor,
+with special states shown as unknown. Writable temporal unions and temporal
+fields within objects/arrays are not exposed. No auxiliary switches or remembered
+restoration values are added. Node-profile temporal values are not exposed.
+
+Datetimes use Home Assistant's timezone, without zone or area configuration.
+Changing it reinterprets cached local values, without writing the device clock.
+Ambiguous/nonexistent DST times become unknown on read and are rejected on write.
+Dates, clock times and durations are not timezone-shifted.
 
 ## Manufacturer-Specific Extensions
 

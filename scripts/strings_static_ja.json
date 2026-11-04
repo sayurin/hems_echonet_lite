@@ -145,6 +145,9 @@
     }
   },
   "exceptions": {
+    "invalid_property_value": {
+      "message": "デバイスで表現できない値です: {error}"
+    },
     "epc_not_writable": {
       "message": "EPC {epc_list} はデバイスによって書き込みできません。"
     },
