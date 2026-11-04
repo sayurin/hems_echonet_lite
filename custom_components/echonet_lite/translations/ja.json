@@ -679,6 +679,28 @@
         }
       }
     },
+    "date": {
+      "class_0000_epc_98": {
+        "name": "現在年月日設定"
+      },
+      "class_0279_epc_98": {
+        "name": "現在年月日設定"
+      },
+      "class_027d_epc_98": {
+        "name": "現在年月日設定"
+      },
+      "class_02a5_epc_98": {
+        "name": "現在年月日設定"
+      },
+      "class_02a7_epc_98": {
+        "name": "現在年月日設定"
+      }
+    },
+    "datetime": {
+      "class_02a7_epc_cd": {
+        "name": "瞬時電力計測値履歴取得日時"
+      }
+    },
     "fan": {
       "air_cleaner": {
         "state_attributes": {
@@ -722,6 +744,12 @@
       "class_0000_epc_99": {
         "name": "電力制限設定"
       },
+      "class_0130_epc_92": {
+        "name": "ONタイマ相対時間設定値"
+      },
+      "class_0130_epc_96": {
+        "name": "OFFタイマ相対時間設定値"
+      },
       "class_0130_epc_b4": {
         "name": "除湿モード時相対湿度設定値"
       },
@@ -761,6 +789,12 @@
       "class_026b_epc_b4": {
         "name": "手動沸き上げ停止日数設定値"
       },
+      "class_026b_epc_b5": {
+        "name": "手動沸き上げOFFタイマ相対時間設定値"
+      },
+      "class_026b_epc_c4": {
+        "name": "風呂保温運転相対時間設定値"
+      },
       "class_026b_epc_d1": {
         "name": "給湯温度設定値"
       },
@@ -782,6 +816,9 @@
       "class_026b_epc_ee": {
         "name": "風呂湯量設定3"
       },
+      "class_0272_epc_92": {
+        "name": "風呂自動ONタイマ相対時間設定値"
+      },
       "class_0272_epc_d1": {
         "name": "給湯温度設定値"
       },
@@ -799,6 +836,12 @@
       },
       "class_0272_epc_ee": {
         "name": "風呂湯量設定3"
+      },
+      "class_0273_epc_92": {
+        "name": "ONタイマ相対時間設定値"
+      },
+      "class_0273_epc_96": {
+        "name": "OFFタイマ相対時間設定値"
       },
       "class_0279_epc_a0": {
         "name": "出力制御設定1"
@@ -821,6 +864,12 @@
       "class_0279_epc_e9": {
         "name": "定格発電電力値(独立時)"
       },
+      "class_027a_epc_92": {
+        "name": "ONタイマ相対時間設定値"
+      },
+      "class_027a_epc_96": {
+        "name": "OFFタイマ相対時間設定値"
+      },
       "class_027a_epc_d1": {
         "name": "冷水温設定2設定可能最大レベル"
       },
@@ -829,6 +878,12 @@
       },
       "class_027a_epc_e1": {
         "name": "水温設定1"
+      },
+      "class_027b_epc_92": {
+        "name": "ON タイマ相対時間設定値"
+      },
+      "class_027b_epc_96": {
+        "name": "OFF タイマ相対時間設定値"
       },
       "class_027b_epc_e0": {
         "name": "温度設定1"
@@ -1010,6 +1065,9 @@
       "class_03b9_epc_e7": {
         "name": "加熱出力設定 左コンロ加熱出力"
       },
+      "class_03bb_epc_92": {
+        "name": "炊飯予約設定相対時間設定値"
+      },
       "class_03ce_epc_ca": {
         "name": "グループ情報"
       },
@@ -1021,6 +1079,9 @@
       },
       "class_03ce_epc_ef": {
         "name": "庫内温度設定値"
+      },
+      "class_03d3_epc_92": {
+        "name": "ONタイマ相対時間設定値"
       },
       "class_03d3_epc_d7": {
         "name": "脱水回転数設定値"
@@ -2192,6 +2253,9 @@
           "user_definable1": "ユーザ定義領域1"
         }
       },
+      "class_0000_epc_8e": {
+        "name": "製造年月日"
+      },
       "class_0011_epc_e0": {
         "name": "温度計測値"
       },
@@ -2431,6 +2495,9 @@
       "class_0272_epc_d5": {
         "name": "風呂湯量設定4 設定可能最大レベル"
       },
+      "class_0272_epc_db": {
+        "name": "自動運転残時間"
+      },
       "class_0272_epc_ef": {
         "name": "風呂動作状態監視",
         "state": {
@@ -2444,6 +2511,9 @@
       },
       "class_0273_epc_bb": {
         "name": "浴室内温度計測値"
+      },
+      "class_0279_epc_b1": {
+        "name": "次回アクセス日時"
       },
       "class_0279_epc_b3": {
         "name": "出力変化時間設定値"
@@ -3469,6 +3539,15 @@
           "other": "その他"
         }
       },
+      "class_03d3_epc_db": {
+        "name": "洗濯残り時間"
+      },
+      "class_03d3_epc_dc": {
+        "name": "乾燥残り時間"
+      },
+      "class_03d3_epc_df": {
+        "name": "ONタイマ経過時間"
+      },
       "class_03d3_epc_e2": {
         "name": "洗濯乾燥遷移状態",
         "state": {
@@ -3501,6 +3580,9 @@
           "wrinkle_minimizing": "ソフトキープ"
         }
       },
+      "class_03d3_epc_ed": {
+        "name": "洗濯乾燥残り時間"
+      },
       "class_03d4_epc_be": {
         "name": "外気温度計測値"
       },
@@ -3515,6 +3597,12 @@
           "disconnected": "離脱中",
           "not_registered": "未登録"
         }
+      },
+      "class_05ff_epc_c9": {
+        "name": "管理対象機器製造年月日"
+      },
+      "class_05ff_epc_ca": {
+        "name": "管理対象機器登録情報更新年月日"
       },
       "class_05ff_epc_cb": {
         "name": "管理対象機器登録情報更新バージョン情報"
@@ -4080,6 +4168,71 @@
         }
       }
     },
+    "time": {
+      "class_0000_epc_97": {
+        "name": "現在時刻設定"
+      },
+      "class_0130_epc_91": {
+        "name": "ONタイマ時刻設定値"
+      },
+      "class_0130_epc_95": {
+        "name": "OFFタイマ時刻設定値"
+      },
+      "class_026b_epc_91": {
+        "name": "ONタイマ時刻設定値"
+      },
+      "class_0272_epc_91": {
+        "name": "ONタイマ時刻設定値"
+      },
+      "class_0272_epc_ed": {
+        "name": "給湯保温ONタイマ時刻設定値"
+      },
+      "class_0273_epc_91": {
+        "name": "ONタイマ時刻設定値"
+      },
+      "class_0273_epc_95": {
+        "name": "OFFタイマ時刻設定値"
+      },
+      "class_0279_epc_97": {
+        "name": "現在時刻設定"
+      },
+      "class_027a_epc_91": {
+        "name": "ONタイマ時刻設定値"
+      },
+      "class_027a_epc_95": {
+        "name": "OFFタイマ時刻設定値"
+      },
+      "class_027b_epc_91": {
+        "name": "ON タイマ時刻設定値"
+      },
+      "class_027b_epc_95": {
+        "name": "OFF タイマ時刻設定値"
+      },
+      "class_027d_epc_97": {
+        "name": "現在時刻設定"
+      },
+      "class_028e_epc_da": {
+        "name": "現在時分秒設定"
+      },
+      "class_0290_epc_91": {
+        "name": "ONタイマ時刻設定値"
+      },
+      "class_0290_epc_95": {
+        "name": "OFFタイマ時刻設定値"
+      },
+      "class_02a5_epc_97": {
+        "name": "現在時刻設定"
+      },
+      "class_02a7_epc_c9": {
+        "name": "現在時分秒設定"
+      },
+      "class_03bb_epc_91": {
+        "name": "炊飯予約設定時刻設定値"
+      },
+      "class_03d3_epc_91": {
+        "name": "ONタイマ時刻設定値"
+      }
+    },
     "water_heater": {
       "electric_water_heater": {
         "state_attributes": {
@@ -4101,6 +4254,9 @@
     },
     "installation_location_number_unset": {
       "message": "設置場所番号を設定できません: 設置場所コードがまだ設定されていません。先に設置場所を選択してください。"
+    },
+    "invalid_property_value": {
+      "message": "デバイスで表現できない値です: {error}"
     },
     "runtime_start_failed": {
       "message": "ランタイムクライアントの起動に失敗しました: {error}"

@@ -22,7 +22,7 @@ from .entity import (
     build_platform_descriptions,
     setup_common_platform,
 )
-from .prop import NumericProp
+from .prop import DurationProp, NumericProp
 from .runtime import EchonetLiteConfigEntry
 
 PARALLEL_UPDATES = 0
@@ -41,7 +41,7 @@ class EchonetLiteNumberEntityDescription(
 ):
     """Entity description with EPC metadata for number entities."""
 
-    prop: NumericProp
+    prop: NumericProp | DurationProp
 
     @classmethod
     @override
@@ -51,6 +51,18 @@ class EchonetLiteNumberEntityDescription(
         entity_def: EntityDefinition,
     ) -> EchonetLiteNumberEntityDescription:
         """Construct a number description from an EntityDefinition."""
+        if entity_def.temporal is not None:
+            prop = DurationProp.from_entity_def(entity_def)
+            return cls(
+                key=f"{entity_def.epc:02x}_0",
+                device_class=NumberDeviceClass.DURATION,
+                native_unit_of_measurement=prop.unit,
+                native_min_value=0,
+                native_max_value=prop.maximum,
+                native_step=1,
+                prop=prop,
+                **cls._common_kwargs(entity_def),
+            )
         return cls(
             key=f"{entity_def.epc:02x}_{entity_def.byte_offset}",
             device_class=_infer_device_class(entity_def),

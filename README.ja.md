@@ -117,6 +117,24 @@
 | 1 値 enum | Button | — |
 | 数値 | Number | Sensor |
 
+### 日時・時間量
+
+platformは定義のreadable / writableで固定し、実機のset_epcsでは切り替えません。
+書き込み可能な単体の暦日・日時・時刻はdate / datetime / timeとして公開します。
+読み取り専用の定義では暦日と日時をDATE / TIMESTAMP sensorとし、時刻は対象外です。
+実機がGETのみでも別platformやsensor用翻訳は追加せず、書込時にSET対応を確認します。
+時間量はDURATIONのnumber / sensorとし、
+2バイトなら分、3バイトなら秒を使います。表現できない精度は丸めず拒否します。
+
+clockを除くreadonlyの「正常日時値 + 特殊状態」oneOfはsensor単独で公開し、
+特殊状態はunknownとします。writable oneOfとobject / array内の日時は公開せず、
+補助switchや復元用の記憶領域は追加しません。ノードプロファイルの日時は公開しません。
+
+日時はHA全体のtimezoneで解釈し、zone / areaの配置は不要です。
+timezone変更時はキャッシュを再解釈しますが、機器の時計を書き換えません。
+DSTで存在しない・一意でない日時は読取時unknown、書込時エラーとします。
+暦日・時刻・時間量はtimezone補正しません。
+
 ## メーカー独自拡張機能
 
 ECHONET Lite 仕様の範囲を超えて、特定のメーカー向けにプロパティ定義が追加されています。機器のメーカーコードが一致した場合に自動的に適用されます。

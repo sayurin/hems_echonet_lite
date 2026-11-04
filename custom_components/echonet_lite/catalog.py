@@ -13,6 +13,7 @@ from pyhems import (
     DefinitionsRegistry,
     EntityDefinition,
     PropertyRole,
+    TemporalKind,
     get_collection_binding,
 )
 
@@ -53,23 +54,59 @@ def can_process_enum_values(entity: EntityDefinition) -> bool:
 
 
 def infer_platform(entity: EntityDefinition) -> Platform | None:
-    """Infer the platform type from entity definition using MRA get/set info.
+    """Infer a generic platform from the definition's MRA access and value shape.
 
-    Decision matrix:
-        | Data shape    | readable + writable | readable only | write-only         |
-        |---------------|---------------------|---------------|-----------         |
-        | true/false enum | switch            | binary_sensor | None (skip)        |
-        | other enum values | select          | sensor (ENUM) | None (skip)        |
-        | 1 enum value  | None (skip)         | None (skip)   | button             |
-        | numeric       | number              | sensor        | None (skip)        |
-        | numericValue  | None (skip)         | None (skip)   | None (skip)        |
+    Decision matrix for readable definitions:
+        | Value shape            | writable | readonly           |
+        |------------------------|----------|--------------------|
+        | true/false enum        | switch   | binary_sensor      |
+        | other multi-value enum | select   | sensor (ENUM)      |
+        | 1 enum value           | None     | None               |
+        | numeric format         | number   | sensor             |
+        | numericValue           | None     | None               |
+        | date                   | date     | sensor (DATE)      |
+        | clock time             | time     | None               |
+        | duration               | number   | sensor (DURATION)  |
+        | date-time              | datetime | sensor (TIMESTAMP) |
+        | temporal + states      | None     | see below          |
+        | object / array         | None     | None               |
+
+    Write-only definitions become buttons only when they have exactly one enum
+    value and no temporal definition. Other unreadable definitions are skipped.
+
+    The input is a generated EntityDefinition, not a raw MRA schema. Enum and
+    numeric alternatives already resolved by pyhems follow their scalar rows.
+    A temporal value with enum_values represents a simple oneOf: one normal
+    temporal value plus special states. Only readonly unions are exposed,
+    using the normal value's readonly mapping. Other unions are unsupported.
+    Objects and arrays are not mapped directly here. Previously extracted
+    scalar fields follow the scalar rows; curated collection sensors are
+    created separately.
+
+    Definition access fixes the platform here. Runtime setup checks EPC presence
+    but does not switch platforms based on actual SET support; writes check SET
+    support separately. Writable temporal unions remain excluded. Class
+    exclusions and other catalog filters are applied separately.
 
     Args:
         entity: Entity definition to analyze.
 
     Returns:
-        Platform type string, or None if entity should be skipped.
+        Platform enum member, or None if the definition should be skipped.
     """
+    if entity.temporal is not None:
+        if not entity.readable or (entity.enum_values and entity.writable):
+            return None
+        if not entity.writable:
+            return (
+                None if entity.temporal.kind is TemporalKind.CLOCK else Platform.SENSOR
+            )
+        return {
+            TemporalKind.DATE: Platform.DATE,
+            TemporalKind.CLOCK: Platform.TIME,
+            TemporalKind.DURATION: Platform.NUMBER,
+            TemporalKind.DATETIME: Platform.DATETIME,
+        }[entity.temporal.kind]
     if entity.readable:
         writable = entity.writable
         if entity.enum_values:

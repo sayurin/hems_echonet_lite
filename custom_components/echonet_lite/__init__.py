@@ -36,6 +36,8 @@ PLATFORMS: Final = [
     Platform.BUTTON,
     Platform.CLIMATE,
     Platform.COVER,
+    Platform.DATE,
+    Platform.DATETIME,
     Platform.FAN,
     Platform.LIGHT,
     Platform.LOCK,
@@ -43,6 +45,7 @@ PLATFORMS: Final = [
     Platform.SELECT,
     Platform.SENSOR,
     Platform.SWITCH,
+    Platform.TIME,
     Platform.WATER_HEATER,
 ]
 
