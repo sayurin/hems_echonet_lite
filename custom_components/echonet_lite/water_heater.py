@@ -94,7 +94,7 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
 
     entity_description: EchonetLiteWaterHeaterEntityDescription
     _attr_name = None
-    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_precision: float = PRECISION_WHOLE
     _attr_translation_key = _TRANSLATION_KEY
 
@@ -166,14 +166,14 @@ class EchonetLiteWaterHeater(EchonetLiteEntity, WaterHeaterEntity):
 
     @property
     @override
-    def current_temperature(self) -> float | None:
+    def native_current_temperature(self) -> float | None:
         """Return the measured water temperature."""
         value = self.entity_description.current_temp_prop.get(self._node)
         return float(value) if value is not None else None
 
     @property
     @override
-    def target_temperature(self) -> float | None:
+    def native_target_temperature(self) -> float | None:
         """Return the configured target water temperature."""
         value = self.entity_description.target_temp_prop.get(self._node)
         return float(value) if value is not None else None
