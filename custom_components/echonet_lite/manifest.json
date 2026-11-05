@@ -13,5 +13,5 @@
   "quality_scale": "silver",
   "requirements": ["pyhems==0.9.1"],
   "single_config_entry": true,
-  "version": "0.9.0"
+  "version": "0.9.1"
 }
