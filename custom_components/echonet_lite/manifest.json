@@ -1,6 +1,7 @@
 {
   "domain": "echonet_lite",
   "name": "HEMS Echonet Lite",
+  "categories": ["energy", "hubs_protocols.smart_home_hubs", "climate"],
   "codeowners": ["@sayurin"],
   "config_flow": true,
   "dependencies": ["network"],

@@ -52,7 +52,7 @@ PLATFORMS: Final = [
 
 async def async_migrate_entry(
     hass: HomeAssistant, entry: EchonetLiteConfigEntry
-) -> bool:
+) -> None:
     """Migrate old config entry to new format."""
     if entry.version == 1 and entry.minor_version < 1:
         # Version 1.0 → 1.1: Move CONF_INTERFACE from options to data
@@ -65,10 +65,9 @@ async def async_migrate_entry(
             entry, data=new_data, options=new_options, minor_version=1
         )
         _LOGGER.debug("Migrated config entry to version 1.1")
-    return True
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) -> None:
     """Set up HEMS Echonet Lite from a config entry."""
 
     interface = entry.data.get(CONF_INTERFACE, DEFAULT_INTERFACE)
@@ -145,7 +144,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: EchonetLiteConfigEntry) 
     entry.runtime_data = controller
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    return True
 
 
 async def async_remove_config_entry_device(
@@ -175,13 +173,10 @@ async def async_remove_config_entry_device(
 
 async def async_unload_entry(
     hass: HomeAssistant, entry: EchonetLiteConfigEntry
-) -> bool:
+) -> None:
     """Unload a config entry."""
-    if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        return False
+    await hass.config_entries.async_unload_platforms_or_raise(entry, PLATFORMS)
 
     runtime = entry.runtime_data
     if runtime:
         await runtime.async_stop()
-
-    return True

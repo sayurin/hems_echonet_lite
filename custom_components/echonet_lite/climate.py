@@ -205,7 +205,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
 
     entity_description: EchonetLiteClimateEntityDescription
     _attr_name = None
-    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_translation_key = "climate"
     _attr_hvac_modes = _SUPPORTED_HVAC_MODES
 
@@ -293,7 +293,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
 
     @property
     @override
-    def current_temperature(self) -> float | None:
+    def native_current_temperature(self) -> float | None:
         """Return the measured indoor temperature."""
         value = self.entity_description.room_temp_prop.get(self._node)
         return float(value) if value is not None else None
@@ -307,7 +307,7 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
 
     @property
     @override
-    def target_temperature(self) -> float | None:
+    def native_target_temperature(self) -> float | None:
         """Return the currently configured setpoint."""
         value = self.entity_description.target_temp_prop.get(self._node)
         return float(value) if value is not None else None
@@ -389,8 +389,8 @@ class EchonetLiteClimate(EchonetLiteEntity, ClimateEntity):
         Kept for devices that cannot report whether they are cooling or
         heating while in AUTO mode.
         """
-        target = self.target_temperature
-        current = self.current_temperature
+        target = self.native_target_temperature
+        current = self.native_current_temperature
         if target is None or current is None:
             return HVACAction.IDLE
         if target <= current:
