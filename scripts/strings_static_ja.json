@@ -131,13 +131,19 @@
     },
     "water_heater": {
       "electric_water_heater": {
+        "state": {
+          "auto": "自動沸き上げ",
+          "manual_heating": "手動沸き上げ",
+          "manual_no_heating": "手動沸き上げ停止",
+          "off": "OFF"
+        },
         "state_attributes": {
           "operation_mode": {
             "state": {
-              "auto": "自動沸き上げ",
-              "manual_heating": "手動沸き上げ",
-              "manual_no_heating": "手動沸き上げ停止",
-              "off": "OFF"
+              "auto": "[%key:component::echonet_lite::entity::water_heater::electric_water_heater::state::auto%]",
+              "manual_heating": "[%key:component::echonet_lite::entity::water_heater::electric_water_heater::state::manual_heating%]",
+              "manual_no_heating": "[%key:component::echonet_lite::entity::water_heater::electric_water_heater::state::manual_no_heating%]",
+              "off": "[%key:component::echonet_lite::entity::water_heater::electric_water_heater::state::off%]"
             }
           }
         }

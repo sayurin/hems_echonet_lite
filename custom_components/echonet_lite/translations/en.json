@@ -4433,6 +4433,12 @@
         },
         "water_heater": {
             "electric_water_heater": {
+                "state": {
+                    "auto": "Auto",
+                    "manual_heating": "Manual (heating)",
+                    "manual_no_heating": "Manual (heating stopped)",
+                    "off": "Off"
+                },
                 "state_attributes": {
                     "operation_mode": {
                         "state": {

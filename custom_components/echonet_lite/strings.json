@@ -4433,12 +4433,18 @@
     },
     "water_heater": {
       "electric_water_heater": {
+        "state": {
+          "auto": "[%key:common::state::auto%]",
+          "manual_heating": "Manual (heating)",
+          "manual_no_heating": "Manual (heating stopped)",
+          "off": "[%key:common::state::off%]"
+        },
         "state_attributes": {
           "operation_mode": {
             "state": {
               "auto": "[%key:common::state::auto%]",
-              "manual_heating": "Manual (heating)",
-              "manual_no_heating": "Manual (heating stopped)",
+              "manual_heating": "[%key:component::echonet_lite::entity::water_heater::electric_water_heater::state::manual_heating%]",
+              "manual_no_heating": "[%key:component::echonet_lite::entity::water_heater::electric_water_heater::state::manual_no_heating%]",
               "off": "[%key:common::state::off%]"
             }
           }
