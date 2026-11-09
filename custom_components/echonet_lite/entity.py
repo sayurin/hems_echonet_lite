@@ -284,6 +284,7 @@ class EchonetLiteEntityDescription(EntityDescription):
             "translation_key": entity_def.id,
             "epc": entity_def.epc,
             "entity_category": get_entity_category(entity_def),
+            "entity_registry_enabled_default": entity_def.epc not in (0x97, 0x98),
             "manufacturer_code": entity_def.manufacturer_code,
             "coefficient_epcs": entity_def.coefficient_epcs or (),
         }
