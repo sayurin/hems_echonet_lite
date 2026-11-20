@@ -11,14 +11,14 @@ Do not use `!` solely for compatibility with the next Home Assistant release.
 From this checkout, sync a dedicated uv environment, not the Core environment:
 
 ```shell
-env -u VIRTUAL_ENV UV_PROJECT_ENVIRONMENT=.venv uv sync --locked --extra dev --extra ha-minimum
-env -u VIRTUAL_ENV UV_PROJECT_ENVIRONMENT=.venv uv run --locked --extra dev --extra ha-minimum pytest
-env -u VIRTUAL_ENV UV_PROJECT_ENVIRONMENT=.venv uv run --locked --extra dev --extra ha-minimum prek run --all-files
+env -u VIRTUAL_ENV UV_PROJECT_ENVIRONMENT=.venv uv sync --locked --extra dev
+env -u VIRTUAL_ENV UV_PROJECT_ENVIRONMENT=.venv uv run --locked --extra dev pytest
+env -u VIRTUAL_ENV UV_PROJECT_ENVIRONMENT=.venv uv run --locked --extra dev prek run --all-files
 ```
 
-Use `ha-latest` instead of `ha-minimum` to test against the latest locked
-Home Assistant version. The extras cannot be installed together. The offline
-tests do not start Home Assistant or load this integration. Ruff lint and mypy
+Tests use the Home Assistant version resolved in `uv.lock`; the minimum
+supported version is not separately tested. The offline tests do not start
+Home Assistant or load this integration. Ruff lint and mypy
 start with the new tooling; Ruff also lints the tests. Use `gh actions-lock`
 v0.4.1 to regenerate the workflow lockfile after changing action references.
 
