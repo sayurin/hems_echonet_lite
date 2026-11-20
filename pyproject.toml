@@ -1,0 +1,46 @@
+[project]
+name = "hems-echonet-lite-dev"
+version = "0.0.0"
+requires-python = ">=3.14.2"
+
+[project.optional-dependencies]
+dev = [
+    "codespell",
+    "mypy",
+    "pre-commit-hooks",
+    "prek",
+    "pytest-cov",
+    "PyYAML",
+    "ruff",
+]
+ha-minimum = ["pytest-homeassistant==2026.11.0"]
+ha-latest = ["pytest-homeassistant==2026.11.1"]
+
+[tool.uv]
+conflicts = [[{ extra = "ha-minimum" }, { extra = "ha-latest" }]]
+package = false
+required-version = ">=0.13.1"
+
+[tool.pytest.ini_options]
+addopts = "-p no:respx"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+required-version = ">=0.13.0"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "RUF"]
+ignore = ["E501"]
+
+[tool.mypy]
+check_untyped_defs = true
+warn_unused_ignores = true
+files = ["scripts/build_release.py", "scripts/check_commit_messages.py"]
+
+[tool.codespell]
+skip = "./.*,*.csv,*.json"
+quiet-level = 2
+ignore-words-list = ["echonet,hass"]
