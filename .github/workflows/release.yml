@@ -37,17 +37,17 @@ jobs:
           fi
       - name: Require GitHub App configuration
         env:
-          APP_ID: ${{ vars.APP_ID }}
+          APP_CLIENT_ID: ${{ vars.APP_CLIENT_ID }}
           APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
         run: |
-          if [ -z "$APP_ID" ] || [ -z "$APP_PRIVATE_KEY" ]; then
-            echo "::error::Configure APP_ID and APP_PRIVATE_KEY for the release GitHub App."
+          if [ -z "$APP_CLIENT_ID" ] || [ -z "$APP_PRIVATE_KEY" ]; then
+            echo "::error::Configure APP_CLIENT_ID and APP_PRIVATE_KEY for the release GitHub App."
             exit 1
           fi
       - uses: actions/create-github-app-token@v3.3.0
         id: app
         with:
-          app-id: ${{ vars.APP_ID }}
+          client-id: ${{ vars.APP_CLIENT_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           permission-contents: write
           permission-pull-requests: write
