@@ -14,10 +14,6 @@ permissions:
 jobs:
   tests:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        ha-extra: [ha-minimum, ha-latest]
     steps:
       - uses: actions/checkout@v7.0.1
         with:
@@ -30,9 +26,7 @@ jobs:
         with:
           version: 0.13.1
       - name: Install dependencies
-        env:
-          HA_EXTRA: ${{ matrix.ha-extra }}
-        run: uv sync --locked --extra dev --extra "$HA_EXTRA"
+        run: uv sync --locked --extra dev
       - name: Install actions-lock extension
         run: gh extension install github/gh-actions-lock --pin v0.4.1
       - name: Verify workflow dependencies
@@ -45,16 +39,11 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PR_TITLE: ${{ github.event.pull_request.title }}
-          HA_EXTRA: ${{ matrix.ha-extra }}
-        run: uv run --locked --extra dev --extra "$HA_EXTRA" python scripts/check_commit_messages.py "$BASE_SHA" "$HEAD_SHA" --title "$PR_TITLE"
+        run: uv run --locked --extra dev python scripts/check_commit_messages.py "$BASE_SHA" "$HEAD_SHA" --title "$PR_TITLE"
       - name: Run prek
-        env:
-          HA_EXTRA: ${{ matrix.ha-extra }}
-        run: uv run --locked --extra dev --extra "$HA_EXTRA" prek run --all-files
+        run: uv run --locked --extra dev prek run --all-files
       - name: Run offline tests
-        env:
-          HA_EXTRA: ${{ matrix.ha-extra }}
-        run: uv run --locked --extra dev --extra "$HA_EXTRA" pytest
+        run: uv run --locked --extra dev pytest
       - name: Audit dependencies
         run: uv audit --locked
       - uses: actions/setup-go@v7.0.0

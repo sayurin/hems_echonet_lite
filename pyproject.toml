@@ -10,14 +10,12 @@ dev = [
     "pre-commit-hooks",
     "prek",
     "pytest-cov",
+    "pytest-homeassistant>=2026.11.0",
     "PyYAML",
     "ruff",
 ]
-ha-minimum = ["pytest-homeassistant==2026.11.0"]
-ha-latest = ["pytest-homeassistant==2026.11.1"]
 
 [tool.uv]
-conflicts = [[{ extra = "ha-minimum" }, { extra = "ha-latest" }]]
 package = false
 required-version = ">=0.13.1"
 

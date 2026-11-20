@@ -118,8 +118,8 @@ jobs:
       - uses: astral-sh/setup-uv@v10.3.3
         with:
           version: 0.13.1
-      - run: uv sync --locked --extra dev --extra ha-minimum
-      - run: uv run --locked --extra dev --extra ha-minimum pytest
+      - run: uv sync --locked --extra dev
+      - run: uv run --locked --extra dev pytest
       - uses: home-assistant/actions/hassfest@master
       - name: Build integration ZIP
         env:
