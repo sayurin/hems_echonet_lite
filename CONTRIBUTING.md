@@ -25,8 +25,8 @@ v0.4.1 to regenerate the workflow lockfile after changing action references.
 ## Releases
 
 Install the release GitHub App on this repository with Contents, Pull requests
-and Issues read/write access. Configure its `APP_ID` Actions variable and
-`APP_PRIVATE_KEY` secret before merging the workflow.
+and Issues read/write access. Set its Client ID as the `APP_CLIENT_ID` Actions
+variable and its private key as the `APP_PRIVATE_KEY` Actions secret.
 
 Only merge the release PR when the pinned pyhems version is available on PyPI
 and the integration prerequisites are verified. Release Please publishes a
