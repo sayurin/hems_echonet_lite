@@ -178,7 +178,6 @@ class EchonetLiteEntity(CoordinatorEntity[EchonetLiteCoordinator]):
             node_id=node.node_id,
             deoj=node.eoj,
             properties=properties,
-            refresh=True,
         )
         if not result.sent:
             raise HomeAssistantError(
