@@ -1,21 +1,83 @@
-name: Validation
+name: Validate
 
 on:
   push:
+    branches: [master]
   pull_request:
-  workflow_dispatch:
   schedule:
     - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
-  validation:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ha-extra: [ha-minimum, ha-latest]
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version-file: .python-version
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          version: 0.13.1
+      - name: Install dependencies
+        env:
+          HA_EXTRA: ${{ matrix.ha-extra }}
+        run: uv sync --locked --extra dev --extra "$HA_EXTRA"
+      - name: Install actions-lock extension
+        run: gh extension install github/gh-actions-lock --pin v0.4.1
+      - name: Verify workflow dependencies
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh actions-lock --verify
+      - name: Validate commit messages and PR title
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          HA_EXTRA: ${{ matrix.ha-extra }}
+        run: uv run --locked --extra dev --extra "$HA_EXTRA" python scripts/check_commit_messages.py "$BASE_SHA" "$HEAD_SHA" --title "$PR_TITLE"
+      - name: Run prek
+        env:
+          HA_EXTRA: ${{ matrix.ha-extra }}
+        run: uv run --locked --extra dev --extra "$HA_EXTRA" prek run --all-files
+      - name: Run offline tests
+        env:
+          HA_EXTRA: ${{ matrix.ha-extra }}
+        run: uv run --locked --extra dev --extra "$HA_EXTRA" pytest
+      - name: Audit dependencies
+        run: uv audit --locked
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version: 1.25.0
+      - name: Install actionlint
+        run: go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+      - name: Lint workflows
+        run: |
+          "$(go env GOPATH)/bin/actionlint"
+
+  validate-hacs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        with:
-          persist-credentials: false
-      - name: HACS validation
-        uses: hacs/action@1ebf01c408f29afcb6406bd431bc98fd8cbb15aa # main
+      - uses: hacs/action@main
         with:
           category: integration
-      - name: Hassfest validation
-        uses: home-assistant/actions/hassfest@e91ad1948e57189485b9c1ad608af0c303946f89 # master
+          comment: false
+
+  hassfest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: home-assistant/actions/hassfest@master

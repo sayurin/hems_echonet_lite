@@ -1,0 +1,65 @@
+repos:
+  - repo: local
+    hooks:
+      - id: trailing-whitespace
+        name: Fix trailing whitespace
+        entry: uv run --locked --no-sync --extra dev trailing-whitespace-fixer
+        language: system
+        types: [text]
+      - id: end-of-file-fixer
+        name: Fix end of files
+        entry: uv run --locked --no-sync --extra dev end-of-file-fixer
+        language: system
+        types: [text]
+        exclude: ^custom_components/echonet_lite/translations/en\.json$
+      - id: check-yaml
+        name: Check YAML
+        entry: uv run --locked --no-sync --extra dev check-yaml
+        language: system
+        types: [yaml]
+      - id: check-toml
+        name: Check TOML
+        entry: uv run --locked --no-sync --extra dev check-toml
+        language: system
+        types: [toml]
+      - id: check-added-large-files
+        name: Check for added large files
+        entry: uv run --locked --no-sync --extra dev check-added-large-files
+        language: system
+        exclude: ^uv\.lock$
+      - id: debug-statements
+        name: Check for debug statements
+        entry: uv run --locked --no-sync --extra dev debug-statement-hook
+        language: system
+        types: [python]
+      - id: ruff-check
+        name: Ruff check
+        entry: uv run --locked --no-sync --extra dev ruff check --fix
+        language: system
+        types: [python]
+        files: ^(scripts/(build_release|check_commit_messages)\.py|tests/)
+      - id: ruff-format
+        name: Ruff format
+        entry: uv run --locked --no-sync --extra dev ruff format
+        language: system
+        types: [python]
+      - id: codespell
+        name: Codespell
+        entry: uv run --locked --no-sync --extra dev codespell
+        language: system
+      - id: mypy
+        name: Mypy
+        entry: uv run --locked --no-sync --extra dev mypy
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: check-actions-lock
+        name: Check GitHub Actions lockfile
+        entry: gh actions-lock --verify-local
+        language: system
+        pass_filenames: false
+        always_run: true
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.32.0
+    hooks:
+      - id: zizmor

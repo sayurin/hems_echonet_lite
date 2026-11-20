@@ -1,69 +1,152 @@
 name: Release
 
 on:
+  push:
+    branches: [master]
   workflow_dispatch:
     inputs:
-      bump:
-        description: "Version bump type"
+      release_tag:
+        description: Existing published pre-release tag to safely retry
         required: true
-        type: choice
-        options:
-          - major
-          - minor
-          - patch
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-please
+  cancel-in-progress: false
 
 jobs:
   release:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag: ${{ steps.release.outputs.tag_name }}
+      sha: ${{ steps.release.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Require a version that Release Please can publish as a pre-release
+        run: |
+          if ! grep -Eq '^0\.[0-9]+\.[0-9]+$' version.txt; then
+            echo "::error::Release Please cannot create a pre-release for a final version at or above 1.0.0."
+            exit 1
+          fi
+      - name: Require GitHub App configuration
+        env:
+          APP_ID: ${{ vars.APP_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+        run: |
+          if [ -z "$APP_ID" ] || [ -z "$APP_PRIVATE_KEY" ]; then
+            echo "::error::Configure APP_ID and APP_PRIVATE_KEY for the release GitHub App."
+            exit 1
+          fi
+      - uses: actions/create-github-app-token@v3.3.0
+        id: app
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-issues: write
+      - uses: googleapis/release-please-action@v5.0.0
+        id: release
+        with:
+          token: ${{ steps.app.outputs.token }}
+          target-branch: master
+
+  recover:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.revision.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate published pre-release and resolve tag
+        id: revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          release="$(gh release view "$RELEASE_TAG" --json isDraft,isPrerelease,tagName)"
+          [[ "$(jq -r .tagName <<<"$release")" == "$RELEASE_TAG" ]]
+          [[ "$(jq -r .isDraft <<<"$release")" == false ]]
+          [[ "$(jq -r .isPrerelease <<<"$release")" == true ]]
+          echo "sha=$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")" >> "$GITHUB_OUTPUT"
+
+  package:
+    needs: [release, recover]
+    if: |
+      always() &&
+      (
+        (github.event_name == 'push' && needs.release.result == 'success' && needs.release.outputs.release_created == 'true')
+        || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' && needs.recover.result == 'success')
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@v7.0.1
         with:
+          ref: ${{ needs.recover.outputs.sha || needs.release.outputs.sha }}
+          fetch-depth: 0
           persist-credentials: false
-
-      - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: "3.14"
-
-      - name: Install bump-my-version
-        run: python -m pip install bump-my-version==1.2.4
-
-      - name: Bump version
-        id: bump_version
-        run: |
-          bump-my-version bump "${{ inputs.bump }}"
-          NEW_VERSION="$(python -c 'import json; print(json.load(open("custom_components/echonet_lite/manifest.json", encoding="utf-8"))["version"])')"
-          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
-
-      - name: Check tag does not already exist
-        run: |
-          if git rev-parse "v${{ steps.bump_version.outputs.new_version }}" >/dev/null 2>&1; then
-            echo "::error::Tag v${{ steps.bump_version.outputs.new_version }} already exists"
-            exit 1
-          fi
-
-      - name: Commit and tag
+      - name: Verify published pre-release and tag revision
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag || needs.release.outputs.tag }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .bumpversion.toml custom_components/echonet_lite/manifest.json
-          git commit -m "Release v${{ steps.bump_version.outputs.new_version }}"
-          git tag "v${{ steps.bump_version.outputs.new_version }}"
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git" HEAD --tags
-
-      - name: ZIP echonet_lite Dir
-        run: |
-          cd ${{ github.workspace }}/custom_components/echonet_lite
-          zip echonet_lite.zip -r ./
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          release="$(gh release view "$RELEASE_TAG" --json isDraft,isPrerelease,tagName)"
+          [[ "$(jq -r .tagName <<<"$release")" == "$RELEASE_TAG" ]]
+          [[ "$(jq -r .isDraft <<<"$release")" == false ]]
+          [[ "$(jq -r .isPrerelease <<<"$release")" == true ]]
+          [[ "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")" == "$(git rev-parse HEAD)" ]]
+      - uses: actions/setup-python@v7.1.0
         with:
-          tag_name: "v${{ steps.bump_version.outputs.new_version }}"
-          generate_release_notes: true
-          prerelease: true
-          files: ${{ github.workspace }}/custom_components/echonet_lite/echonet_lite.zip
+          python-version-file: .python-version
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          version: 0.13.1
+      - run: uv sync --locked --extra dev --extra ha-minimum
+      - run: uv run --locked --extra dev --extra ha-minimum pytest
+      - uses: home-assistant/actions/hassfest@master
+      - name: Build integration ZIP
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag || needs.release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          RELEASE_SHA="$(git rev-parse HEAD)"
+          export RELEASE_SHA
+          python scripts/build_release.py
+      - name: Attach ZIP without replacing an existing asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.release_tag || needs.release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          release="$(gh release view "$RELEASE_TAG" --json assets,isDraft,isPrerelease,tagName)"
+          jq -e --arg tag "$RELEASE_TAG" '.tagName == $tag and (.isDraft | not) and .isPrerelease' <<<"$release"
+          asset_names="$(jq -r '.assets[].name' <<<"$release")"
+          asset="dist/echonet_lite.zip"
+          if grep -Fqx -- "$(basename "$asset")" <<<"$asset_names"; then
+            mkdir -p "$RUNNER_TEMP/release-assets"
+            gh release download "$RELEASE_TAG" --pattern "$(basename "$asset")" --dir "$RUNNER_TEMP/release-assets"
+            if ! cmp --silent "$asset" "$RUNNER_TEMP/release-assets/$(basename "$asset")"; then
+              echo "::error::Existing release ZIP does not match the rebuilt archive."
+              exit 1
+            fi
+          else
+            gh release upload "$RELEASE_TAG" "$asset"
+          fi
