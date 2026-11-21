@@ -30,7 +30,10 @@ variable and its private key as the `APP_PRIVATE_KEY` Actions secret.
 
 Only merge the release PR when the pinned pyhems version is available on PyPI
 and the integration prerequisites are verified. Release Please publishes a
-public pre-release with the final version tag. Wait for the ZIP checks and
+public pre-release with the final version tag. The committed integration
+manifest keeps version `0.0.0`; packaging inserts the verified tag version into
+the release ZIP without changing the source. Install the ZIP rather than the
+tag's source archive to obtain the release version. Wait for the ZIP checks and
 upload to finish. Test that exact ZIP on a separate Home Assistant installation
 with pre-releases enabled; do not run the HACS integration in WSL. Only a
 maintainer should clear the pre-release flag and set the same release as latest

@@ -4,6 +4,7 @@ import json
 import os
 import re
 import subprocess
+from io import BytesIO
 from pathlib import Path, PurePosixPath
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
@@ -26,11 +27,26 @@ def main() -> None:
     ).strip()
     if resolved != revision:
         raise ValueError("Release tag does not point to the release commit")
-    manifest = json.loads(committed(revision, f"{INTEGRATION}/manifest.json"))
-    if manifest["version"] != tag.removeprefix("v"):
-        raise ValueError("Release tag and manifest versions disagree")
-    if committed(revision, "version.txt").decode().strip() != manifest["version"]:
+    version = tag.removeprefix("v")
+    manifest_data = committed(revision, f"{INTEGRATION}/manifest.json")
+    manifest = json.loads(manifest_data)
+    if manifest["version"] != "0.0.0":
+        raise ValueError("Committed manifest version must be 0.0.0")
+    if committed(revision, "version.txt").decode().strip() != version:
         raise ValueError("Release version files disagree")
+    release_manifest = json.loads(committed(revision, ".release-please-manifest.json"))
+    if release_manifest["."] != version:
+        raise ValueError("Release version files disagree")
+    manifest_data, replacements = re.subn(
+        rb'(?m)^([ \t]*"version"[ \t]*:[ \t]*)"0\.0\.0"(?=[ \t]*,?[ \t]*\r?$)',
+        lambda match: match.group(1) + json.dumps(version).encode(),
+        manifest_data,
+    )
+    if replacements != 1:
+        raise ValueError("Expected exactly one manifest version placeholder")
+    manifest["version"] = version
+    if json.loads(manifest_data) != manifest:
+        raise ValueError("Updated manifest does not match the release version")
     hacs = json.loads(committed(revision, "hacs.json"))
     if hacs.get("filename") != "echonet_lite.zip" or not hacs.get("zip_release"):
         raise ValueError("HACS archive configuration does not match")
@@ -42,22 +58,23 @@ def main() -> None:
     if temporary.exists():
         raise FileExistsError(f"Temporary archive already exists: {temporary}")
     try:
-        subprocess.run(
+        source = subprocess.check_output(
             [
                 "git",
                 "archive",
                 "--format=zip",
                 "--mtime=1980-01-01T00:00:00Z",
-                f"--output={temporary}",
                 f"{revision}:{INTEGRATION}",
             ],
-            check=True,
         )
-        with ZipFile(temporary, "a", compression=ZIP_DEFLATED) as archive:
-            names = archive.namelist()
+        with (
+            ZipFile(BytesIO(source)) as source_archive,
+            ZipFile(temporary, "w", compression=ZIP_DEFLATED) as archive,
+        ):
+            names = source_archive.namelist()
             if len(names) != len(set(names)) or "LICENSE" in names:
                 raise ValueError("Duplicate archive member")
-            for info in archive.infolist():
+            for info in source_archive.infolist():
                 path = PurePosixPath(info.filename)
                 if (
                     path.is_absolute()
@@ -69,6 +86,12 @@ def main() -> None:
                     or (info.external_attr >> 16) & 0o170000 == 0o120000
                 ):
                     raise ValueError(f"Unexpected archive member: {info.filename}")
+                content = (
+                    manifest_data
+                    if info.filename == "manifest.json"
+                    else source_archive.read(info)
+                )
+                archive.writestr(info, content)
             if not {"manifest.json", "__init__.py"} <= set(names):
                 raise ValueError("Required integration archive members are missing")
             license_info = ZipInfo("LICENSE")
