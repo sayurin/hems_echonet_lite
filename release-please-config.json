@@ -7,14 +7,7 @@
       "bump-minor-pre-major": true,
       "draft": false,
       "prerelease": true,
-      "force-tag-creation": true,
-      "extra-files": [
-        {
-          "type": "json",
-          "path": "custom_components/echonet_lite/manifest.json",
-          "jsonpath": "$.version"
-        }
-      ]
+      "force-tag-creation": true
     }
   }
 }
