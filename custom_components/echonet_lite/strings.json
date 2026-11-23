@@ -4358,6 +4358,13 @@
           "on": "Ventilation function ON"
         }
       },
+      "class_0f01_epc_cf_000006": {
+        "name": "Filter replacement alarm status",
+        "state": {
+          "off": "No filter replacement alarm",
+          "on": "Filter replacement alarm active"
+        }
+      },
       "class_0f02_epc_8f_000006": {
         "name": "Keep operation setting",
         "state": {
