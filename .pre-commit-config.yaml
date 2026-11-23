@@ -47,6 +47,12 @@ repos:
         name: Codespell
         entry: uv run --locked --no-sync --extra dev codespell
         language: system
+      - id: check-generated-translation-keys
+        name: Check generated translation keys
+        entry: uv run --locked --no-sync --extra dev python scripts/check_generated_translation_keys.py
+        language: system
+        pass_filenames: false
+        files: ^custom_components/echonet_lite/(strings\.json|translations/(en|ja)\.json)$
       - id: mypy
         name: Mypy
         entry: uv run --locked --no-sync --extra dev mypy
