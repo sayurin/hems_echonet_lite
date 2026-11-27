@@ -10,7 +10,7 @@ dev = [
     "pre-commit-hooks",
     "prek",
     "pytest-cov",
-    "pytest-homeassistant>=2026.11.0",
+    "pytest-homeassistant>=2026.11.2",
     "PyYAML",
     "ruff",
 ]
