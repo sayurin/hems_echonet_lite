@@ -46,7 +46,7 @@ jobs:
         run: uv run --locked --extra dev pytest
       - name: Audit dependencies
         run: uv audit --locked
-      - uses: actions/setup-go@v7.0.0
+      - uses: actions/setup-go@v7.1.0
         with:
           go-version: 1.25.0
           cache: false
